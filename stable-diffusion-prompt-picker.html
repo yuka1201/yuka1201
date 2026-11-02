@@ -96,6 +96,9 @@ body{padding-bottom:var(--drawer-pad,60px)}
 @media(max-width:640px){.tpl-sel{max-width:124px;padding:0 8px}}
 .dh-title{min-width:0;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto}
 @media(max-width:640px){#drawer-handle{gap:6px;padding:8px}#drawer-handle .btn{padding:10px 8px}#drawer-toggle{min-width:0;padding:10px 10px;font-size:14px}.dh-title{font-size:12.5px}}
+.dh-info{display:contents}
+@media(max-width:900px){#drawer-handle{flex-wrap:wrap;row-gap:8px}.dh-info{display:flex;align-items:center;gap:8px;flex:1 1 100%;min-width:0}.dh-info .dh-title{flex:none;overflow:visible;text-overflow:clip}#dh-preview{display:block;flex:1 1 auto;min-width:0}#drawer-body{max-height:calc(60vh - 116px)}}
+@media(max-width:640px){#drawer-handle .dh-act{flex:1 1 0}#drawer-toggle{flex:1 1 0}}
 </style>
 </head>
 <body>
@@ -121,7 +124,7 @@ body{padding-bottom:var(--drawer-pad,60px)}
 </div>
 </main>
 <div id="drawer">
-<div id="drawer-handle"><span class="dh-title">プロンプト（選択中 <span id="dh-cnt">0</span> 件）</span><span id="dh-preview" class="empty">（まだ選択されていません）</span><button class="btn dh-act" type="button" data-copy="pos"><i data-i="copy"></i><span class="lbl-full">Positiveコピー</span><span class="lbl-short">Pos</span></button><button class="btn dh-act" type="button" data-copy="neg"><i data-i="copy"></i><span class="lbl-full">Negativeコピー</span><span class="lbl-short">Neg</span></button><button class="btn p share-btn dh-act" id="dh-share" type="button" onclick="sharePrompt()"><i data-i="share"></i>共有</button><button id="drawer-toggle" type="button" aria-expanded="true" aria-controls="drawer-body">▼ 閉じる</button></div>
+<div id="drawer-handle"><div class="dh-info"><span class="dh-title">プロンプト（選択中 <span id="dh-cnt">0</span> 件）</span><span id="dh-preview" class="empty">（まだ選択されていません）</span></div><button class="btn dh-act" type="button" data-copy="pos"><i data-i="copy"></i><span class="lbl-full">Positiveコピー</span><span class="lbl-short">Pos</span></button><button class="btn dh-act" type="button" data-copy="neg"><i data-i="copy"></i><span class="lbl-full">Negativeコピー</span><span class="lbl-short">Neg</span></button><button class="btn p share-btn dh-act" id="dh-share" type="button" onclick="sharePrompt()"><i data-i="share"></i>共有</button><button id="drawer-toggle" type="button" aria-expanded="true" aria-controls="drawer-body">▼ 閉じる</button></div>
 <div id="drawer-body">
 <div class="right">
 <h3><span id="cnt">0</span> 件を選択中</h3>
