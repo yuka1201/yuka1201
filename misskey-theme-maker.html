@@ -213,6 +213,26 @@
     .sample .sdesc{font-size:10.5px;line-height:1.45}
     .sample .dots i{width:11px;height:11px}
   }
+
+  /* スマホ表示の崩れ修正（ボタン折り返し・入力欄のはみ出し・ノート下部の詰まり） */
+  @media (max-width:640px){
+    .card{padding:14px}
+    .rowbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .rowbtns .btn{width:100%;padding:11px 6px;font-size:12.5px}
+    .rowbtns .btn:first-child{grid-column:1 / -1}
+    .tile .t-inputs{gap:5px}
+    .tile .t-inputs input[type=text]{flex:1;min-width:0;width:auto}
+    .mk-body{padding:10px}
+    .mk-head{padding:10px 12px}
+    .panel{padding:10px 12px}
+    .n-acts{gap:12px;flex-wrap:wrap}
+    .note .n-head>div{min-width:0}
+    .note .n-acct{display:inline-block;max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+    .mk-nav .ic.act::after{left:-7px}
+    .composer{gap:8px}
+    .composer .ph{font-size:12.5px}
+    #toast{max-width:92vw;text-align:center}
+  }
 </style>
 </head>
 <body>
