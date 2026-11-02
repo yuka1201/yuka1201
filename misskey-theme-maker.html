@@ -85,14 +85,15 @@
     font-size:14px;font-family:inherit;color:var(--ink);background:var(--input-bg);outline:none}
   input[type=text]:focus,textarea:focus{border-color:var(--accent-deep)}
   textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;min-height:230px;resize:vertical}
-  .seg{display:flex;gap:8px}
-  .seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
+  .seg{display:flex;gap:8px;width:100%}
+  .seg button{flex:1 1 0;min-width:0;padding:10px 4px;line-height:1.5;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
   .seg button.on{background:var(--grad);color:#fff;border-color:transparent}
   .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   #infoBtns{display:grid;grid-template-columns:1fr 1fr}
   #infoBtns .btn{width:100%}
-  #infoBtns #btnPalette,#infoBtns #btnDice{grid-column:1/-1}
+  #infoBtns #btnPalette,#infoBtns #btnAllRandom{grid-column:1/-1}
   .btn{border:none;border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;transition:transform .12s ease, box-shadow .12s ease}
+  .btn:disabled{opacity:.45;cursor:default}
   .btn:hover{transform:translateY(-1px)}
   .btn.main{background:var(--grad);color:#fff;box-shadow:var(--btn-shadow)}
   .btn.sub{background:var(--chip-bg);color:var(--accent-deep)}
@@ -269,9 +270,11 @@
         </div>
         <div class="rowbtns" id="infoBtns">
           <button class="btn sub" type="button" id="btnPalette">✨ アクセントから配色をおまかせ</button>
-          <button class="btn sub" type="button" id="btnDice">🎲 ランダムアクセント</button>
+          <button class="btn sub" type="button" id="btnAllRandom">🎲 オールランダム</button>
           <button class="btn ghost" type="button" id="btnClearInfo">テーマの情報をクリア</button>
           <button class="btn ghost" type="button" id="btnReset">リセット</button>
+          <button class="btn ghost" type="button" id="btnUndo" disabled>↩ 1つ戻る</button>
+          <button class="btn ghost" type="button" id="btnRedo" disabled>↪ 1つ進む</button>
         </div>
         <p class="note-help">「配色をおまかせ」は、アクセントカラーに合うリンク色・リノート色などを自動で決めてくれるよ。あとから個別に変えられるよ。</p>
       </section>
@@ -630,6 +633,7 @@ function updateAll(rerenderSamples=true){
   const res=resolvedMap();
   updateTiles(res); updatePreview(res); updateCode(); saveLocal();
   if(rerenderSamples) renderSamples();
+  recordHistory();
 }
 function syncMetaInputs(){
   $("metaName").value=state.name; $("metaAuthor").value=state.author; $("metaDesc").value=state.desc;
@@ -711,11 +715,41 @@ function applySharedState(o){
   return true;
 }
 
+/* --- 履歴（1つ戻る / 1つ進む） --- */
+let hist=[], hIdx=-1, histLock=false, histTimer=null;
+function syncHistBtns(){
+  const u=$("btnUndo"), r=$("btnRedo");
+  if(u) u.disabled = hIdx<=0;
+  if(r) r.disabled = hIdx<0 || hIdx>=hist.length-1;
+}
+function recordHistory(){
+  if(histLock) return;
+  clearTimeout(histTimer);
+  histTimer=setTimeout(()=>{
+    if(histLock) return;
+    let snap; try{ snap=JSON.stringify(state); }catch(e){ return; }
+    if(hist[hIdx]===snap){ syncHistBtns(); return; }
+    hist=hist.slice(0,hIdx+1); hist.push(snap);
+    if(hist.length>60) hist.shift();
+    hIdx=hist.length-1; syncHistBtns();
+  },450);
+}
+function applyHist(dir){
+  const ni=hIdx+dir;
+  if(ni<0||ni>=hist.length) return;
+  clearTimeout(histTimer);
+  hIdx=ni; histLock=true;
+  try{ state=JSON.parse(hist[hIdx]); }catch(e){}
+  syncMetaInputs(); updateAll();
+  histLock=false; syncHistBtns();
+  toast(dir<0?"1つ戻したよ↩":"1つ進めたよ↪");
+}
+
 /* --- イベント --- */
 function bindEvents(){
-  $("metaName").addEventListener("input",e=>{state.name=e.target.value; updateCode(); saveLocal();});
-  $("metaAuthor").addEventListener("input",e=>{state.author=e.target.value; updateCode(); saveLocal();});
-  $("metaDesc").addEventListener("input",e=>{state.desc=e.target.value; updateCode(); saveLocal();});
+  $("metaName").addEventListener("input",e=>{state.name=e.target.value; updateCode(); saveLocal(); recordHistory();});
+  $("metaAuthor").addEventListener("input",e=>{state.author=e.target.value; updateCode(); saveLocal(); recordHistory();});
+  $("metaDesc").addEventListener("input",e=>{state.desc=e.target.value; updateCode(); saveLocal(); recordHistory();});
   $("baseLight").addEventListener("click",()=>{state.base="light"; syncMetaInputs(); updateAll();});
   $("baseDark").addEventListener("click",()=>{state.base="dark"; syncMetaInputs(); updateAll();});
   $("btnClearInfo").addEventListener("click",()=>{
@@ -725,11 +759,48 @@ function bindEvents(){
     toast("テーマの情報をクリアしたよ（IDは新しいものにしたよ）");
   });
   $("btnReset").addEventListener("click",()=>{ localStorage.removeItem("misskey-theme-maker-v1"); applySample(SAMPLES[0]); syncMetaInputs(); updateAll(); toast("優花さくらに戻したよ🌸"); });
-  $("btnDice").addEventListener("click",()=>{
-    const h=Math.floor(Math.random()*360);
-    const c=hslToRgb(h,65,62);
-    state.props.accent={on:true,val:toHex({...c,a:1})};
-    updateAll(); toast("アクセントをランダムにしたよ🎲");
+  $("btnUndo").addEventListener("click",()=>applyHist(-1));
+  $("btnRedo").addEventListener("click",()=>applyHist(1));
+  document.addEventListener("keydown",e=>{
+    if(!(e.ctrlKey||e.metaKey)||e.altKey) return;
+    const tag=(e.target.tagName||"").toLowerCase();
+    if(tag==="input"||tag==="textarea"||tag==="select"||e.target.isContentEditable) return;
+    const k=e.key.toLowerCase();
+    if(k==="z"&&!e.shiftKey){ e.preventDefault(); applyHist(-1); }
+    else if((k==="z"&&e.shiftKey)||k==="y"){ e.preventDefault(); applyHist(1); }
+  });
+  $("btnAllRandom").addEventListener("click",()=>{
+    const R=Math.random;
+    const col=(h,s,l)=>toHex({...hslToRgb(((h%360)+360)%360,s,l),a:1});
+    const set=(k,v)=>{ if(k in state.props) state.props[k]={on:true,val:v}; };
+    const dark=R()<0.5;
+    state.base=dark?"dark":"light";
+    const accH=Math.floor(R()*360), tintH=Math.floor(R()*360);
+    set("accent", col(accH, 60+R()*25, dark?62:55));
+    if(dark){
+      set("bg", col(tintH,35,9)); set("panel", col(tintH,30,14)); set("fg", col(tintH,25,88));
+      set("header", ":alpha<0.8<@panel");
+    }else{
+      set("bg", col(tintH,55,96)); set("panel", "#ffffff"); set("fg", col(tintH,30,26));
+      set("header", ":alpha<0.85<@panel");
+    }
+    const fgc=hslToRgb(tintH, dark?25:30, dark?88:26);
+    const rgbaFg=a=>`rgba(${fgc.r}, ${fgc.g}, ${fgc.b}, ${a})`;
+    set("fgOnAccent","#ffffff");
+    set("navBg","@panel");
+    set("divider", rgbaFg(0.12)); set("inputBorder", rgbaFg(0.14));
+    set("buttonBg", ":darken<4<@panel"); set("buttonHoverBg", ":darken<8<@panel");
+    set("link", col(accH+(R()*120-60), 60, dark?62:48));
+    set("renote", col(accH+120+R()*60, 55, dark?55:42));
+    set("hashtag", col(accH-20-R()*40, 80, dark?65:55));
+    set("mention","@accent"); set("mentionMe","@mention");
+    set("love", col(330+R()*40, 72, 55));
+    set("buttonGradateA","@accent"); set("buttonGradateB",`:hue<${20+Math.floor(R()*40)}<@accent`);
+    set("focus",":alpha<0.3<@accent"); set("accentedBg",":alpha<0.14<@accent");
+    set("indicator","@accent"); set("navActive","@accent"); set("navIndicator","@accent");
+    state.sampleId=null;
+    syncMetaInputs(); updateAll();
+    toast("ぜんぶランダムにしたよ🎲");
   });
   $("btnPalette").addEventListener("click",()=>{
     const eff=effectiveProps();
