@@ -191,10 +191,12 @@ button{font:inherit}
 .chip.active{border-color:var(--ai);background:var(--ai);color:#fff}
 .chip:active{transform:scale(.98)}
 .print-actions{display:grid;gap:10px;margin-top:16px}
-@media(min-width:560px){.print-actions{grid-template-columns:1fr 1fr 1fr}}
+@media(min-width:560px){.print-actions{grid-template-columns:1fr 1fr}}
 .print-btn{min-height:54px;border-radius:15px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:900;font-size:14.5px;cursor:pointer;padding:10px}
 .print-btn.primary{background:var(--shu);border-color:var(--shu);color:#fff;box-shadow:0 8px 20px rgba(217,79,48,.22)}
 .print-btn.dark{background:var(--ai);border-color:var(--ai);color:#fff}
+.print-btn.direct{background:var(--ink);border-color:var(--ink);color:var(--bg);box-shadow:0 8px 20px rgba(20,35,25,.18)}
+.print-btn.direct:active{transform:scale(.99)}
 .print-btn:disabled{opacity:.5;cursor:default;box-shadow:none}
 .print-status{margin:10px 2px 0;font-size:13px;line-height:1.6;color:var(--muted);min-height:20px}
 .print-status.ok{color:var(--ok);font-weight:700} .print-status.err{color:var(--ng);font-weight:700}
@@ -308,11 +310,12 @@ button{font:inherit}
 
       <div class="print-actions">
         <button class="print-btn primary" id="btnMakeSet" onclick="makePrintSet(true)">問題セットを作る</button>
+        <button class="print-btn direct" id="btnDirectPrint" onclick="directPrint()">🖨 そのまま印刷する</button>
         <button class="print-btn dark" id="btnPrintPdf" onclick="downloadPrintPDF()" disabled>PDFで保存</button>
         <button class="print-btn" id="btnReshuffle" onclick="makePrintSet(true)" disabled>別の問題に作り直す</button>
       </div>
       <p class="print-status" id="printStatus" role="status" aria-live="polite"></p>
-      <p class="export-note">紙に印刷する場合は、PDFを保存してそのファイルを印刷してください。HTMLファイルをブラウザで開いている場合は、セットを作ったあとブラウザの印刷でも、選んだモードの問題用紙だけが印刷されるレイアウトになっています。問題は作るたびにランダムで、選択肢の並びも変わります。プレビューと同じ問題がPDFに出ます。</p>
+      <p class="export-note">「そのまま印刷する」を押すと、セットがまだない場合は自動で作ってから印刷ダイアログが開き、選んだモード（問題のみ／解答・解説のみ／両方）の問題用紙だけが印刷されます。アプリ内ビューで印刷が開かないときは、PDFで保存してそのファイルを印刷してください。問題は作るたびにランダムで、選択肢の並びも変わります。プレビューと同じ問題が印刷・PDFに出ます。</p>
       <div class="print-preview" id="printPreview">
         <div class="preview-head"><b>問題用紙のプレビュー</b><button class="preview-close" onclick="closePrintPreview()">閉じる</button></div>
         <div class="preview-scroll" id="printPreviewScroll"></div>
@@ -327,7 +330,7 @@ button{font:inherit}
         <li><span class="num">2</span><span><b>選択肢をタップ</b> — 大きなボタンなので片手でも押し間違いにくい設計です。</span></li>
         <li><span class="num">3</span><span><b>解説で復習</b> — 正解・不正解の直後に解説と覚え方のポイントが出ます。</span></li>
         <li><span class="num">4</span><span><b>課題として提出</b> — 結果画面で名前を入れて、解答レポートを画像（PNG）またはPDFで保存できます。</span></li>
-        <li><span class="num">5</span><span><b>紙で解く</b> — 「問題を印刷する」で時代と出題数を選ぶと、問題用紙（解答・解説は別ページ）をPDF保存・印刷できます。</span></li>
+        <li><span class="num">5</span><span><b>紙で解く</b> — 「問題を印刷する」で時代と出題数を選ぶと、問題用紙（解答・解説は別ページ）を「そのまま印刷する」で直接印刷したり、PDF保存できます。</span></li>
       </ol>
     </div>
     <p class="foot">中学校・高校の日本史の基本事項を中心に作成しています。<br>1192年など、学説で議論のある年号は教科書で広く使われる表記を採用しています。</p>
@@ -896,8 +899,24 @@ function setPrintStatus(msg, kind){
 }
 function setPrintBusy(busy){
   ['btnMakeSet','btnPrintPdf','btnReshuffle'].forEach(function(id){ var b=document.getElementById(id); if(b){ if(id==='btnMakeSet') b.disabled=busy; else if(busy) b.disabled=true; else if(printSet) b.disabled=false; } });
+  var d=document.getElementById('btnDirectPrint'); if(d){ d.disabled=busy; d.textContent= busy ? '作成中…' : '🖨 そのまま印刷する'; }
   var m=document.getElementById('btnMakeSet'); if(m) m.textContent= busy ? '作成中…' : '問題セットを作る';
   var p=document.getElementById('btnPrintPdf'); if(p) p.textContent= busy ? '作成中…' : 'PDFで保存';
+}
+function directPrint(){
+  if(!printSet){ makePrintSet(false); }
+  else { syncPrintArea(); }
+  if(!printSet){ setPrintStatus('問題セットを作成できませんでした。もう一度お試しください。','err'); return; }
+  setPrintStatus(printSet.eraName+' '+printSet.list.length+'問（'+PRINT_MODE_LABEL[printModeVal]+'）の印刷ダイアログを開きます。印刷画面では問題用紙だけが表示されます。');
+  // Give the print-only area a moment to lay out before opening the dialog.
+  setTimeout(function(){
+    try{
+      window.print();
+      setPrintStatus('印刷が終わったら、この画面に戻って続きを確認できます。印刷ダイアログが開かなかった場合は「PDFで保存」して、そのファイルを印刷してください。');
+    }catch(e){
+      setPrintStatus('印刷ダイアログを開けませんでした。「PDFで保存」して、そのファイルを印刷してください。','err');
+    }
+  }, 350);
 }
 function buildPrintList(){
   var list, eraName;
