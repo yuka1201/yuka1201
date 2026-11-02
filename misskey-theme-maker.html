@@ -189,6 +189,8 @@
   .tile .ja{line-break:strict}
   .tile .key{overflow-wrap:anywhere}
   .mk .n-text,.mk .n-name,.note-help,.sample .sdesc{line-break:strict}
+  .sec-t{white-space:nowrap}
+  .btn-nor,.btn-post{white-space:nowrap}
   textarea{line-break:normal}
 </style>
 </head>
@@ -202,7 +204,7 @@
   </header>
 
   <section class="card">
-    <h2 class="sec">🌸 まずはテンプレートから選ぶ <span class="hint">タップすると全部の色が切り替わるよ。ここから自分好みに変えていこう</span></h2>
+    <h2 class="sec"><span class="sec-t">🌸 まずはテンプレートから選ぶ</span> <span class="hint">タップすると全部の色が切り替わるよ。ここから自分好みに変えていこう</span></h2>
     <div class="samples" id="samples"></div>
   </section>
 
@@ -231,7 +233,7 @@
       </section>
 
       <section class="card">
-        <h2 class="sec">🖌️ 色を変える <span class="hint">右のプレビューの気になる場所をタップしても、ここが開くよ</span></h2>
+        <h2 class="sec"><span class="sec-t">🖌️ 色を変える</span> <span class="hint">右のプレビューの気になる場所をタップしても、ここが開くよ</span></h2>
         <input type="text" id="propSearch" placeholder="🔍 色の名前で探す（例：背景、ボタン、accent）">
         <div id="groups"></div>
         <p class="note-help">チェックを外した色はテーマコードに入らず、ベーステーマの色がそのまま使われるよ。値に <b>@accent</b>（他の色を参照）や <b>:alpha&lt;0.3&lt;@accent</b>（透明化などの関数）も書けるよ。</p>
@@ -240,7 +242,7 @@
 
     <div class="col sticky">
       <section class="card">
-        <h2 class="sec">👀 サンプル画面（プレビュー） <span class="hint">気になる場所をタップすると、その色を編集できるよ</span></h2>
+        <h2 class="sec"><span class="sec-t">👀 サンプル画面（プレビュー）</span> <span class="hint">気になる場所をタップすると、その色を編集できるよ</span></h2>
         <div class="mk" id="preview">
           <nav class="mk-nav" data-pick="navBg" title="ナビ背景">
             <div class="logo">🌸</div>
@@ -287,7 +289,7 @@
                     <div class="inp" data-pick="inputBorder" title="入力欄の枠">🔍 検索ボックス</div>
                     <div class="swrow"><span class="switch on" data-pick="switchOnBg" title="スイッチON"></span> オン状態</div>
                     <div class="swrow"><span class="switch" data-pick="switchOffBg" title="スイッチOFF"></span> オフ状態</div>
-                    <div style="margin-top:10px;display:flex;gap:8px">
+                    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
                       <button class="btn-nor" data-pick="buttonBg" title="ボタン">ふつうのボタン</button>
                       <button class="btn-post" data-pick="buttonGradateA" title="グラデーションボタン">決定</button>
                     </div>
@@ -301,7 +303,7 @@
       </section>
 
       <section class="card">
-        <h2 class="sec">📦 テーマコード <span class="hint">Misskeyに貼るのはこれだよ</span></h2>
+        <h2 class="sec"><span class="sec-t">📦 テーマコード</span> <span class="hint">Misskeyに貼るのはこれだよ</span></h2>
         <textarea id="codeOut" spellcheck="false"></textarea>
         <div class="rowbtns">
           <button class="btn main" type="button" id="btnCopy">📋 コピーする</button>
