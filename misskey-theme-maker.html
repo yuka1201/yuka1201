@@ -43,7 +43,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
-    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",Meiryo,system-ui,sans-serif;
     color:var(--ink); min-height:100vh;
     background:var(--bg-img);
   }
@@ -177,6 +177,19 @@
   .theme-icon-btn:hover{transform:scale(1.1) rotate(-6deg)}
   @media (max-width:520px){.site-theme-row{top:10px;right:10px}.theme-icon-btn{width:42px;height:42px;font-size:19px}}
   footer{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:34px;line-height:1.8}
+
+  /* 日本語の改行・フォント調整 */
+  html{-webkit-text-size-adjust:100%}
+  body{line-break:strict;word-break:normal;overflow-wrap:break-word;letter-spacing:.02em}
+  h1,h2.sec,.sample .sname{text-wrap:balance}
+  h2.sec{flex-wrap:wrap;row-gap:4px}
+  h2.sec .hint{flex:1 1 240px;line-height:1.5}
+  .sub{max-width:660px;margin-left:auto;margin-right:auto;text-wrap:balance}
+  .btn,.seg button,.chip,.mini-btn{white-space:nowrap}
+  .tile .ja{line-break:strict}
+  .tile .key{overflow-wrap:anywhere}
+  .mk .n-text,.mk .n-name,.note-help,.sample .sdesc{line-break:strict}
+  textarea{line-break:normal}
 </style>
 </head>
 <body>
@@ -185,7 +198,7 @@
   <header class="top">
     <span class="badge">Y.U.K.A SYSTEM</span>
     <h1>🎨 Misskeyテーマメーカー</h1>
-    <p class="sub">テンプレートから選んで、色をタップして変えるだけ。<br>右の「Misskeyのサンプル画面」がその場で変わるから、見た目を確認しながら作れるよ。<br>できたらテーマコードをコピーして、Misskeyの「設定 → テーマ → インストール」に貼るだけ！</p>
+    <p class="sub">テンプレートから選んで、色をタップして変えるだけ。右の「Misskeyのサンプル画面」がその場で変わるから、見た目を確認しながら作れるよ。できたらテーマコードをコピーして、Misskeyの「設定 → テーマ → インストール」に貼るだけ！</p>
   </header>
 
   <section class="card">
