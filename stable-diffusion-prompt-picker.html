@@ -143,6 +143,15 @@ body{padding-bottom:var(--drawer-pad,60px)}
 .navrow .nav{flex:1;margin-bottom:0}
 .nav-exp{flex:none;width:38px;border:1px solid var(--ln);background:var(--in);border-radius:11px;color:var(--sb);font:inherit;font-size:13px;cursor:pointer}
 .nav-exp:hover{background:var(--ch)}
+#pickBar{display:flex;gap:8px;padding:0 18px 10px;align-items:center}
+#pickBar input{flex:1;min-height:46px;font-size:15px;min-width:0}
+#pickBar .btn{min-height:46px;flex:none}
+#pickPanel{margin:0 18px 12px;background:var(--pn);border:1px solid var(--ln);border-radius:16px;padding:10px 12px;box-shadow:var(--sh)}
+.pick-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#pickCnt{font-weight:700;color:var(--sb)}
+.pick-ops{display:flex;gap:6px}
+#pickPanel #pickResults{margin-top:8px}
+@media(max-width:640px){#pickBar{padding:0 10px 8px}#pickPanel{margin:0 10px 10px}}
 </style>
 </head>
 <body>
@@ -161,6 +170,8 @@ body{padding-bottom:var(--drawer-pad,60px)}
 <select id="themeSel" class="theme-sel" aria-label="テーマ選択" onchange="applyTheme(this.value)"><option value="white">白</option><option value="black">黒</option><option value="yuka">優花</option></select>
 <div id="themePill" role="group" aria-label="表示テーマ"><button type="button" data-th="white" onclick="applyTheme('white')">明</button><button type="button" data-th="black" onclick="applyTheme('black')">暗</button><button type="button" data-th="yuka" onclick="applyTheme('yuka')">優花</button></div>
 </header>
+<div id="pickBar"><input type="text" id="pickTxt" placeholder="作りたい絵を文章で入力：例）泣いている女の子、雨の夜／a smiling girl with cat ears"><button class="btn p" type="button" onclick="runPick()">ピック</button></div>
+<div id="pickPanel" hidden><div class="pick-head"><span id="pickCnt"></span><span class="pick-ops"><button class="btn s p" type="button" onclick="pickAddAll()">候補を全部追加</button><button class="btn s" type="button" onclick="closePickPanel()">閉じる</button></span></div><div id="pickResults"></div><p class="hint" style="margin:6px 2px 0">候補をタップで追加／解除できます</p></div>
 <main>
 <nav class="side" id="nav"></nav>
 <div class="ctr">
@@ -199,7 +210,6 @@ body{padding-bottom:var(--drawer-pad,60px)}
 <p>貼り付け（カンマ／改行区切り。「表示名=プロンプト」も可）</p><textarea id="itxt" rows="8" placeholder="笑顔=smile, 全身=full body"></textarea>
 <div class="row"><button class="btn p" onclick="doImp()">追加する</button><button class="btn" onclick="dl('sd-prompts.json',D)">データ書き出し</button><button class="btn" onclick="loadData()">データ読込</button><button class="btn" onclick="resetData()">初期化</button><button class="btn" onclick="dlg.close()">閉じる</button></div></dialog>
 <dialog id="shareDlg"><h3>共有URL</h3><p>自動でコピーできませんでした。このURLをコピーして共有してください。</p><textarea id="shareUrlTxt" rows="4" readonly></textarea><div class="row"><button class="btn p" onclick="copyShareUrl()">URLをコピー</button><button class="btn" onclick="document.getElementById('shareDlg').close()">閉じる</button></div></dialog>
-<dialog id="pickDlg"><h3>自然言語ピック</h3><p>文章を入れると、内容に近いタグを候補として出します。候補をタップで追加／解除できます。</p><textarea id="pickTxt" rows="3" placeholder="例：泣いている女の子、雨の夜／a smiling girl with cat ears"></textarea><div class="row"><button class="btn p" type="button" onclick="runPick()">ピックする</button><span id="pickCnt" style="align-self:center;color:var(--sb);font-weight:700"></span></div><div id="pickResults"></div><div class="row"><button class="btn" type="button" onclick="pickAddAll()">候補を全部追加</button><button class="btn" type="button" onclick="document.getElementById('pickDlg').close()">閉じる</button></div></dialog>
 <div id="toast"></div>
 <script>
 const ICO={
@@ -439,9 +449,9 @@ function pickScore(q,it){
   })}}
   return s;
 }
-function openPick(){const d=$("#pickDlg");if(!d)return;if(typeof d.showModal==="function"){try{d.showModal();return}catch(e){}}d.setAttribute("open","")}
+function openPick(){const t=$("#pickTxt");if(!t)return;window.scrollTo({top:0,behavior:"smooth"});t.focus()}
 function runPick(){
-  const q=($("#pickTxt").value||"").trim();const box=$("#pickResults");pickList=[];
+  const q=($("#pickTxt").value||"").trim();const box=$("#pickResults");pickList=[];const pn=$("#pickPanel");if(pn)pn.hidden=false;
   if(!q){box.innerHTML='<p class="hint">文章を入力してね</p>';$("#pickCnt").textContent="";return}
   const scored=[];
   Object.entries(D).forEach(([c,v],ci)=>{(v.items||[]).forEach((it,ii)=>{const s=pickScore(q,it);if(s>0)scored.push({c,it,s,ci,ii})})});
@@ -455,6 +465,6 @@ function pickRefresh(){document.querySelectorAll("#pickResults .pick-row").forEa
 function togglePick(i){const r=pickList[i];if(!r)return;const j=hasP(r.it.p);if(j>=0)sel.splice(j,1);else add(r.c,r.it);update(true);pickRefresh()}
 function pickAddAll(){if(!pickList.length){toast("候補がありません");return}let n=0;pickList.forEach(r=>{if(hasP(r.it.p)<0){add(r.c,r.it);n++}});if(n)update(true);pickRefresh();toast(n?n+" 件追加しました":"全部追加済みです")}
 </script>
-<script>function scrollToSub(g){requestAnimationFrame(()=>{const el=document.querySelector('.subhead[data-sub="'+g+'"]');if(el&&typeof el.scrollIntoView==="function"){try{el.scrollIntoView({block:"start"})}catch(e){}}})}</script>
+<script>function scrollToSub(g){requestAnimationFrame(()=>{const el=document.querySelector('.subhead[data-sub="'+g+'"]');if(el&&typeof el.scrollIntoView==="function"){try{el.scrollIntoView({block:"start"})}catch(e){}}})}function closePickPanel(){const pn=document.getElementById("pickPanel");if(pn)pn.hidden=true}const _pt=document.getElementById("pickTxt");if(_pt)_pt.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();runPick()}});</script>
 </body>
 </html>
