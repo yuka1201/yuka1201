@@ -83,6 +83,18 @@ button{font:inherit}
 .how li{display:flex;gap:12px;font-size:13.5px;line-height:1.6;color:var(--muted)} .how li b{color:var(--ink)}
 .num{width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-size:12px;font-weight:900}
 .foot{margin-top:18px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
+.legal{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px 18px;text-align:left}
+.legal-title{margin:0;font-family:"Shippori Mincho",serif;font-size:16px;line-height:1.4}
+.legal-lead{margin:8px 0 0;color:var(--muted);font-size:12.5px;line-height:1.75}
+.legal-sec{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.legal-sec h3{margin:0 0 8px;font-size:13.5px;line-height:1.4;display:flex;align-items:center;gap:8px}
+.legal-sec h3 span{flex:0 0 auto;font-size:11px;font-weight:900;letter-spacing:.06em;color:#fff;background:var(--ai);border-radius:999px;padding:4px 8px}
+.legal-sec p,.legal-sec li{font-size:12.5px;line-height:1.85;color:var(--muted)}
+.legal-sec p{margin:0}
+.legal-sec ul{margin:6px 0 0;padding-left:18px}
+.legal-sec li{margin:3px 0}
+.legal-sec li::marker{color:var(--ai)}
+.legal-foot{margin:18px 0 0;padding-top:14px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:11.5px;line-height:1.7}
 
 /* VIEWS */
 .view{display:none} .view.active{display:block}
@@ -354,6 +366,44 @@ button{font:inherit}
       </ol>
     </div>
     <p class="foot">中学校・高校の日本史の基本事項を中心に作成しています。<br>1192年など、学説で議論のある年号は教科書で広く使われる表記を採用しています。</p>
+
+    <footer class="legal" aria-label="免責・プライバシー・利用条件">
+      <h2 class="legal-title">ご利用にあたって</h2>
+      <p class="legal-lead">このアプリを安心して使っていただくため、免責事項・プライバシー・利用条件をまとめています。</p>
+
+      <div class="legal-sec">
+        <h3><span>免責</span>免責事項</h3>
+        <p>本アプリは、中学校・高校の日本史の学習を補助するための教材です。掲載している問題・解答・解説は、内容の確認に努めて作成していますが、その正確性・完全性・最新性を保証するものではありません。</p>
+        <ul>
+          <li>年号や用語には学説・教科書によって表記の異なるものがあります（例：鎌倉幕府の成立年など）。1192年をはじめ、議論のある事項は教科書で広く使われる表記を採用していますが、最終的な確認は学校の教科書・資料集・授業内容で行ってください。</li>
+          <li>本アプリの利用によって生じた学習上・試験結果などに関する損害について、制作者は責任を負いません。定期テストや入試の対策は、本アプリだけで完結させず、教科書などとあわせてご利用ください。</li>
+          <li>本アプリの内容は、予告なく変更・修正・公開停止する場合があります。</li>
+        </ul>
+      </div>
+
+      <div class="legal-sec">
+        <h3><span>プライバシー</span>入力した情報の取り扱い</h3>
+        <p>本アプリは、入力した情報を外部に送信したり、サーバーに保存したりしません。すべてお使いの端末（ブラウザ）の中だけで処理されます。</p>
+        <ul>
+          <li>課題提出用シートに入力する<strong>名前・学年・クラス・番号などの情報は、保存・送信されません</strong>。入力した内容は、その場で提出用シート（画像・PDF）を作成するためだけに使われます。</li>
+          <li>名前などは <strong>localStorage・sessionStorage・Cookie などにも保存されません</strong>。ページを閉じたり、再読み込み（リロード）したりすると、入力した名前などは消えます。再度出力する場合は、改めて入力してください。</li>
+          <li>問題用紙の「年・組・番・名前」欄は、印刷後に手書きで記入するための空欄です。ここにアプリ上で個人情報を入力・保存する仕組みはありません。</li>
+          <li>アクセス解析ツールや広告のための Cookie は使用していません。クイズのベストスコア表示も、端末に保存せず、開いている間のメモリ上だけに保持されます（閉じると消えます）。</li>
+          <li>例外として、文字表示のために Google Fonts（fonts.googleapis.com / fonts.gstatic.com）からフォントを読み込んでいます。この読み込みの際に、IPアドレスなどの情報が Google に送信される場合があります。フォント以外で外部へ情報を送信する仕組みはありません。</li>
+        </ul>
+      </div>
+
+      <div class="legal-sec">
+        <h3><span>利用条件</span>使っていい範囲</h3>
+        <ul>
+          <li>個人での学習利用は自由です。学校の授業・課題での利用、および授業で使うために問題用紙を印刷して教室で配布することもできます。</li>
+          <li>問題・選択肢・解説・画像などの内容を、許可なく転載すること、インターネットなどでの再配布（有償・無償を問いません）、商用利用、問題文の大量のコピー・データ化はご遠慮ください。授業内での配布は上記のとおり可能です。</li>
+          <li>出力した解答レポートや問題用紙は、提出・学習の目的の範囲でご利用ください。内容を改変して再配布することはご遠慮ください。</li>
+        </ul>
+      </div>
+
+      <p class="legal-foot">日本史問題集アプリ — 学習補助用の問題集です。正確な内容は教科書などでご確認ください。</p>
+    </footer>
   </section>
 
   <!-- QUIZ -->
@@ -411,7 +461,7 @@ button{font:inherit}
         <button class="export-btn pdf" id="btnPdf" onclick="exportAsPDF()">PDFで保存</button>
       </div>
       <p class="export-status" id="exportStatus" role="status" aria-live="polite"></p>
-      <p class="export-note">保存したファイルを、学校の提出方法（Classroom・ロイロノート・メールなど）に合わせて提出してください。問題数が多い場合はPDFが複数ページになります。</p>
+      <p class="export-note">保存したファイルを、学校の提出方法（Classroom・ロイロノート・メールなど）に合わせて提出してください。問題数が多い場合はPDFが複数ページになります。入力した名前・学年・クラス・番号は保存・送信されず、端末内だけでシート作成に使われます。ページを閉じたり再読み込みすると消えます。</p>
       <div class="preview-wrap" id="previewWrap">
         <div class="preview-head"><b>提出シートのプレビュー</b><button class="preview-close" onclick="closePreview()">閉じる</button></div>
         <div class="preview-scroll" id="previewScroll"></div>
@@ -1255,6 +1305,15 @@ function syncPrintArea(){
 
 renderPrintCats();
 renderCats();
+/* Privacy: never persist name/class inputs. Values live only in the input
+   elements while the page is open; clear them on load and on pageshow
+   (bfcache restore) so a reload or reopen always starts blank. */
+function clearPersonalInputs(){
+  var n=document.getElementById('exportName'); if(n) n.value='';
+  var c=document.getElementById('exportClass'); if(c) c.value='';
+}
+clearPersonalInputs();
+window.addEventListener('pageshow', clearPersonalInputs);
 </script>
 </body>
 </html>
