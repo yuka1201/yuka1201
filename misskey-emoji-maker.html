@@ -218,6 +218,7 @@
           <label class="f">画像ファイル（PNG / JPG / GIF / WebP）</label>
           <div class="drop" id="dropZone">📂 ここをタップして画像を選ぶか、ドラッグ＆ドロップしてね<div class="note">透過PNGがおすすめ。アニメGIFを読み込んだ場合は1コマ目だけ使うよ。</div></div>
           <input type="file" id="inFile" accept="image/*" class="hidden">
+          <div class="note">※ 画像はこのブラウザの中だけで処理するローカル動作だよ（サーバーには送らないよ）。<b>ページを更新すると読み込んだ画像は消えちゃう</b>から、消える前にPNG／GIFをダウンロードしておいてね。</div>
         </div>
         <div class="row" style="margin-top:12px"><input type="checkbox" id="inLinkName" checked style="width:19px;height:19px;accent-color:var(--pink-deep)"><label for="inLinkName" style="font-size:13px;font-weight:800">🔗 文字と絵文字名を連動する（かな→ローマ字で自動生成）</label></div>
         <label class="f" for="inName">絵文字名（Misskeyの <code>:名前:</code> になるよ・半角英数と _ のみ）</label>
@@ -250,7 +251,7 @@
         </div>
         <label class="f">ふちどり</label>
         <div class="row">
-          <input type="checkbox" id="inOutline" checked style="width:19px;height:19px;accent-color:var(--pink-deep)">
+          <input type="checkbox" id="inOutline" style="width:19px;height:19px;accent-color:var(--pink-deep)">
           <input type="color" id="inOutlineColor" value="#ffffff">
           <input type="range" id="inOutlineWidth" min="0" max="30" value="13" class="grow">
           <span class="val" id="outlineWidthVal">13%</span>
@@ -386,7 +387,7 @@ let imgObj=null, imgURL="";
 const state={
   mode:"text", text:"", name:"", linkName:true,
   font:"maru", colorMode:"solid", color:"#000000", color2:"#8b6fd8",
-  outline:true, outlineColor:"#ffffff", outlineWidth:13, textSize:100,
+  outline:false, outlineColor:"#ffffff", outlineWidth:13, textSize:100,
   bg:"none", bgColor:"#fdf3f8",
   effects:[],
   sizeOpt:"none", flipOpt:"none"
@@ -708,7 +709,7 @@ $("btnShare").addEventListener("click",()=>{
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(s))));
   copyText(location.origin+location.pathname+"#s="+b64,"共有URLをコピーしたよ🔗（画像モードの画像自体は含まれないよ）");
 });
-$("btnReset").addEventListener("click",()=>{ try{localStorage.removeItem("misskey-emoji-maker-v2");}catch(e){}
+$("btnReset").addEventListener("click",()=>{ try{localStorage.removeItem("misskey-emoji-maker-v3");}catch(e){}
   location.hash=""; location.reload(); });
 
 /* ---------- 入力の結線 ---------- */
@@ -758,7 +759,7 @@ EMOJI_PALETTE.forEach(t=>{ const b=document.createElement("button"); b.type="but
 
 /* ---------- 保存・復元 ---------- */
 let saveTimer=0;
-function saveLocal(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ const s={...state}; localStorage.setItem("misskey-emoji-maker-v2",JSON.stringify(s)); }catch(e){} },300); }
+function saveLocal(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ const s={...state}; localStorage.setItem("misskey-emoji-maker-v3",JSON.stringify(s)); }catch(e){} },300); }
 function applyState(s){
   Object.assign(state,s);
   $("inText").value=state.text; $("inName").value=state.name; $("inLinkName").checked=!!state.linkName;
@@ -780,17 +781,17 @@ let siteTheme="black";
 function applySiteTheme(t,save=true){ siteTheme=t; document.documentElement.dataset.theme=t;
   const meta=THEMES.find(x=>x[0]===t)||THEMES[0]; const btn=$("siteThemeBtn");
   btn.textContent=meta[1]; btn.title=`表示テーマ：${meta[2]}（タップで切替）`;
-  if(save){ try{ localStorage.setItem("misskey-emoji-maker-sitetheme-v2",t); }catch(e){} } }
+  if(save){ try{ localStorage.setItem("misskey-emoji-maker-sitetheme-v3",t); }catch(e){} } }
 $("siteThemeBtn").addEventListener("click",()=>{ const i=THEMES.findIndex(x=>x[0]===siteTheme); applySiteTheme(THEMES[(i+1)%THEMES.length][0]); });
 
 /* ---------- 初期化 ---------- */
 (function init(){
-  try{ siteTheme=localStorage.getItem("misskey-emoji-maker-sitetheme-v2")||"black"; }catch(e){}
+  try{ siteTheme=localStorage.getItem("misskey-emoji-maker-sitetheme-v3")||"black"; }catch(e){}
   applySiteTheme(THEMES.some(x=>x[0]===siteTheme)?siteTheme:"black",false);
   buildPresets(); buildFxGrid();
   let restored=false;
   if(location.hash.startsWith("#s=")){ try{ const s=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))); applyState(s); restored=true; }catch(e){} }
-  if(!restored){ try{ const raw=localStorage.getItem("misskey-emoji-maker-v2"); if(raw){ applyState(JSON.parse(raw)); restored=true; } }catch(e){} }
+  if(!restored){ try{ const raw=localStorage.getItem("misskey-emoji-maker-v3"); if(raw){ applyState(JSON.parse(raw)); restored=true; } }catch(e){} }
   if(!restored){ applyState(state); }
   refresh();
 })();
