@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="yuka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misskey絵文字メーカー ― Y.U.K.A Tools</title>
+<meta name="description" content="Misskeyのカスタム絵文字が作れるツール。文字や画像から絵文字を作って、回転・バウンド・キラキラなどのアニメーション効果を付けられます。MFMコード出力とアニメGIFダウンロード対応。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E✨%3C/text%3E%3C/svg%3E">
+<style>
+  :root, :root[data-theme="white"]{
+    --lav:#b79ced; --lav-deep:#8b6fd8; --pink:#f6a8c9; --pink-deep:#d16ba5;
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(0,0,0,.04), transparent 60%), linear-gradient(160deg,#f4f4f7 0%,#fbfbfc 100%);
+    --card:#ffffff; --soft-bg:#f6f6f9; --input-bg:#ffffff;
+    --ink:#23232b; --ink-soft:#6d6d78;
+    --line2:rgba(35,35,43,.16); --accent-deep:#4c4c58;
+    --grad:linear-gradient(92deg,#3f3f4a,#767684);
+    --chip-bg:#eeeef1; --badge-bg:rgba(255,255,255,.85);
+    --card-shadow:0 10px 30px rgba(30,30,40,.08); --hover-shadow:0 10px 22px rgba(30,30,40,.12);
+    --btn-shadow:0 6px 16px rgba(30,30,40,.18); --flash-ring:rgba(76,76,88,.25);
+    --toast-bg:#23232b; --toast-fg:#ffffff;
+  }
+  :root[data-theme="black"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(122,132,255,.14), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(70,70,140,.18), transparent 60%), linear-gradient(160deg,#0b0c16 0%,#12122a 100%);
+    --card:#171932; --soft-bg:#101124; --input-bg:#0f1020;
+    --ink:#eceefb; --ink-soft:#9a9ec0;
+    --line2:rgba(236,238,251,.20); --accent-deep:#c3b3f7;
+    --grad:linear-gradient(92deg,#4a4e78,#7d84b8);
+    --chip-bg:#23233d; --badge-bg:rgba(23,25,50,.85);
+    --card-shadow:0 10px 30px rgba(0,0,0,.40); --hover-shadow:0 10px 22px rgba(0,0,0,.45);
+    --btn-shadow:0 6px 16px rgba(0,0,0,.40); --flash-ring:rgba(185,168,245,.35);
+    --toast-bg:#eceefb; --toast-fg:#171932;
+  }
+  :root[data-theme="yuka"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%), linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+    --card:#ffffff; --soft-bg:#fdfbff; --input-bg:#fdfbff;
+    --ink:#3d3355; --ink-soft:#6f6590;
+    --line2:rgba(183,156,237,.35); --accent-deep:#8b6fd8;
+    --grad:linear-gradient(92deg,#8b6fd8,#d16ba5 60%,#f6a8c9);
+    --chip-bg:#f1eafd; --badge-bg:rgba(255,255,255,.75);
+    --card-shadow:0 10px 30px rgba(93,72,160,.12); --hover-shadow:0 10px 22px rgba(93,72,160,.16);
+    --btn-shadow:0 6px 16px rgba(209,107,165,.35); --flash-ring:rgba(209,107,165,.30);
+    --toast-bg:#3d3355; --toast-fg:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",Meiryo,system-ui,sans-serif;
+    color:var(--ink); min-height:100vh; background:var(--bg-img);
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:34px 16px 70px}
+  header.top{text-align:center;margin-bottom:22px}
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:var(--badge-bg);border:1.5px solid var(--line2);color:var(--accent-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
+  h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin-top:10px;color:var(--ink-soft);font-size:14px;line-height:1.8}
+  .sub b{color:var(--accent-deep)}
+  .site-theme-row{position:fixed;top:16px;right:16px;z-index:60}
+  .theme-icon-btn{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line2);background:var(--badge-bg);box-shadow:var(--card-shadow);backdrop-filter:blur(8px);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
+  .theme-icon-btn:hover{transform:scale(1.1) rotate(-6deg)}
+  @media (max-width:520px){.site-theme-row{top:10px;right:10px}.theme-icon-btn{width:42px;height:42px;font-size:19px}}
+
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--card-shadow);border:2px solid var(--line2)}
+  h2.sec{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  h2.sec .hint{font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .howto{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .howto .step{flex:1;min-width:200px;background:var(--card);border:2px solid var(--line2);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.65;box-shadow:var(--card-shadow)}
+  .howto .step b{display:block;font-size:14px;margin-bottom:3px}
+  .howto .step .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;align-items:center;justify-content:center;font-size:12px;margin-right:6px;vertical-align:-5px}
+
+  .layout{display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:18px;align-items:start}
+  @media (max-width:920px){.layout{display:flex;flex-direction:column}.layout .col{display:contents}.card-preview{order:1}.card-out{order:2}.card-src{order:3}.card-design{order:4}.card-fx{order:5}}
+  .col{display:flex;flex-direction:column;gap:18px;min-width:0;width:100%}
+  .sticky{position:sticky;top:14px}
+  @media (max-width:920px){.sticky{position:static}}
+
+  label.f{display:block;font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:12px 0 5px}
+  label.f:first-of-type{margin-top:2px}
+  input[type=text],textarea,select{
+    width:100%;border:1.5px solid var(--line2);border-radius:12px;background:var(--input-bg);color:var(--ink);
+    font-family:inherit;font-size:15px;padding:10px 12px;outline:none;
+  }
+  input[type=text]:focus,textarea:focus,select:focus{border-color:var(--accent-deep);box-shadow:0 0 0 3px var(--flash-ring)}
+  textarea{resize:vertical;line-height:1.6}
+  textarea.code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
+  input[type=range]{width:100%;accent-color:var(--pink-deep);height:28px}
+  input[type=color]{width:52px;height:38px;border:1.5px solid var(--line2);border-radius:10px;background:var(--input-bg);padding:3px;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row > *{flex:0 0 auto}
+  .grow{flex:1 1 auto !important;min-width:0}
+  .val{font-size:12.5px;font-weight:800;color:var(--accent-deep);min-width:44px;text-align:right}
+  .note{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:6px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:6px}
+  .tab{flex:1;padding:10px;border-radius:12px;border:2px solid var(--line2);background:var(--soft-bg);color:var(--ink);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s ease}
+  .tab.active{border-color:var(--accent-deep);background:var(--chip-bg);box-shadow:0 0 0 3px var(--flash-ring)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{border:1.5px solid var(--line2);background:var(--chip-bg);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .12s ease}
+  .chip:hover{transform:translateY(-2px)}
+  .palette{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+  .palette button{font-size:21px;padding:7px 0;border-radius:12px;border:1.5px solid var(--line2);background:var(--soft-bg);cursor:pointer;transition:transform .12s ease;line-height:1.2}
+  .palette button:hover{transform:scale(1.12)}
+  .drop{border:2px dashed var(--line2);border-radius:16px;padding:22px 14px;text-align:center;color:var(--ink-soft);font-size:13.5px;line-height:1.8;cursor:pointer;background:var(--soft-bg);transition:border-color .15s ease}
+  .drop:hover,.drop.over{border-color:var(--accent-deep)}
+  .drop img{max-width:120px;max-height:120px;display:block;margin:0 auto 8px}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap}
+  .sw{width:30px;height:30px;border-radius:50%;border:2px solid rgba(0,0,0,.12);cursor:pointer;padding:0;transition:transform .12s ease}
+  .sw:hover{transform:scale(1.15)}
+  .seg{display:flex;border:1.5px solid var(--line2);border-radius:12px;overflow:hidden}
+  .seg button{flex:1;padding:8px 4px;border:0;background:var(--soft-bg);color:var(--ink);font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+  .seg button.active{background:var(--grad);color:#fff}
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .preset{border:2px solid var(--line2);background:var(--soft-bg);color:var(--ink);border-radius:14px;padding:8px 13px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s ease;text-align:left}
+  .preset:hover{transform:translateY(-2px);border-color:var(--accent-deep)}
+  .preset small{display:block;font-weight:600;color:var(--ink-soft);font-size:11px;margin-top:2px}
+  .fxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px}
+  .fx{border:2px solid var(--line2);border-radius:16px;padding:11px 12px;background:var(--soft-bg);transition:border-color .15s ease, box-shadow .15s ease}
+  .fx.on{border-color:var(--accent-deep);background:var(--card);box-shadow:0 0 0 3px var(--flash-ring)}
+  .fx-head{display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+  .fx-head input{width:19px;height:19px;margin-top:2px;accent-color:var(--pink-deep);cursor:pointer;flex:0 0 auto}
+  .fx-head .ic{font-size:20px;line-height:1.25}
+  .fx-head .nm{font-weight:900;font-size:13.5px;line-height:1.35}
+  .fx-head .ds{font-size:11.5px;color:var(--ink-soft);line-height:1.5}
+  .fx-ctl{display:none;margin-top:9px;border-top:1.5px dashed var(--line2);padding-top:8px}
+  .fx.on .fx-ctl{display:block}
+  .fx-ctl .row{flex-wrap:nowrap}
+  .fx-ctl label{font-size:11.5px;font-weight:800;color:var(--ink-soft);white-space:nowrap}
+  .fx-ctl select{padding:6px 8px;font-size:13px;border-radius:9px}
+  .orderline{font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.8}
+  .orderline b{color:var(--accent-deep)}
+
+  /* プレビュー */
+  .checker{
+    background-color:#fff;
+    background-image:linear-gradient(45deg,#dcd6ea 25%,transparent 25%),linear-gradient(-45deg,#dcd6ea 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dcd6ea 75%),linear-gradient(-45deg,transparent 75%,#dcd6ea 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;
+    border-radius:16px;border:1.5px solid var(--line2);
+  }
+  :root[data-theme="black"] .checker{background-color:#2a2c4a;background-image:linear-gradient(45deg,#3a3c5e 25%,transparent 25%),linear-gradient(-45deg,#3a3c5e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#3a3c5e 75%),linear-gradient(-45deg,transparent 75%,#3a3c5e 75%)}
+  .stage{height:264px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .box{width:calc(var(--cfs)*1.42);height:calc(var(--cfs)*1.42);display:flex;align-items:center;justify-content:center;text-align:center;position:relative;flex:0 0 auto}
+  .stage{--cfs:150px}
+  .pv-text{font-weight:900;line-height:1.12;white-space:pre-line;display:block}
+  .pv-img{width:100%;height:100%;object-fit:contain;display:block}
+  .fxs{display:inline-block;position:relative}
+  .sparkle-star{position:absolute;pointer-events:none;animation:sparkleBlink 1.2s ease-in-out infinite;z-index:5}
+  @keyframes sparkleBlink{0%,100%{transform:scale(.2) rotate(0deg);opacity:0}50%{transform:scale(1) rotate(45deg);opacity:1}}
+  @keyframes kf-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes kf-spinX{from{transform:rotateX(0deg)}to{transform:rotateX(360deg)}}
+  @keyframes kf-spinY{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+  @keyframes kf-bounce{0%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-16%) scale(1,1)}50%{transform:translateY(0) scale(1.18,.8)}65%{transform:translateY(-7%) scale(1,1)}80%{transform:translateY(0) scale(1.08,.92)}100%{transform:translateY(0) scale(1,1)}}
+  @keyframes kf-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-26%)}}
+  @keyframes kf-shake{0%,100%{transform:translate(0,0) rotate(0deg)}20%{transform:translate(-3%,1%) rotate(-2deg)}40%{transform:translate(3%,-1%) rotate(2deg)}60%{transform:translate(-3%,-1%) rotate(-2deg)}80%{transform:translate(3%,1%) rotate(2deg)}}
+  @keyframes kf-twitch{0%,100%{transform:translate(0,0) rotate(0deg)}10%{transform:translate(-5%,3%) rotate(-4deg)}20%{transform:translate(4%,-4%) rotate(3deg)}30%{transform:translate(-4%,-3%) rotate(-3deg)}40%{transform:translate(5%,4%) rotate(4deg)}50%{transform:translate(-3%,2%) rotate(-2deg)}60%{transform:translate(4%,-2%) rotate(3deg)}70%{transform:translate(-5%,-4%) rotate(-4deg)}80%{transform:translate(3%,3%) rotate(2deg)}90%{transform:translate(-2%,-2%) rotate(-1deg)}}
+  @keyframes kf-jelly{0%,100%{transform:scale(1,1)}15%{transform:scale(1.25,.75)}30%{transform:scale(.75,1.25)}45%{transform:scale(1.15,.85)}60%{transform:scale(.95,1.05)}75%{transform:scale(1.05,.95)}}
+  @keyframes kf-tada{0%{transform:scale(1) rotate(0deg)}10%,20%{transform:scale(.92) rotate(-3deg)}30%,50%,70%,90%{transform:scale(1.12) rotate(3deg)}40%,60%,80%{transform:scale(1.12) rotate(-3deg)}100%{transform:scale(1) rotate(0deg)}}
+  @keyframes kf-rainbow{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+
+  .sizes{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:14px}
+  .sizes .cell{text-align:center}
+  .sizes .cell .holder{display:flex;align-items:center;justify-content:center;margin:0 auto}
+  .sizes .cell .cap{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:5px}
+  .note-mock{margin-top:16px;border:1.5px solid var(--line2);border-radius:16px;padding:13px 14px;background:var(--soft-bg)}
+  .note-head{display:flex;gap:10px;align-items:center}
+  .avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--lav),var(--pink));display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto}
+  .note-name{font-weight:900;font-size:14px}
+  .note-acct{font-size:12px;color:var(--ink-soft)}
+  .note-body{margin-top:9px;font-size:14.5px;line-height:1.9}
+  .note-body{--cfs:30px}
+  .reactions{margin-top:9px;display:flex;gap:8px}
+  .reaction{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line2);background:var(--card);border-radius:999px;padding:3px 11px 3px 6px;font-size:13px;font-weight:800}
+  .reaction{--cfs:15px}
+
+  .btn{border:0;border-radius:14px;padding:12px 18px;font-family:inherit;font-size:14.5px;font-weight:900;cursor:pointer;color:#fff;background:var(--grad);box-shadow:var(--btn-shadow);transition:transform .13s ease, opacity .13s ease}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.sub{background:var(--card);color:var(--accent-deep);border:2px solid var(--line2);box-shadow:none}
+  .btn.small{padding:9px 14px;font-size:13px;border-radius:11px}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .hidden{display:none !important}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,80px);background:var(--toast-bg);color:var(--toast-fg);padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:800;z-index:99;transition:transform .3s ease;box-shadow:0 10px 26px rgba(0,0,0,.25);max-width:88vw;text-align:center}
+  .toast.show{transform:translate(-50%,0)}
+  .foot{margin-top:20px;text-align:center;color:var(--ink-soft);font-size:12px;line-height:1.9}
+  .foot a{color:var(--accent-deep)}
+  progress{width:100%;height:10px;accent-color:var(--pink-deep)}
+</style>
+</head>
+<body>
+<div class="site-theme-row"><button type="button" id="siteThemeBtn" class="theme-icon-btn" aria-label="サイトの表示テーマ切り替え" title="表示テーマ：優花（タップで切替）">🌸</button></div>
+<div class="wrap">
+  <header class="top">
+    <span class="badge">Y.U.K.A TOOLS</span>
+    <h1>✨ Misskey絵文字メーカー ✨</h1>
+    <p class="sub">文字や画像からMisskeyのカスタム絵文字を作って、<b>回転・バウンド・キラキラ</b>などの<br>アニメーション効果を重ねて付けられるツールだよ。ノート用の<b>MFMコード</b>と、<b>アニメGIF</b>の両方に出力できるよ。</p>
+  </header>
+
+  <div class="howto">
+    <div class="step"><b><span class="n">1</span>素材を決める</b>文字（1〜6文字くらい）か、手持ちの画像をアップロード。絵文字名も付けてね。</div>
+    <div class="step"><b><span class="n">2</span>効果を付ける</b>アニメーション効果は複数を重ねられるよ。プレビューとMisskey風ノートで動きを確認してね。</div>
+    <div class="step"><b><span class="n">3</span>出力する</b>PNG／アニメGIFを保存してMisskeyに登録するか、MFMコードをコピーしてノートで使ってね。</div>
+  </div>
+
+  <div class="layout">
+    <div class="col">
+      <section class="card card-src">
+        <h2 class="sec">🧩 素材 <span class="hint">絵文字のもと</span></h2>
+        <div class="tabs">
+          <button type="button" class="tab active" id="tabText">✍️ 文字で作る</button>
+          <button type="button" class="tab" id="tabImage">🖼️ 画像を使う</button>
+        </div>
+        <div id="paneText">
+          <label class="f" for="inText">文字（改行で2行にできるよ）</label>
+          <input type="text" id="inText" value="すき" maxlength="12" autocomplete="off">
+          <div class="note">3文字以上は自動で2行に割り振るよ。絵文字1個でもOK。</div>
+          <div class="chips" id="textChips"></div>
+          <label class="f">絵文字パレット（タップでセット）</label>
+          <div class="palette" id="emojiPalette"></div>
+        </div>
+        <div id="paneImage" class="hidden">
+          <label class="f">画像ファイル（PNG / JPG / GIF / WebP）</label>
+          <div class="drop" id="dropZone">📂 ここをタップして画像を選ぶか、ドラッグ＆ドロップしてね<div class="note">透過PNGがおすすめ。アニメGIFを読み込んだ場合は1コマ目だけ使うよ。</div></div>
+          <input type="file" id="inFile" accept="image/*" class="hidden">
+        </div>
+        <label class="f" for="inName">絵文字名（Misskeyの <code>:名前:</code> になるよ・半角英数と _ のみ）</label>
+        <input type="text" id="inName" value="suki" maxlength="40" autocomplete="off" spellcheck="false">
+        <div class="note" id="nameWarn"></div>
+      </section>
+
+      <section class="card card-design">
+        <h2 class="sec">🎨 デザイン <span class="hint">文字モード用</span></h2>
+        <label class="f">フォント</label>
+        <div class="seg" id="fontSeg">
+          <button type="button" data-font="maru" class="active">まる文字</button>
+          <button type="button" data-font="gothic">ゴシック</button>
+          <button type="button" data-font="mincho">明朝</button>
+          <button type="button" data-font="mono">等幅</button>
+        </div>
+        <label class="f">文字の色</label>
+        <div class="seg" id="colorModeSeg" style="margin-bottom:8px">
+          <button type="button" data-cm="solid" class="active">単色</button>
+          <button type="button" data-cm="grad">グラデーション</button>
+        </div>
+        <div class="row">
+          <input type="color" id="inColor" value="#d16ba5">
+          <div class="swatches" id="colorSwatches"></div>
+        </div>
+        <div class="row hidden" id="gradRow" style="margin-top:8px">
+          <span style="font-size:12.5px;font-weight:800;color:var(--ink-soft)">2色目</span>
+          <input type="color" id="inColor2" value="#8b6fd8">
+          <div class="swatches" id="color2Swatches"></div>
+        </div>
+        <label class="f">ふちどり</label>
+        <div class="row">
+          <input type="checkbox" id="inOutline" checked style="width:19px;height:19px;accent-color:var(--pink-deep)">
+          <input type="color" id="inOutlineColor" value="#ffffff">
+          <input type="range" id="inOutlineWidth" min="0" max="30" value="13" class="grow">
+          <span class="val" id="outlineWidthVal">13%</span>
+        </div>
+        <label class="f">文字の大きさ</label>
+        <div class="row"><input type="range" id="inTextSize" min="50" max="130" value="100" class="grow"><span class="val" id="textSizeVal">100%</span></div>
+        <label class="f">背景</label>
+        <div class="seg" id="bgSeg">
+          <button type="button" data-bg="none" class="active">透明</button>
+          <button type="button" data-bg="full">ベタ塗り</button>
+          <button type="button" data-bg="round">角丸</button>
+          <button type="button" data-bg="circle">まる</button>
+        </div>
+        <div class="row hidden" id="bgColorRow" style="margin-top:8px">
+          <input type="color" id="inBgColor" value="#fdf3f8">
+          <div class="swatches" id="bgSwatches"></div>
+        </div>
+      </section>
+
+      <section class="card card-fx">
+        <h2 class="sec">🎬 アニメーション効果 <span class="hint">複数を重ねられるよ（MFM準拠）</span></h2>
+        <div class="presets" id="presets"></div>
+        <div class="fxgrid" id="fxGrid"></div>
+        <div class="orderline" id="orderLine"></div>
+        <label class="f">ノートでの大きさ（MFM）</label>
+        <div class="seg" id="sizeSeg">
+          <button type="button" data-size="none" class="active">そのまま</button>
+          <button type="button" data-size="x2">x2</button>
+          <button type="button" data-size="x3">x3</button>
+          <button type="button" data-size="x4">x4</button>
+        </div>
+        <label class="f">反転（MFM）</label>
+        <div class="seg" id="flipSeg">
+          <button type="button" data-flip="none" class="active">なし</button>
+          <button type="button" data-flip="h">左右</button>
+          <button type="button" data-flip="v">上下</button>
+          <button type="button" data-flip="hv">上下左右</button>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <div class="sticky" style="display:flex;flex-direction:column;gap:18px">
+        <section class="card card-preview">
+          <h2 class="sec">👀 プレビュー <span class="hint">実際の動きに近い表示だよ</span></h2>
+          <div class="stage checker" id="stage"></div>
+          <div class="sizes" id="sizeRow"></div>
+          <div class="note-mock">
+            <div class="note-head">
+              <div class="avatar">🌸</div>
+              <div><div class="note-name">如月ユカ（Y.U.K.A）</div><div class="note-acct">@yuka1201@misskey.io</div></div>
+            </div>
+            <div class="note-body">今日もがんばるぞい！ <span id="noteEmoji1"></span> えっへん <span id="noteEmoji2"></span></div>
+            <div class="reactions"><span class="reaction"><span id="noteReact"></span> 12</span><span class="reaction">💖 34</span></div>
+          </div>
+          <div class="note">※ プレビューはブラウザ上の近似表示だよ。本物のMisskeyでの動きとは少し違う場合があるよ。キラキラはプレビューとGIFでのみ再現されるよ（MFMの <code>$[sparkle ]</code> はMisskey側が描画するよ）。</div>
+        </section>
+
+        <section class="card card-out">
+          <h2 class="sec">📤 出力</h2>
+          <label class="f">MFMコード（ノートに貼る用）</label>
+          <textarea class="code" id="mfmOut" rows="3" readonly></textarea>
+          <div class="btnrow">
+            <button type="button" class="btn small" id="btnCopyMfm">📋 MFMコードをコピー</button>
+            <button type="button" class="btn small sub" id="btnCopyName">:名前: だけコピー</button>
+          </div>
+          <label class="f">画像として保存（Misskeyに絵文字登録する用）</label>
+          <div class="row">
+            <span style="font-size:12.5px;font-weight:800;color:var(--ink-soft)">サイズ</span>
+            <select id="exportSize" style="width:auto;padding:8px 10px">
+              <option value="128">128 × 128</option>
+              <option value="256" selected>256 × 256</option>
+            </select>
+          </div>
+          <div class="btnrow">
+            <button type="button" class="btn" id="btnPng">🖼️ PNGをダウンロード</button>
+            <button type="button" class="btn" id="btnGif">🎞️ アニメGIFをダウンロード</button>
+          </div>
+          <div id="gifProgress" class="hidden" style="margin-top:10px"><progress id="gifBar" max="100" value="0"></progress><div class="note" id="gifStatus">GIFを作ってるよ…</div></div>
+          <div class="note" id="gifNote">アニメGIFは、付けた効果の動きをそのまま焼き込んだファイルだよ。効果が何もないときは静止画になるのでPNGで十分だよ。</div>
+          <div class="btnrow">
+            <button type="button" class="btn small sub" id="btnShare">🔗 設定の共有URLをコピー</button>
+            <button type="button" class="btn small sub" id="btnReset">↺ リセット</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <p class="foot">
+    使い方の流れ：画像を保存 → Misskeyの「設定 → カスタム絵文字」やモデレーション画面から登録（サーバーによって権限が必要だよ）→ ノートで <code>:名前:</code> と打てば使えるよ。<br>
+    MFMの公式ドキュメント：<a href="https://misskey-hub.net/ja/docs/for-users/features/mfm/" target="_blank" rel="noopener">Misskey Hub ― MFM</a> ／ GIFエンコーダに gifenc（MIT License）を利用。<br>
+    <a href="index.html">← 優花のツール置き場に戻る</a>
+  </p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>(()=>{var X={signature:"GIF",version:"89a",trailer:59,extensionIntroducer:33,applicationExtensionLabel:255,graphicControlExtensionLabel:249,imageSeparator:44,signatureSize:3,versionSize:3,globalColorTableFlagMask:128,colorResolutionMask:112,sortFlagMask:8,globalColorTableSizeMask:7,applicationIdentifierSize:8,applicationAuthCodeSize:3,disposalMethodMask:28,userInputFlagMask:2,transparentColorFlagMask:1,localColorTableFlagMask:128,interlaceFlagMask:64,idSortFlagMask:32,localColorTableSizeMask:7};function F(t=256){let e=0,s=new Uint8Array(t);return{get buffer(){return s.buffer},reset(){e=0},bytesView(){return s.subarray(0,e)},bytes(){return s.slice(0,e)},writeByte(r){n(e+1),s[e]=r,e++},writeBytes(r,o=0,i=r.length){n(e+i);for(let c=0;c<i;c++)s[e++]=r[c+o]},writeBytesView(r,o=0,i=r.byteLength){n(e+i),s.set(r.subarray(o,o+i),e),e+=i}};function n(r){var o=s.length;if(o>=r)return;var i=1024*1024;r=Math.max(r,o*(o<i?2:1.125)>>>0),o!=0&&(r=Math.max(r,256));let c=s;s=new Uint8Array(r),e>0&&s.set(c.subarray(0,e),0)}}var O=12,J=5003,lt=[0,1,3,7,15,31,63,127,255,511,1023,2047,4095,8191,16383,32767,65535];function at(t,e,s,n,r=F(512),o=new Uint8Array(256),i=new Int32Array(J),c=new Int32Array(J)){let x=i.length,a=Math.max(2,n);o.fill(0),c.fill(0),i.fill(-1);let l=0,f=0,g=a+1,h=g,b=!1,w=h,_=(1<<w)-1,u=1<<g-1,k=u+1,B=u+2,p=0,A=s[0],z=0;for(let y=x;y<65536;y*=2)++z;z=8-z,r.writeByte(a),I(u);let d=s.length;for(let y=1;y<d;y++){t:{let m=s[y],v=(m<<O)+A,M=m<<z^A;if(i[M]===v){A=c[M];break t}let V=M===0?1:x-M;for(;i[M]>=0;)if(M-=V,M<0&&(M+=x),i[M]===v){A=c[M];break t}I(A),A=m,B<1<<O?(c[M]=B++,i[M]=v):(i.fill(-1),B=u+2,b=!0,I(u))}}return I(A),I(k),r.writeByte(0),r.bytesView();function I(y){for(l&=lt[f],f>0?l|=y<<f:l=y,f+=w;f>=8;)o[p++]=l&255,p>=254&&(r.writeByte(p),r.writeBytesView(o,0,p),p=0),l>>=8,f-=8;if((B>_||b)&&(b?(w=h,_=(1<<w)-1,b=!1):(++w,_=w===O?1<<w:(1<<w)-1)),y==k){for(;f>0;)o[p++]=l&255,p>=254&&(r.writeByte(p),r.writeBytesView(o,0,p),p=0),l>>=8,f-=8;p>0&&(r.writeByte(p),r.writeBytesView(o,0,p),p=0)}}}var $=at;function D(t,e,s){return t<<8&63488|e<<2&992|s>>3}function G(t,e,s,n){return t>>4|e&240|(s&240)<<4|(n&240)<<8}function j(t,e,s){return t>>4<<8|e&240|s>>4}function R(t,e,s){return t<e?e:t>s?s:t}function T(t){return t*t}function tt(t,e,s){var n=0,r=1e100;let o=t[e],i=o.cnt,c=o.ac,x=o.rc,a=o.gc,l=o.bc;for(var f=o.fw;f!=0;f=t[f].fw){let h=t[f],b=h.cnt,w=i*b/(i+b);if(!(w>=r)){var g=0;s&&(g+=w*T(h.ac-c),g>=r)||(g+=w*T(h.rc-x),!(g>=r)&&(g+=w*T(h.gc-a),!(g>=r)&&(g+=w*T(h.bc-l),!(g>=r)&&(r=g,n=f))))}}o.err=r,o.nn=n}function Q(){return{ac:0,rc:0,gc:0,bc:0,cnt:0,nn:0,fw:0,bk:0,tm:0,mtm:0,err:0}}function ut(t,e){let s=e==="rgb444"?4096:65536,n=new Array(s),r=t.length;if(e==="rgba4444")for(let o=0;o<r;++o){let i=t[o],c=i>>24&255,x=i>>16&255,a=i>>8&255,l=i&255,f=G(l,a,x,c),g=f in n?n[f]:n[f]=Q();g.rc+=l,g.gc+=a,g.bc+=x,g.ac+=c,g.cnt++}else if(e==="rgb444")for(let o=0;o<r;++o){let i=t[o],c=i>>16&255,x=i>>8&255,a=i&255,l=j(a,x,c),f=l in n?n[l]:n[l]=Q();f.rc+=a,f.gc+=x,f.bc+=c,f.cnt++}else for(let o=0;o<r;++o){let i=t[o],c=i>>16&255,x=i>>8&255,a=i&255,l=D(a,x,c),f=l in n?n[l]:n[l]=Q();f.rc+=a,f.gc+=x,f.bc+=c,f.cnt++}return n}function H(t,e,s={}){let{format:n="rgb565",clearAlpha:r=!0,clearAlphaColor:o=0,clearAlphaThreshold:i=0,oneBitAlpha:c=!1}=s;if(!t||!t.buffer)throw new Error("quantize() expected RGBA Uint8Array data");if(!(t instanceof Uint8Array)&&!(t instanceof Uint8ClampedArray))throw new Error("quantize() expected RGBA Uint8Array data");let x=new Uint32Array(t.buffer),a=s.useSqrt!==!1,l=n==="rgba4444",f=ut(x,n),g=f.length,h=g-1,b=new Uint32Array(g+1);for(var w=0,u=0;u<g;++u){let C=f[u];if(C!=null){var _=1/C.cnt;l&&(C.ac*=_),C.rc*=_,C.gc*=_,C.bc*=_,f[w++]=C}}T(e)/w<.022&&(a=!1);for(var u=0;u<w-1;++u)f[u].fw=u+1,f[u+1].bk=u,a&&(f[u].cnt=Math.sqrt(f[u].cnt));a&&(f[u].cnt=Math.sqrt(f[u].cnt));var k,B,p;for(u=0;u<w;++u){tt(f,u,!1);var A=f[u].err;for(B=++b[0];B>1&&(p=B>>1,!(f[k=b[p]].err<=A));B=p)b[B]=k;b[B]=u}var z=w-e;for(u=0;u<z;){for(var d;;){var I=b[1];if(d=f[I],d.tm>=d.mtm&&f[d.nn].mtm<=d.tm)break;d.mtm==h?I=b[1]=b[b[0]--]:(tt(f,I,!1),d.tm=u);var A=f[I].err;for(B=1;(p=B+B)<=b[0]&&(p<b[0]&&f[b[p]].err>f[b[p+1]].err&&p++,!(A<=f[k=b[p]].err));B=p)b[B]=k;b[B]=I}var y=f[d.nn],m=d.cnt,v=y.cnt,_=1/(m+v);l&&(d.ac=_*(m*d.ac+v*y.ac)),d.rc=_*(m*d.rc+v*y.rc),d.gc=_*(m*d.gc+v*y.gc),d.bc=_*(m*d.bc+v*y.bc),d.cnt+=y.cnt,d.mtm=++u,f[y.bk].fw=y.fw,f[y.fw].bk=y.bk,y.mtm=h}let M=[];var V=0;for(u=0;;++V){let L=R(Math.round(f[u].rc),0,255),C=R(Math.round(f[u].gc),0,255),Y=R(Math.round(f[u].bc),0,255),E=255;if(l){if(E=R(Math.round(f[u].ac),0,255),c){let st=typeof c=="number"?c:127;E=E<=st?0:255}r&&E<=i&&(L=C=Y=o,E=0)}let K=l?[L,C,Y,E]:[L,C,Y];if(xt(M,K)||M.push(K),(u=f[u].fw)==0)break}return M}function xt(t,e){for(let s=0;s<t.length;s++){let n=t[s],r=n[0]===e[0]&&n[1]===e[1]&&n[2]===e[2],o=n.length>=4&&e.length>=4?n[3]===e[3]:!0;if(r&&o)return!0}return!1}function U(t,e){var s=0,n;for(n=0;n<t.length;n++){let r=t[n]-e[n];s+=r*r}return s}function P(t,e){return e>1?Math.round(t/e)*e:t}function et(t,{roundRGB:e=5,roundAlpha:s=10,oneBitAlpha:n=null}={}){let r=new Uint32Array(t.buffer);for(let o=0;o<r.length;o++){let i=r[o],c=i>>24&255,x=i>>16&255,a=i>>8&255,l=i&255;if(c=P(c,s),n){let f=typeof n=="number"?n:127;c=c<=f?0:255}l=P(l,e),a=P(a,e),x=P(x,e),r[o]=c<<24|x<<16|a<<8|l<<0}}function nt(t,e,s="rgb565"){if(!t||!t.buffer)throw new Error("quantize() expected RGBA Uint8Array data");if(!(t instanceof Uint8Array)&&!(t instanceof Uint8ClampedArray))throw new Error("quantize() expected RGBA Uint8Array data");if(e.length>256)throw new Error("applyPalette() only works with 256 colors or less");let n=new Uint32Array(t.buffer),r=n.length,o=s==="rgb444"?4096:65536,i=new Uint8Array(r),c=new Array(o),x=s==="rgba4444";if(s==="rgba4444")for(let a=0;a<r;a++){let l=n[a],f=l>>24&255,g=l>>16&255,h=l>>8&255,b=l&255,w=G(b,h,g,f),_=w in c?c[w]:c[w]=gt(b,h,g,f,e);i[a]=_}else{let a=s==="rgb444"?j:D;for(let l=0;l<r;l++){let f=n[l],g=f>>16&255,h=f>>8&255,b=f&255,w=a(b,h,g),_=w in c?c[w]:c[w]=bt(b,h,g,e);i[l]=_}}return i}function gt(t,e,s,n,r){let o=0,i=1e100;for(let c=0;c<r.length;c++){let x=r[c],a=x[3],l=q(a-n);if(l>i)continue;let f=x[0];if(l+=q(f-t),l>i)continue;let g=x[1];if(l+=q(g-e),l>i)continue;let h=x[2];l+=q(h-s),!(l>i)&&(i=l,o=c)}return o}function bt(t,e,s,n){let r=0,o=1e100;for(let i=0;i<n.length;i++){let c=n[i],x=c[0],a=q(x-t);if(a>o)continue;let l=c[1];if(a+=q(l-e),a>o)continue;let f=c[2];a+=q(f-s),!(a>o)&&(o=a,r=i)}return r}function rt(t,e,s=5){if(!t.length||!e.length)return;let n=t.map(i=>i.slice(0,3)),r=s*s,o=t[0].length;for(let i=0;i<e.length;i++){let c=e[i];c.length<o?c=[c[0],c[1],c[2],255]:c.length>o?c=c.slice(0,3):c=c.slice();let x=N(n,c.slice(0,3),U),a=x[0],l=x[1];l>0&&l<=r&&(t[a]=c)}}function q(t){return t*t}function W(t,e,s=U){let n=Infinity,r=-1;for(let o=0;o<t.length;o++){let i=t[o],c=s(e,i);c<n&&(n=c,r=o)}return r}function N(t,e,s=U){let n=Infinity,r=-1;for(let o=0;o<t.length;o++){let i=t[o],c=s(e,i);c<n&&(n=c,r=o)}return[r,n]}function ot(t,e,s=U){return t[W(t,e,s)]}function ct(t={}){let{initialCapacity:e=4096,auto:s=!0}=t,n=F(e),r=5003,o=new Uint8Array(256),i=new Int32Array(r),c=new Int32Array(r),x=!1;return{reset(){n.reset(),x=!1},finish(){n.writeByte(X.trailer)},bytes(){return n.bytes()},bytesView(){return n.bytesView()},get buffer(){return n.buffer},get stream(){return n},writeHeader:a,writeFrame(l,f,g,h={}){let{transparent:b=!1,transparentIndex:w=0,delay:_=0,palette:u=null,repeat:k=0,colorDepth:B=8,dispose:p=-1}=h,A=!1;if(s?x||(A=!0,a(),x=!0):A=Boolean(h.first),f=Math.max(0,Math.floor(f)),g=Math.max(0,Math.floor(g)),A){if(!u)throw new Error("First frame must include a { palette } option");pt(n,f,g,u,B),it(n,u),k>=0&&dt(n,k)}let z=Math.round(_/10);wt(n,p,z,b,w);let d=Boolean(u)&&!A;ht(n,f,g,d?u:null),d&&it(n,u),yt(n,l,f,g,B,o,i,c)}};function a(){ft(n,"GIF89a")}}function wt(t,e,s,n,r){t.writeByte(33),t.writeByte(249),t.writeByte(4),r<0&&(r=0,n=!1);var o,i;n?(o=1,i=2):(o=0,i=0),e>=0&&(i=e&7),i<<=2;let c=0;t.writeByte(0|i|c|o),S(t,s),t.writeByte(r||0),t.writeByte(0)}function pt(t,e,s,n,r=8){let o=1,i=0,c=Z(n.length)-1,x=o<<7|r-1<<4|i<<3|c,a=0,l=0;S(t,e),S(t,s),t.writeBytes([x,a,l])}function dt(t,e){t.writeByte(33),t.writeByte(255),t.writeByte(11),ft(t,"NETSCAPE2.0"),t.writeByte(3),t.writeByte(1),S(t,e),t.writeByte(0)}function it(t,e){let s=1<<Z(e.length);for(let n=0;n<s;n++){let r=[0,0,0];n<e.length&&(r=e[n]),t.writeByte(r[0]),t.writeByte(r[1]),t.writeByte(r[2])}}function ht(t,e,s,n){if(t.writeByte(44),S(t,0),S(t,0),S(t,e),S(t,s),n){let r=0,o=0,i=Z(n.length)-1;t.writeByte(128|r|o|0|i)}else t.writeByte(0)}function yt(t,e,s,n,r=8,o,i,c){$(s,n,e,r,t,o,i,c)}function S(t,e){t.writeByte(e&255),t.writeByte(e>>8&255)}function ft(t,e){for(var s=0;s<e.length;s++)t.writeByte(e.charCodeAt(s))}function Z(t){return Math.max(Math.ceil(Math.log2(t)),1)}var Bt=ct;
+;window.GIFENC={GIFEncoder:ct,applyPalette:nt,quantize:H};})();</script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const FONTS={
+  maru:'"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif',
+  gothic:'"Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",sans-serif',
+  mincho:'"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif',
+  mono:'"MS Gothic","Osaka-Mono","Noto Sans Mono",monospace'
+};
+const EFFECT_DEFS=[
+  {type:"spin",   icon:"🌀", name:"回転 spin",        desc:"ぐるぐる回る",            defSpeed:1.5, min:0.3, max:4,   spinOpts:true},
+  {type:"bounce", icon:"🏀", name:"バウンド bounce",  desc:"下でぽよんと弾む",        defSpeed:0.75,min:0.3, max:3},
+  {type:"jump",   icon:"🦘", name:"ジャンプ jump",    desc:"ぴょんぴょん跳ねる",      defSpeed:0.75,min:0.3, max:3},
+  {type:"shake",  icon:"📳", name:"ぶるぶる shake",   desc:"小刻みに震える",          defSpeed:0.5, min:0.2, max:2},
+  {type:"twitch", icon:"⚡", name:"ピクピク twitch",  desc:"強くピクピク震える",      defSpeed:0.2, min:0.1, max:1},
+  {type:"jelly",  icon:"🍮", name:"びよんびよん jelly",desc:"ゼリーみたいに伸び縮み", defSpeed:1,   min:0.3, max:3},
+  {type:"tada",   icon:"🎉", name:"タダー tada",      desc:"大きくなってアピール",    defSpeed:1,   min:0.3, max:3},
+  {type:"rainbow",icon:"🌈", name:"虹色 rainbow",     desc:"色がくるくる変わる",      defSpeed:1,   min:0.3, max:4},
+  {type:"sparkle",icon:"✨", name:"キラキラ sparkle", desc:"星がキラキラ光る",        defSpeed:1,   noSpeed:true}
+];
+const PRESETS=[
+  {label:"🌀 ぐるぐる", small:"spin", fx:[{type:"spin",speed:1}]},
+  {label:"🦘 ぴょんぴょん", small:"bounce", fx:[{type:"bounce",speed:0.6}]},
+  {label:"🍮 ぷるぷる", small:"jelly", fx:[{type:"jelly",speed:0.8}]},
+  {label:"📳 ぶるぶる", small:"shake", fx:[{type:"shake",speed:0.4}]},
+  {label:"🎉 キラキラ大アピール", small:"tada + sparkle", fx:[{type:"tada",speed:1},{type:"sparkle"}]},
+  {label:"🌈 レインボー回転", small:"rainbow + spin.y", fx:[{type:"rainbow",speed:1.5},{type:"spin",speed:1.5,axis:"y"}]}
+];
+const TEXT_CHIPS=["すき","草","神","よい","えらい","推し","OK","NG","祝","あ","優勝","天才","ねむい","おつ","大吉","当"];
+const EMOJI_PALETTE=["🌸","🍮","⭐","💖","🔥","🍓","🐱","🌙","✨","💮","🍰","🎀","👑","💎","🦄","🍑","🍙","🎮","💤","🫶"];
+const SWATCHES=["#d16ba5","#8b6fd8","#f472b6","#ef4444","#f59e0b","#22c55e","#0ea5e9","#3d3355","#ffffff","#111111"];
+
+let imgObj=null, imgURL="";
+const state={
+  mode:"text", text:"すき", name:"suki",
+  font:"maru", colorMode:"solid", color:"#d16ba5", color2:"#8b6fd8",
+  outline:true, outlineColor:"#ffffff", outlineWidth:13, textSize:100,
+  bg:"none", bgColor:"#fdf3f8",
+  effects:[{type:"sparkle"},{type:"bounce",speed:0.75}],
+  sizeOpt:"none", flipOpt:"none"
+};
+
+/* ---------- 小物 ---------- */
+let toastTimer=0;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2400); }
+function fmtSpeed(v){ return (Math.round(v*100)/100).toString(); }
+function hexToHsl(hex){ const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h=0,s=0; const l=(mx+mn)/2;
+  if(mx!==mn){ const d=mx-mn; s=l>0.5? d/(2-mx-mn): d/(mx+mn);
+    if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; }
+  return [h,s*100,l*100]; }
+function hueShift(hex,deg){ if(!deg) return hex; const [h,s,l]=hexToHsl(hex); return `hsl(${(h+deg)%360} ${s}% ${l}%)`; }
+function textLines(){
+  const raw=(state.text||"").replace(/\r/g,"");
+  if(raw.includes("\n")) return raw.split("\n").slice(0,3);
+  const chars=[...raw]; if(chars.length<=2) return [raw];
+  const half=Math.ceil(chars.length/2);
+  return [chars.slice(0,half).join(""), chars.slice(half).join("")];
+}
+function validName(){ return /^[a-z0-9_]+$/.test(state.name||""); }
+
+/* ---------- 効果UI ---------- */
+function findFx(type){ return state.effects.find(e=>e.type===type); }
+function buildFxGrid(){
+  const grid=$("fxGrid"); grid.innerHTML="";
+  EFFECT_DEFS.forEach(def=>{
+    const cur=findFx(def.type);
+    const div=document.createElement("div"); div.className="fx"+(cur?" on":""); div.dataset.type=def.type;
+    let ctl="";
+    if(!def.noSpeed) ctl+=`<div class="row"><label>速さ</label><input type="range" class="fx-speed grow" min="${def.min}" max="${def.max}" step="0.05" value="${cur?cur.speed:def.defSpeed}"><span class="val fx-speed-val">${fmtSpeed(cur?cur.speed:def.defSpeed)}s</span></div>`;
+    else ctl+=`<div class="note" style="margin-top:0">速さの指定はない効果だよ</div>`;
+    if(def.spinOpts) ctl+=`<div class="row" style="margin-top:6px"><label>軸</label><select class="fx-axis grow"><option value="">平面</option><option value="x" ${cur&&cur.axis==="x"?"selected":""}>X軸（縦回転）</option><option value="y" ${cur&&cur.axis==="y"?"selected":""}>Y軸（横回転）</option></select></div>
+    <div class="row" style="margin-top:6px"><label>向き</label><select class="fx-dir grow"><option value="">右回り</option><option value="left" ${cur&&cur.dir==="left"?"selected":""}>左回り</option><option value="alternate" ${cur&&cur.dir==="alternate"?"selected":""}>往復</option></select></div>`;
+    div.innerHTML=`<label class="fx-head"><input type="checkbox" class="fx-toggle" ${cur?"checked":""}><span class="ic">${def.icon}</span><span><span class="nm">${def.name}</span><br><span class="ds">${def.desc}</span></span></label><div class="fx-ctl">${ctl}</div>`;
+    grid.appendChild(div);
+    div.querySelector(".fx-toggle").addEventListener("change",ev=>{
+      div.classList.toggle("on",ev.target.checked);
+      if(ev.target.checked){ const e={type:def.type}; if(!def.noSpeed) e.speed=parseFloat(div.querySelector(".fx-speed").value);
+        if(def.spinOpts){ const ax=div.querySelector(".fx-axis").value, dr=div.querySelector(".fx-dir").value; if(ax)e.axis=ax; if(dr)e.dir=dr; }
+        state.effects.push(e);
+      } else { state.effects=state.effects.filter(x=>x.type!==def.type); }
+      refresh();
+    });
+    const sp=div.querySelector(".fx-speed");
+    if(sp) sp.addEventListener("input",()=>{ div.querySelector(".fx-speed-val").textContent=fmtSpeed(parseFloat(sp.value))+"s";
+      const e=findFx(def.type); if(e){ e.speed=parseFloat(sp.value); refresh(false); } updateMfm(); updateOrder(); });
+    const ax=div.querySelector(".fx-axis"), dr=div.querySelector(".fx-dir");
+    if(ax) ax.addEventListener("change",()=>{ const e=findFx("spin"); if(e){ if(ax.value)e.axis=ax.value; else delete e.axis; refresh(); }});
+    if(dr) dr.addEventListener("change",()=>{ const e=findFx("spin"); if(e){ if(dr.value)e.dir=dr.value; else delete e.dir; refresh(); }});
+  });
+}
+function buildPresets(){
+  const box=$("presets"); box.innerHTML="";
+  PRESETS.forEach(p=>{ const b=document.createElement("button"); b.type="button"; b.className="preset"; b.innerHTML=`${p.label}<small>${p.small}</small>`;
+    b.addEventListener("click",()=>{ state.effects=p.fx.map(f=>({...f})); buildFxGrid(); refresh(); toast(`プリセット「${p.label}」を適用したよ`); });
+    box.appendChild(b); });
+  const clr=document.createElement("button"); clr.type="button"; clr.className="preset"; clr.innerHTML=`🚫 効果なし<small>全部外す</small>`;
+  clr.addEventListener("click",()=>{ state.effects=[]; buildFxGrid(); refresh(); });
+  box.appendChild(clr);
+}
+function updateOrder(){
+  const el=$("orderLine");
+  if(!state.effects.length){ el.innerHTML="効果は付いてないよ。付けると <b>外側 → 内側</b> の順に重なるよ。"; return; }
+  el.innerHTML=`重なる順（外側→内側）： <b>${state.effects.map(e=>e.type).join(" → ")}</b> → 絵文字`;
+}
+
+/* ---------- プレビュー ---------- */
+function fxCssAnim(e){
+  const s=e.speed||1;
+  switch(e.type){
+    case "spin": { const name=e.axis==="x"?"kf-spinX":e.axis==="y"?"kf-spinY":"kf-spin";
+      const dir=e.dir==="left"?"reverse":e.dir==="alternate"?"alternate":"normal";
+      return `animation:${name} ${s}s linear infinite;animation-direction:${dir}`; }
+    case "bounce": return `animation:kf-bounce ${s}s linear infinite;transform-origin:center bottom`;
+    case "jump": return `animation:kf-jump ${s}s linear infinite`;
+    case "shake": return `animation:kf-shake ${s}s ease infinite`;
+    case "twitch": return `animation:kf-twitch ${s}s ease infinite`;
+    case "jelly": return `animation:kf-jelly ${s}s linear infinite`;
+    case "tada": return `animation:kf-tada ${s}s linear infinite`;
+    case "rainbow": return `animation:kf-rainbow ${s}s linear infinite`;
+    default: return "";
+  }
+}
+function contentEl(){
+  let el;
+  if(state.mode==="image" && imgURL){
+    el=document.createElement("img"); el.className="pv-img"; el.src=imgURL; el.alt=state.name;
+  } else {
+    el=document.createElement("span"); el.className="pv-text";
+    el.style.fontFamily=FONTS[state.font];
+    const lines=textLines();
+    const fsFactor=(lines.length>1?0.60:0.95)*(state.textSize/100);
+    el.style.fontSize=`calc(var(--cfs) * ${fsFactor})`;
+    el.textContent=lines.join("\n");
+    if(state.colorMode==="grad"){ el.style.background=`linear-gradient(180deg, ${state.color}, ${state.color2})`; el.style.webkitBackgroundClip="text"; el.style.backgroundClip="text"; el.style.color="transparent"; }
+    else el.style.color=state.color;
+    if(state.outline){ el.style.webkitTextStroke=`calc(var(--cfs) * ${0.11*state.outlineWidth/13}) ${state.outlineColor}`; }
+  }
+  const box=document.createElement("span"); box.className="box fxs"; box.appendChild(el);
+  if(state.bg!=="none"){ box.style.background=state.bgColor; box.style.borderRadius=state.bg==="circle"?"50%":state.bg==="round"?"22%":"0"; }
+  if(state.flipOpt!=="none"){ box.style.transform=`scale(${state.flipOpt==="h"||state.flipOpt==="hv"?-1:1}, ${state.flipOpt==="v"||state.flipOpt==="hv"?-1:1})`; }
+  return box;
+}
+function fxTree(){
+  let node=contentEl();
+  for(let i=state.effects.length-1;i>=0;i--){
+    const e=state.effects[i];
+    const wrap=document.createElement("span"); wrap.className="fxs";
+    if(e.type==="sparkle"){
+      wrap.appendChild(node);
+      for(let k=0;k<6;k++){ const st=document.createElement("span"); st.className="sparkle-star"; st.textContent="✦";
+        const pos=[[6,2],[82,8],[10,78],[84,80],[45,-6],[48,88]][k];
+        st.style.left=pos[0]+"%"; st.style.top=pos[1]+"%"; st.style.fontSize="calc(var(--cfs)*0.28)"; st.style.color="#f5b921"; st.style.animationDelay=(k*0.2)+"s";
+        wrap.appendChild(st); }
+      node=wrap;
+    } else {
+      wrap.style.cssText=fxCssAnim(e);
+      if(e.type==="tada") wrap.style.fontSize="1em";
+      wrap.appendChild(node); node=wrap;
+    }
+  }
+  if(state.sizeOpt!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.fontSize={x2:"1.35em",x3:"1.7em",x4:"2.05em"}[state.sizeOpt]; w.appendChild(node); node=w; }
+  return node;
+}
+function mountPreviews(){
+  const stage=$("stage"); stage.innerHTML=""; stage.appendChild(fxTree());
+  const row=$("sizeRow"); row.innerHTML="";
+  [[128,"128px"],[64,"64px"],[32,"32px（リアクション）"],[18,"18px（本文）"]].forEach(([px,cap])=>{
+    const cell=document.createElement("div"); cell.className="cell";
+    const holder=document.createElement("div"); holder.className="holder"; holder.style.setProperty("--cfs",(px/1.42)+"px");
+    holder.appendChild(fxTree());
+    const c=document.createElement("div"); c.className="cap"; c.textContent=cap;
+    cell.appendChild(holder); cell.appendChild(c); row.appendChild(cell);
+  });
+  ["noteEmoji1","noteEmoji2","noteReact"].forEach(id=>{ const t=$(id); t.innerHTML=""; t.appendChild(fxTree()); });
+}
+
+/* ---------- MFM ---------- */
+function fxMfm(e){
+  if(e.type==="sparkle") return "sparkle";
+  if(e.type==="spin"){ let s="spin"; if(e.axis) s+="."+e.axis; if(e.dir) s+=","+e.dir; s+=`,speed=${fmtSpeed(e.speed||1.5)}s`; return s; }
+  return `${e.type}.speed=${fmtSpeed(e.speed||EFFECT_DEFS.find(d=>d.type===e.type).defSpeed)}s`;
+}
+function buildMfm(){
+  let code=":"+(state.name||"emoji")+":";
+  const wraps=state.effects.map(fxMfm);
+  if(state.flipOpt==="h") wraps.push("flip");
+  else if(state.flipOpt==="v") wraps.push("flip.v");
+  else if(state.flipOpt==="hv") wraps.push("flip.h,v");
+  if(state.sizeOpt!=="none") wraps.unshift(state.sizeOpt);
+  let s=code;
+  for(let i=wraps.length-1;i>=0;i--) s=`$[${wraps[i]} ${s}]`;
+  return s;
+}
+function updateMfm(){
+  $("mfmOut").value=buildMfm();
+  $("nameWarn").textContent= validName()? "" : "⚠️ 絵文字名は半角の英小文字・数字・アンダースコアだけにしてね（今の名前だとMisskeyに登録できないよ）";
+}
+
+/* ---------- Canvas描画（PNG/GIF用） ---------- */
+const cvs=document.createElement("canvas"), ctx=cvs.getContext("2d");
+function drawContent(size,t,forGif){
+  cvs.width=size; cvs.height=size;
+  ctx.clearRect(0,0,size,size);
+  ctx.save();
+  if(state.bg==="full"){ ctx.fillStyle=state.bgColor; ctx.fillRect(0,0,size,size); }
+  else if(state.bg==="round"||state.bg==="circle"){ ctx.fillStyle=state.bgColor; ctx.beginPath();
+    if(state.bg==="circle") ctx.arc(size/2,size/2,size*0.48,0,Math.PI*2);
+    else { const r=size*0.2, m=size*0.02; ctx.roundRect(m,m,size-2*m,size-2*m,r); }
+    ctx.fill(); }
+  ctx.translate(size/2,size/2);
+  // 反転
+  if(state.flipOpt!=="none") ctx.scale(state.flipOpt==="h"||state.flipOpt==="hv"?-1:1, state.flipOpt==="v"||state.flipOpt==="hv"?-1:1);
+  let hue=0;
+  const TAU=Math.PI*2;
+  for(const e of state.effects){
+    const sp=e.speed||1, p=((t/sp)%1+1)%1;
+    if(e.type==="spin"){ let ang;
+      if(e.dir==="alternate"){ const ph=((t/(sp*2))%1+1)%1; const tri=ph<0.5? ph*2 : 2-2*ph; ang=TAU*tri; }
+      else if(e.dir==="left") ang=-TAU*p; else ang=TAU*p;
+      if(e.axis==="x") ctx.scale(1,Math.cos(ang)); else if(e.axis==="y") ctx.scale(Math.cos(ang),1); else ctx.rotate(ang);
+    } else if(e.type==="bounce"){ const hop=Math.abs(Math.sin(Math.PI*p));
+      const sy=1-0.20*(1-hop), sx=1+0.13*(1-hop);
+      ctx.translate(0,-size*0.17*hop + size*0.30*(1-sy)); ctx.scale(sx,sy);
+    } else if(e.type==="jump"){ ctx.translate(0,-size*0.20*Math.abs(Math.sin(Math.PI*p)));
+    } else if(e.type==="shake"){ ctx.translate(size*0.030*Math.sin(TAU*p*4), size*0.016*Math.sin(TAU*p*7)); ctx.rotate(0.035*Math.sin(TAU*p*4));
+    } else if(e.type==="twitch"){ const seed=Math.floor(p*12); const h1=Math.abs(Math.sin(seed*127.1)*43758.5453)%1, h2=Math.abs(Math.sin(seed*311.7)*12543.123)%1;
+      ctx.translate((h1-0.5)*size*0.09,(h2-0.5)*size*0.09); ctx.rotate((h1-0.5)*0.14);
+    } else if(e.type==="jelly"){ const sx=1+0.24*Math.sin(TAU*p)-0.06*Math.sin(TAU*p*2); const sy=1-0.22*Math.sin(TAU*p)+0.05*Math.sin(TAU*p*2); ctx.scale(sx,sy);
+    } else if(e.type==="tada"){ const s=1+0.13*Math.abs(Math.sin(Math.PI*p)); ctx.scale(s,s); ctx.rotate(0.05*Math.sin(TAU*p*2));
+    } else if(e.type==="rainbow"){ hue=(360*p)%360; }
+  }
+  const box=size*0.94;
+  if(state.mode==="image" && imgObj){
+    if(hue) ctx.filter=`hue-rotate(${hue}deg)`;
+    const sc=Math.min(box/imgObj.naturalWidth, box/imgObj.naturalHeight);
+    const w=imgObj.naturalWidth*sc, h=imgObj.naturalHeight*sc;
+    ctx.drawImage(imgObj,-w/2,-h/2,w,h);
+    ctx.filter="none";
+  } else {
+    const lines=textLines();
+    let fs=size*0.92;
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    const setFont=()=>{ ctx.font=`900 ${fs}px ${FONTS[state.font]}`; };
+    setFont();
+    const maxW=Math.max(...lines.map(l=>ctx.measureText(l).width),1);
+    const lineH=fs*1.14;
+    fs*=Math.min(1,(size*0.84)/maxW,(size*0.84)/(lineH*lines.length));
+    fs*=state.textSize/100; setFont();
+    const lh=fs*1.14, y0=-lh*(lines.length-1)/2;
+    lines.forEach((ln,i)=>{
+      const y=y0+lh*i;
+      if(state.outline && state.outlineWidth>0){ ctx.lineWidth=fs*state.outlineWidth/100; ctx.strokeStyle=state.outlineColor; ctx.lineJoin="round"; ctx.miterLimit=2; ctx.strokeText(ln,0,y); }
+      if(state.colorMode==="grad"){ const g=ctx.createLinearGradient(0,y-fs*0.55,0,y+fs*0.55); g.addColorStop(0,hueShift(state.color,hue)); g.addColorStop(1,hueShift(state.color2,hue)); ctx.fillStyle=g; }
+      else ctx.fillStyle=hueShift(state.color,hue);
+      ctx.fillText(ln,0,y);
+    });
+  }
+  ctx.restore();
+  // キラキラ（最前面）
+  if(findFx("sparkle")){
+    const pos=[[0.16,0.14],[0.85,0.2],[0.12,0.82],[0.86,0.85],[0.5,0.05],[0.52,0.94]];
+    pos.forEach(([fx,fy],i)=>{ const ph=((t/1.2)+i/6)%1; const a=Math.pow(Math.max(0,Math.sin(Math.PI*ph)),2);
+      if(a<=0.02) return; const r=size*0.075*(0.4+0.6*Math.sin(Math.PI*ph));
+      const x=fx*size, y=fy*size;
+      ctx.save(); ctx.globalAlpha=a; ctx.translate(x,y); ctx.rotate(ph*Math.PI/2);
+      ctx.fillStyle="#f7b733"; ctx.beginPath();
+      ctx.moveTo(0,-r); ctx.quadraticCurveTo(0,0,r,0); ctx.quadraticCurveTo(0,0,0,r); ctx.quadraticCurveTo(0,0,-r,0); ctx.quadraticCurveTo(0,0,0,-r);
+      ctx.fill(); ctx.restore(); });
+  }
+}
+function loopDuration(){
+  const speeds=state.effects.filter(e=>e.type!=="sparkle"&&e.speed).map(e=> e.type==="spin"&&e.dir==="alternate"? e.speed*2 : e.speed);
+  if(findFx("sparkle")) speeds.push(1.2);
+  if(!speeds.length) return 0;
+  for(let d=0.6; d<=6.001; d+=0.05){ if(speeds.every(s=>Math.abs(d/s-Math.round(d/s))<0.02)) return Math.round(d*100)/100; }
+  return Math.min(4, Math.max(...speeds)*2);
+}
+
+/* ---------- 出力 ---------- */
+function download(blob,filename){ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },800); }
+$("btnPng").addEventListener("click",()=>{
+  drawContent(parseInt($("exportSize").value,10),0,false);
+  cvs.toBlob(b=>{ download(b,(state.name||"emoji")+".png"); toast("PNGを保存したよ🖼️ Misskeyに登録してね"); },"image/png");
+});
+$("btnGif").addEventListener("click",async()=>{
+  const D=loopDuration();
+  if(!D){ toast("効果が付いてないから、GIFにしても静止画だよ。PNGで十分だよ🖼️"); return; }
+  if(typeof GIFENC==="undefined"){ toast("GIF部品の読み込みに失敗しちゃった…もう一度開き直してみてね"); return; }
+  const size=parseInt($("exportSize").value,10), fps=15, frames=Math.max(6,Math.round(D*fps)), delay=Math.round(1000/fps);
+  const btn=$("btnGif"); btn.disabled=true; $("gifProgress").classList.remove("hidden");
+  try{
+    const gif=GIFENC.GIFEncoder();
+    for(let f=0; f<frames; f++){
+      drawContent(size, f/fps, true);
+      const img=ctx.getImageData(0,0,size,size);
+      const palette=GIFENC.quantize(img.data,255,{format:"rgba4444",oneBitAlpha:true});
+      let tIdx=palette.findIndex(c=>c.length>3&&c[3]===0);
+      const index=GIFENC.applyPalette(img.data,palette,"rgba4444");
+      const opts={palette,delay,dispose:2};
+      if(tIdx>=0){ opts.transparent=true; opts.transparentIndex=tIdx; }
+      if(f===0) opts.repeat=0;
+      gif.writeFrame(index,size,size,opts);
+      $("gifBar").value=Math.round((f+1)/frames*100); $("gifStatus").textContent=`GIFを作ってるよ… ${f+1} / ${frames} コマ`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+    gif.finish();
+    const bytes=gif.bytes();
+    download(new Blob([bytes],{type:"image/gif"}),(state.name||"emoji")+".gif");
+    toast(`アニメGIFを保存したよ🎞️（${frames}コマ／${D}秒ループ）`);
+  }catch(err){ console.error(err); toast("GIFの作成に失敗しちゃった…効果を減らして試してみてね"); }
+  btn.disabled=false; $("gifProgress").classList.add("hidden");
+});
+async function copyText(txt,msg){
+  try{ await navigator.clipboard.writeText(txt); toast(msg); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); toast(msg); }
+}
+$("btnCopyMfm").addEventListener("click",()=>copyText(buildMfm(),"MFMコードをコピーしたよ📋 ノートに貼ってね"));
+$("btnCopyName").addEventListener("click",()=>copyText(":"+(state.name||"emoji")+":",":名前: をコピーしたよ📋"));
+$("btnShare").addEventListener("click",()=>{
+  const s={...state}; delete s.effects; s.effects=state.effects;
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(s))));
+  copyText(location.origin+location.pathname+"#s="+b64,"共有URLをコピーしたよ🔗（画像モードの画像自体は含まれないよ）");
+});
+$("btnReset").addEventListener("click",()=>{ try{localStorage.removeItem("misskey-emoji-maker-v1");}catch(e){}
+  location.hash=""; location.reload(); });
+
+/* ---------- 入力の結線 ---------- */
+function segWire(id,attr,cb){ $(id).querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+  $(id).querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); cb(b.dataset[attr]); })); }
+function segSet(id,attr,val){ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset[attr]===String(val))); }
+segWire("fontSeg","font",v=>{ state.font=v; refresh(); });
+segWire("colorModeSeg","cm",v=>{ state.colorMode=v; $("gradRow").classList.toggle("hidden",v!=="grad"); refresh(); });
+segWire("bgSeg","bg",v=>{ state.bg=v; $("bgColorRow").classList.toggle("hidden",v==="none"); refresh(); });
+segWire("sizeSeg","size",v=>{ state.sizeOpt=v; refresh(); });
+segWire("flipSeg","flip",v=>{ state.flipOpt=v; refresh(); });
+function swatchWire(boxId,inputId){ const box=$(boxId); SWATCHES.forEach(c=>{ const b=document.createElement("button"); b.type="button"; b.className="sw"; b.style.background=c; b.title=c;
+  b.addEventListener("click",()=>{ $(inputId).value=c; $(inputId).dispatchEvent(new Event("input")); }); box.appendChild(b); }); }
+swatchWire("colorSwatches","inColor"); swatchWire("color2Swatches","inColor2"); swatchWire("bgSwatches","inBgColor");
+[["inColor","color"],["inColor2","color2"],["inOutlineColor","outlineColor"],["inBgColor","bgColor"]].forEach(([id,key])=>{
+  $(id).addEventListener("input",()=>{ state[key]=$(id).value; refresh(false); saveLocal(); });
+});
+$("inOutline").addEventListener("change",()=>{ state.outline=$("inOutline").checked; refresh(); });
+$("inOutlineWidth").addEventListener("input",()=>{ state.outlineWidth=parseInt($("inOutlineWidth").value,10); $("outlineWidthVal").textContent=state.outlineWidth+"%"; refresh(false); saveLocal(); });
+$("inTextSize").addEventListener("input",()=>{ state.textSize=parseInt($("inTextSize").value,10); $("textSizeVal").textContent=state.textSize+"%"; refresh(false); saveLocal(); });
+$("inText").addEventListener("input",()=>{ state.text=$("inText").value; refresh(false); saveLocal(); });
+$("inName").addEventListener("input",()=>{ state.name=$("inName").value.trim().toLowerCase().replace(/[^a-z0-9_]/g,"_"); updateMfm(); saveLocal(); });
+$("tabText").addEventListener("click",()=>setMode("text"));
+$("tabImage").addEventListener("click",()=>setMode("image"));
+function setMode(m){ state.mode=m; $("tabText").classList.toggle("active",m==="text"); $("tabImage").classList.toggle("active",m==="image");
+  $("paneText").classList.toggle("hidden",m!=="text"); $("paneImage").classList.toggle("hidden",m!=="image"); refresh(); }
+function loadImageFile(file){
+  if(!file || !file.type.startsWith("image/")){ toast("画像ファイルを選んでね"); return; }
+  const url=URL.createObjectURL(file); const im=new Image();
+  im.onload=()=>{ imgObj=im; imgURL=url;
+    $("dropZone").innerHTML=""; const prev=document.createElement("img"); prev.src=url; $("dropZone").appendChild(prev);
+    const d=document.createElement("div"); d.textContent=`✅ ${file.name} を読み込んだよ（タップで選び直し）`; $("dropZone").appendChild(d);
+    refresh(); toast("画像を読み込んだよ🖼️"); };
+  im.onerror=()=>toast("その画像は読み込めなかった…別のファイルで試してみてね");
+  im.src=url;
+}
+$("dropZone").addEventListener("click",()=>$("inFile").click());
+$("inFile").addEventListener("change",()=>loadImageFile($("inFile").files[0]));
+["dragover","dragleave","drop"].forEach(ev=>$("dropZone").addEventListener(ev,e=>{ e.preventDefault(); $("dropZone").classList.toggle("over",ev==="dragover"); if(ev==="drop") loadImageFile(e.dataTransfer.files[0]); }));
+
+/* チップとパレット */
+TEXT_CHIPS.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=t;
+  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; setMode("text"); refresh(); }); $("textChips").appendChild(b); });
+EMOJI_PALETTE.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.textContent=t;
+  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; setMode("text"); refresh(); }); $("emojiPalette").appendChild(b); });
+
+/* ---------- 保存・復元 ---------- */
+let saveTimer=0;
+function saveLocal(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ const s={...state}; localStorage.setItem("misskey-emoji-maker-v1",JSON.stringify(s)); }catch(e){} },300); }
+function applyState(s){
+  Object.assign(state,s);
+  $("inText").value=state.text; $("inName").value=state.name;
+  $("inColor").value=state.color; $("inColor2").value=state.color2; $("inOutlineColor").value=state.outlineColor; $("inBgColor").value=state.bgColor;
+  $("inOutline").checked=state.outline; $("inOutlineWidth").value=state.outlineWidth; $("outlineWidthVal").textContent=state.outlineWidth+"%";
+  $("inTextSize").value=state.textSize; $("textSizeVal").textContent=state.textSize+"%";
+  segSet("fontSeg","font",state.font); segSet("colorModeSeg","cm",state.colorMode); segSet("bgSeg","bg",state.bg);
+  segSet("sizeSeg","size",state.sizeOpt); segSet("flipSeg","flip",state.flipOpt);
+  $("gradRow").classList.toggle("hidden",state.colorMode!=="grad");
+  $("bgColorRow").classList.toggle("hidden",state.bg==="none");
+  setMode(state.mode==="image"&&imgObj? "image":"text");
+  buildFxGrid();
+}
+function refresh(rebuild=true){ mountPreviews(); updateMfm(); updateOrder(); if(rebuild) saveLocal(); }
+
+/* ---------- サイトテーマ ---------- */
+const THEMES=[["yuka","🌸","優花"],["white","☀️","白"],["black","🌙","黒"]];
+let siteTheme="yuka";
+function applySiteTheme(t,save=true){ siteTheme=t; document.documentElement.dataset.theme=t;
+  const meta=THEMES.find(x=>x[0]===t)||THEMES[0]; const btn=$("siteThemeBtn");
+  btn.textContent=meta[1]; btn.title=`表示テーマ：${meta[2]}（タップで切替）`;
+  if(save){ try{ localStorage.setItem("misskey-emoji-maker-sitetheme",t); }catch(e){} } }
+$("siteThemeBtn").addEventListener("click",()=>{ const i=THEMES.findIndex(x=>x[0]===siteTheme); applySiteTheme(THEMES[(i+1)%THEMES.length][0]); });
+
+/* ---------- 初期化 ---------- */
+(function init(){
+  try{ siteTheme=localStorage.getItem("misskey-emoji-maker-sitetheme")||"yuka"; }catch(e){}
+  applySiteTheme(THEMES.some(x=>x[0]===siteTheme)?siteTheme:"yuka",false);
+  buildPresets(); buildFxGrid();
+  let restored=false;
+  if(location.hash.startsWith("#s=")){ try{ const s=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))); applyState(s); restored=true; }catch(e){} }
+  if(!restored){ try{ const raw=localStorage.getItem("misskey-emoji-maker-v1"); if(raw){ applyState(JSON.parse(raw)); restored=true; } }catch(e){} }
+  if(!restored){ applyState(state); }
+  refresh();
+})();
+</script>
+</body>
+</html>
