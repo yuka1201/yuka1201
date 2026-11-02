@@ -85,8 +85,8 @@
     font-size:14px;font-family:inherit;color:var(--ink);background:var(--input-bg);outline:none}
   input[type=text]:focus,textarea:focus{border-color:var(--accent-deep)}
   textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;min-height:230px;resize:vertical}
-  .seg{display:flex;gap:8px;width:100%}
-  .seg button{flex:1 1 0;min-width:0;padding:10px 4px;line-height:1.5;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
+  .seg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%}
+  .seg button{min-width:0;width:100%;padding:10px 4px;line-height:1.5;font-size:14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
   .seg button.on{background:var(--grad);color:#fff;border-color:transparent}
   .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   #infoBtns{display:grid;grid-template-columns:1fr 1fr}
@@ -184,6 +184,7 @@
 
   /* 日本語の改行・フォント調整 */
   html{-webkit-text-size-adjust:100%}
+  html,body{overflow-x:clip}
   body{line-break:strict;word-break:normal;overflow-wrap:break-word;letter-spacing:.02em}
   h1,h2.sec,.sample .sname{text-wrap:balance}
   h2.sec{flex-wrap:wrap;row-gap:4px}
@@ -607,7 +608,7 @@ function generateCode(){
   const lines=[];
   lines.push("{");
   lines.push(`\tid: '${esc(state.id)}',`);
-  lines.push(`\tname: '${esc(state.name||"My Theme")}',`);
+  lines.push(`\tname: '${esc(state.name||"無名のテーマ")}',`);
   if(state.author) lines.push(`\tauthor: '${esc(state.author)}',`);
   if(state.desc) lines.push(`\tdesc: '${esc(state.desc)}',`);
   lines.push(`\tbase: '${state.base}',`);
