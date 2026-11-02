@@ -86,13 +86,13 @@
   input[type=text]:focus,textarea:focus{border-color:var(--accent-deep)}
   textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;min-height:230px;resize:vertical}
   .seg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;width:100%}
-  .seg button{min-width:0;width:100%;padding:10px 4px;line-height:1.5;font-size:14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
-  .seg button.on{background:var(--grad);color:#fff;border-color:transparent}
+  .seg button{-webkit-appearance:none;appearance:none;background-clip:padding-box;min-width:0;width:100%;padding:10px 4px;line-height:1.5;font-size:14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
+  .seg button.on{background:var(--grad);background-clip:padding-box;color:#fff;border-color:transparent}
   .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   #infoBtns{display:grid;grid-template-columns:1fr 1fr}
   #infoBtns .btn{width:100%}
   #infoBtns #btnPalette,#infoBtns #btnAllRandom{grid-column:1/-1}
-  .btn{border:none;border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;transition:transform .12s ease, box-shadow .12s ease}
+  .btn{-webkit-appearance:none;appearance:none;border:none;border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;transition:transform .12s ease, box-shadow .12s ease}
   .btn:disabled{opacity:.45;cursor:default}
   .btn:hover{transform:translateY(-1px)}
   .btn.main{background:var(--grad);color:#fff;box-shadow:var(--btn-shadow)}
