@@ -366,7 +366,7 @@
 
   <footer>Y.U.K.A ― AI NOTE SYSTEM<br>テーマの仕様は <a href="https://misskey-hub.net/ja/docs/for-users/features/theme/" target="_blank" rel="noopener">Misskey Hub「テーマ」</a> に準拠しているよ🌸</footer>
 </div>
-<div id="miniBar" title="タップでプレビューへ移動"><span class="mb-name">My Theme</span><span class="mb-dots"><i data-mb="bg"></i><i data-mb="panel"></i><i data-mb="accent"></i><i data-mb="fg"></i><i data-mb="link"></i><i data-mb="renote"></i></span><span class="mb-go">プレビュー 👀</span></div>
+<div id="miniBar" title="タップでプレビューへ移動"><span class="mb-name">無名のテーマ</span><span class="mb-dots"><i data-mb="bg"></i><i data-mb="panel"></i><i data-mb="accent"></i><i data-mb="fg"></i><i data-mb="link"></i><i data-mb="renote"></i></span><span class="mb-go">プレビュー 👀</span></div>
 <div id="toast"></div>
 
 <script>
@@ -594,7 +594,7 @@ function updatePreview(res){
   const mb=$("miniBar");
   if(mb){
     mb.style.background=res.panel; mb.style.color=res.fg;
-    mb.querySelector(".mb-name").textContent = state.name || "My Theme";
+    mb.querySelector(".mb-name").textContent = state.name || "無名のテーマ";
     mb.querySelectorAll("[data-mb]").forEach(d=>{ d.style.background = res[d.dataset.mb] || "#888"; });
   }
   let html="";
