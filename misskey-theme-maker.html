@@ -267,7 +267,7 @@
         <div class="rowbtns">
           <button class="btn sub" type="button" id="btnPalette">✨ アクセントから配色をおまかせ</button>
           <button class="btn sub" type="button" id="btnDice">🎲 ランダムアクセント</button>
-          <button class="btn ghost" type="button" id="btnNewId">IDを作り直す</button>
+          <button class="btn ghost" type="button" id="btnClearInfo">テーマの情報をクリア</button>
           <button class="btn ghost" type="button" id="btnReset">リセット</button>
         </div>
         <p class="note-help">「配色をおまかせ」は、アクセントカラーに合うリンク色・リノート色などを自動で決めてくれるよ。あとから個別に変えられるよ。</p>
@@ -680,7 +680,12 @@ function bindEvents(){
   $("metaDesc").addEventListener("input",e=>{state.desc=e.target.value; updateCode(); saveLocal();});
   $("baseLight").addEventListener("click",()=>{state.base="light"; syncMetaInputs(); updateAll();});
   $("baseDark").addEventListener("click",()=>{state.base="dark"; syncMetaInputs(); updateAll();});
-  $("btnNewId").addEventListener("click",()=>{state.id=crypto.randomUUID?crypto.randomUUID():"theme-"+Date.now(); updateCode(); saveLocal(); toast("新しいIDにしたよ");});
+  $("btnClearInfo").addEventListener("click",()=>{
+    state.name=""; state.author=""; state.desc="";
+    state.id=crypto.randomUUID?crypto.randomUUID():"theme-"+Date.now();
+    syncMetaInputs(); updateCode(); saveLocal();
+    toast("テーマの情報をクリアしたよ（IDは新しいものにしたよ）");
+  });
   $("btnReset").addEventListener("click",()=>{ localStorage.removeItem("misskey-theme-maker-v1"); applySample(SAMPLES[0]); syncMetaInputs(); updateAll(); toast("優花さくらに戻したよ🌸"); });
   $("btnDice").addEventListener("click",()=>{
     const h=Math.floor(Math.random()*360);
