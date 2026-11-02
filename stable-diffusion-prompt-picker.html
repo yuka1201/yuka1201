@@ -113,6 +113,11 @@ body{padding-bottom:var(--drawer-pad,60px)}
 @media(min-width:981px){header{padding-right:186px}}
 @media(max-width:980px){#nav-tab{display:block;position:fixed;left:0;top:15%;z-index:55;writing-mode:vertical-rl;background:var(--ac);color:#fff;border:0;border-radius:0 12px 12px 0;padding:13px 7px;font:inherit;font-weight:700;letter-spacing:.12em;cursor:pointer;box-shadow:var(--sh)}body.nav-open #nav-tab{opacity:0;pointer-events:none}h1{padding-right:120px}}
 @media(max-width:640px){#themePill{top:8px;right:8px}#themePill button{font-size:12px;padding:5px 9px;min-height:32px}}
+.up-row{display:flex;align-items:center;gap:6px;background:var(--in);border:1px solid var(--ln);border-radius:10px;padding:4px 6px;margin-bottom:4px}
+.up-name{flex:1;display:flex;align-items:center;gap:8px;background:none;border:0;cursor:pointer;font:inherit;font-weight:700;text-align:left;padding:6px 4px;color:var(--tx);min-width:0}
+.up-name span{color:var(--sb);font-size:11px;font-weight:600;flex:none}
+.up-del{background:none;border:0;cursor:pointer;color:var(--sb);padding:6px 8px;font-size:14px;flex:none}
+.up-del:hover{color:#ef4444}
 </style>
 </head>
 <body>
@@ -148,6 +153,9 @@ body{padding-bottom:var(--drawer-pad,60px)}
 <div class="right">
 <h3><span id="cnt">0</span> 件を選択中</h3>
 <div class="chips" id="chips"></div>
+<div class="oh"><span>マイプリセット</span></div>
+<div class="fr"><label>名前</label><input type="text" id="upName" placeholder="プリセット名を入力"><button class="btn s p" type="button" onclick="saveUserPreset()">保存</button></div>
+<div id="upList"></div>
 <div class="fr"><label>追加</label><input type="text" id="fp" placeholder="英語タグを入力して Enter（追加）"></div>
 <div class="fr"><label>ネガ追加</label><input type="text" id="fn" placeholder="英語タグを入力して Enter（ネガティブ追加）"></div>
 <div class="oh"><span>プロンプト（Positive）</span><button class="btn s" data-copy="pos">コピー</button><button class="btn s p share-btn" type="button" onclick="sharePrompt()"><i data-i="share"></i>共有</button></div>
@@ -282,7 +290,7 @@ $("#special").innerHTML=`<div class="guide">
 <div class="panel"><h3>🌟 テンプレートとランダム</h3><p>ヘッダーの「テンプレート」プルダウンから汎用テンプレートを選ぶと、よく使う組み合わせをワンタップで丸ごとセットできます（今の選択は置き換わります）。セットしたあとは、カードやチップで微調整できます。如月優花のテンプレート集は、カテゴリの一番最後にある「おまけ」に入っています（カードを押すと丸ごとセットできます）。ヘッダーの「ランダム」ボタンでも、カテゴリから少しずつ選んで自動で組み立てられます。</p><p style="margin-top:8px" class="gact"><button class="btn p" type="button" onclick="goCat('おまけ')">おまけ（優花テンプレート）を見る</button><button class="btn" type="button" onclick="goCat('キャラクター')">カテゴリから始める</button><button class="btn" type="button" onclick="goCat('カラーピッカー')">カラーピッカーを開く</button></p></div>
 <div class="panel"><h3>🎨 カラーピッカー</h3><p>外側の輪（色相リング）で色合いを、内側の三角で鮮やかさと明るさを選びます。選んだ色は色名（日本語／英語）と HEX で表示されます。「髪に付ける」「目に付ける」などの適用先ボタンを押すと、その色が色タグ（例：light purple hair）としてドロワーに入ります。同じ適用先を押し直すと色タグが差し替わります。</p></div>
 <div class="panel"><h3>📤 ドロワーと共有</h3><p>画面下のドロワーは、右端のトグルボタンで開閉できます。閉じたままでも、バーのボタンから Positive／Negative のコピーと共有ができます。「共有」ボタンを押すと今の構成を埋め込んだ共有URLができ、そのURLを開くと構成がそのまま復元されます。</p></div>
-<div class="panel"><h3>💾 テーマと保存</h3><p>テーマは 白／黒／優花 の3種類で、ヘッダーのプルダウンから切り替えます。選択内容はこのブラウザに自動保存されるので、ページを開き直しても続きから使えます。ヘッダーの「保存／読込」で、選択内容を JSON ファイルに書き出し・取り込みもできます。</p></div>
+<div class="panel"><h3>💾 テーマと保存</h3><p>テーマは 白／黒／優花 の3種類で、ヘッダーのプルダウンから切り替えます。選択内容はこのブラウザに自動保存されるので、ページを開き直しても続きから使えます。ヘッダーの「保存／読込」で、選択内容を JSON ファイルに書き出し・取り込みもできます。下のプロンプト欄にある「マイプリセット」では、今の選択を名前を付けてブラウザ内に保存でき、タップで呼び出し、✕で削除できます。</p></div>
 <div class="panel warn"><h3>⚠️ 注意</h3><p>NSFW カテゴリは、成人の女性キャラクター専用です。未成年・未成年風のキャラクターには使わないでください。</p></div>
 </div>`}
 function chips(){$("#cnt").textContent=sel.length;
@@ -369,6 +377,6 @@ const d=$("#shareDlg"),t=$("#shareUrlTxt");if(d&&t){t.value=url;if(typeof d.show
 function copyShareUrl(){const t=$("#shareUrlTxt");if(!t)return;t.focus();t.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}if(ok){toast("共有URLをコピーしました")}else if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>toast("共有URLをコピーしました")).catch(()=>{})}}
 boot();buildTplSelect();update(true);initDrawer();if(sharedLoaded)toast("共有されたプロンプトを読み込みました");
 </script>
-<script>function toggleNav(force){const open=typeof force==="boolean"?force:!document.body.classList.contains("nav-open");document.body.classList.toggle("nav-open",open);const b=document.getElementById("nav-open");if(b)b.setAttribute("aria-expanded",String(open))}document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("nav-open"))toggleNav(false)});function syncThemePill(){const t=document.documentElement.dataset.theme||"yuka";document.querySelectorAll("#themePill button").forEach(b=>b.classList.toggle("act",b.dataset.th===t))}new MutationObserver(syncThemePill).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});syncThemePill();</script>
+<script>function toggleNav(force){const open=typeof force==="boolean"?force:!document.body.classList.contains("nav-open");document.body.classList.toggle("nav-open",open);const b=document.getElementById("nav-open");if(b)b.setAttribute("aria-expanded",String(open))}document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("nav-open"))toggleNav(false)});function syncThemePill(){const t=document.documentElement.dataset.theme||"yuka";document.querySelectorAll("#themePill button").forEach(b=>b.classList.toggle("act",b.dataset.th===t))}new MutationObserver(syncThemePill).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});syncThemePill();const UPK="sdpb.userPresets";function loadUP(){try{const a=JSON.parse(localStorage.getItem(UPK));return Array.isArray(a)?a:[]}catch(e){return[]}}function storeUP(a){try{localStorage.setItem(UPK,JSON.stringify(a))}catch(e){}}function saveUserPreset(){if(!sel.length){toast("まずタグを選んでね");return}const inp=document.getElementById("upName");let name=((inp&&inp.value)||"").trim();const list=loadUP();if(!name)name="プリセット"+(list.length+1);const data={name,sel:sel.map(x=>({c:x.c,p:x.p,l:x.l,w:x.w})),colorTags:JSON.parse(JSON.stringify(colorTags||{}))};const i=list.findIndex(x=>x.name===name);if(i>=0)list[i]=data;else list.push(data);storeUP(list);renderUP();if(inp)inp.value="";toast("プリセット「"+name+"」を保存しました")}function applyUserPreset(i){const p=loadUP()[i];if(!p)return;sel=p.sel.map(x=>({c:x.c,p:x.p,l:x.l,w:x.w}));colorTags=JSON.parse(JSON.stringify(p.colorTags||{}));update(true);toast("プリセット「"+p.name+"」を適用しました")}function delUserPreset(i){const list=loadUP();const p=list[i];if(!p)return;list.splice(i,1);storeUP(list);renderUP();toast("プリセット「"+p.name+"」を削除しました")}function renderUP(){const el=document.getElementById("upList");if(!el)return;const list=loadUP();el.innerHTML=list.length?list.map((p,i)=>`<div class="up-row"><button class="up-name" type="button" onclick="applyUserPreset(${i})">${esc(p.name)}<span>${p.sel.length}件</span></button><button class="up-del" type="button" onclick="delUserPreset(${i})" aria-label="プリセットを削除">✕</button></div>`).join(""):'<p class="hint" style="margin:2px 4px">保存したプリセットはここに出ます（タップで適用）</p>'}renderUP();</script>
 </body>
 </html>
