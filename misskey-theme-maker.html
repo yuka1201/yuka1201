@@ -172,15 +172,15 @@
   .note-help{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px}
   #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--toast-bg);color:var(--toast-fg);font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;box-shadow:0 10px 26px rgba(0,0,0,.3)}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .theme-sel{min-height:42px;padding:0 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);color:var(--ink);font:inherit;font-weight:800;cursor:pointer;box-shadow:var(--card-shadow)}
-  .site-theme-row{position:fixed;top:14px;right:16px;z-index:60;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:800;color:var(--ink-soft);background:var(--badge-bg);border:1.5px solid var(--line2);border-radius:999px;padding:6px 8px 6px 14px;box-shadow:var(--card-shadow);backdrop-filter:blur(8px)}
-  .site-theme-row .theme-sel{min-height:36px;padding:0 10px}
-  @media (max-width:520px){.site-theme-row{top:10px;right:10px}.site-theme-row label{display:none}}
+  .site-theme-row{position:fixed;top:14px;right:16px;z-index:60}
+  .theme-icon-btn{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line2);background:var(--badge-bg);box-shadow:var(--card-shadow);backdrop-filter:blur(8px);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
+  .theme-icon-btn:hover{transform:scale(1.1) rotate(-6deg)}
+  @media (max-width:520px){.site-theme-row{top:10px;right:10px}.theme-icon-btn{width:42px;height:42px;font-size:19px}}
   footer{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:34px;line-height:1.8}
 </style>
 </head>
 <body>
-<div class="site-theme-row"><label for="siteThemeSel">サイトの表示</label><select id="siteThemeSel" class="theme-sel" aria-label="サイトの表示テーマ選択"><option value="white">白</option><option value="black">黒</option><option value="yuka">優花</option></select></div>
+<div class="site-theme-row"><button type="button" id="siteThemeBtn" class="theme-icon-btn" aria-label="サイトの表示テーマ切り替え" title="表示テーマ：優花（タップで切替）">🌸</button></div>
 <div class="wrap">
   <header class="top">
     <span class="badge">Y.U.K.A SYSTEM</span>
@@ -598,10 +598,14 @@ function parseThemeCode(text){
 }
 
 /* --- サイト自体の表示テーマ（白 / 黒 / 優花） --- */
+const SITE_THEMES = ["white","black","yuka"];
+const SITE_THEME_ICON = {white:"☀️", black:"🌙", yuka:"🌸"};
+const SITE_THEME_NAME = {white:"白", black:"黒", yuka:"優花"};
 function applySiteTheme(v, save=true){
-  const t = ["white","black","yuka"].includes(v) ? v : "yuka";
+  const t = SITE_THEMES.includes(v) ? v : "yuka";
   document.documentElement.dataset.theme = t;
-  const sel = $("siteThemeSel"); if(sel) sel.value = t;
+  const btn = $("siteThemeBtn");
+  if(btn){ btn.textContent = SITE_THEME_ICON[t]; btn.title = `表示テーマ：${SITE_THEME_NAME[t]}（タップで切替）`; }
   if(save){ try{ localStorage.setItem("misskey-theme-maker-sitetheme", t); }catch(e){} }
 }
 
@@ -657,7 +661,12 @@ function bindEvents(){
     r.tile.classList.add("flash"); setTimeout(()=>r.tile.classList.remove("flash"),1400);
     toast(`「${PROP_JA[key]||key}（${key}）」を編集してるよ`);
   });
-  $("siteThemeSel").addEventListener("change",e=>{ applySiteTheme(e.target.value); toast("サイトの表示を変えたよ"); });
+  $("siteThemeBtn").addEventListener("click",()=>{
+    const cur = document.documentElement.dataset.theme || "yuka";
+    const next = SITE_THEMES[(SITE_THEMES.indexOf(cur)+1) % SITE_THEMES.length];
+    applySiteTheme(next);
+    toast(`サイトの表示を「${SITE_THEME_NAME[next]}」にしたよ`);
+  });
   $("btnCopy").addEventListener("click",async()=>{
     const code=generateCode(); $("codeOut").value=code;
     try{ await navigator.clipboard.writeText(code); toast("テーマコードをコピーしたよ📋"); }
