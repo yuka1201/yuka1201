@@ -139,6 +139,10 @@ body{padding-bottom:var(--drawer-pad,60px)}
 .snav b:empty{display:none}
 .snav:hover{background:var(--ch)}
 .subhead{scroll-margin-top:8px}
+.navrow{display:flex;gap:4px;align-items:stretch;margin-bottom:6px}
+.navrow .nav{flex:1;margin-bottom:0}
+.nav-exp{flex:none;width:38px;border:1px solid var(--ln);background:var(--in);border-radius:11px;color:var(--sb);font:inherit;font-size:13px;cursor:pointer}
+.nav-exp:hover{background:var(--ch)}
 </style>
 </head>
 <body>
@@ -299,7 +303,7 @@ const add=(c,it)=>{if(hasP(it.p)<0)sel.push({c,p:it.p,l:it.l,w:1})};
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),1800)}
 function nav(){$("#nav").innerHTML=Object.entries(allCats()).map(([k,v])=>{const n=k==="カラーピッカー"?sel.filter(x=>x.c===CC).length:sel.filter(x=>x.c===k).length;
 let h=`<button class="nav${k===cur?" act":""}" style="--c:${v.c}" data-k="${esc(k)}"><span class="tile">${catTile(k,v,18)}</span><span class="nm">${esc(k)}</span><b>${n||""}</b></button>`;
-if(SUBCAT[k])for(const [gn,ps] of SUBCAT[k]){const sn=sel.filter(x=>x.c===k&&ps.includes(x.p)).length;h+=`<button class="snav" style="--c:${v.c}" data-k="${esc(k)}" data-g="${esc(gn)}"><span class="tile">${subTile(k,gn,v)}</span><span class="nm">${esc(gn)}</span><b>${sn||""}</b></button>`}
+if(SUBCAT[k]){let expMap={};try{expMap=JSON.parse(localStorage.getItem("sdpb.navExp")||"{}")}catch(e){}const open=expMap[k]!==undefined?!!expMap[k]:k===cur;h=`<div class="navrow">${h}<button class="nav-exp" data-k="${esc(k)}" aria-expanded="${open}" aria-label="サブカテゴリを${open?"閉じる":"開く"}">${open?"▾":"▸"}</button></div>`;if(open)for(const [gn,ps] of SUBCAT[k]){const sn=sel.filter(x=>x.c===k&&ps.includes(x.p)).length;h+=`<button class="snav" style="--c:${v.c}" data-k="${esc(k)}" data-g="${esc(gn)}"><span class="tile">${subTile(k,gn,v)}</span><span class="nm">${esc(gn)}</span><b>${sn||""}</b></button>`}}
 return h}).join("")}
 function grid(){const sp=$("#special");sp.innerHTML="";const g=$("#grid");g.innerHTML="";
 if(cur===GUIDE){renderGuide();return}
@@ -323,7 +327,7 @@ function goCat(k){cur=k;nav();grid();const c=document.querySelector(".ctr");if(c
 function renderGuide(){$("#title").textContent="説明";const t=$("#ttile");t.style.setProperty("--c","#a78bdb");t.innerHTML=ic("help",22);$("#catnote").textContent="このツールの使い方をまとめました。左のカテゴリ（スマホでは上のカテゴリ）を選ぶと、タグ一覧に切り替わります。";$("#cc").textContent="";
 $("#special").innerHTML=`<div class="guide">
 <div class="panel"><h3>📖 このツールについて</h3><p>Stable Diffusion／PixAI／NovelAI 向けのプロンプト組み立てツールです。カードに書かれた日本語のタグを選ぶだけで、英語のプロンプトが組み上がります。カードには「日本語（意味）＋英語（プロンプト）」が表示されますが、コピーされるのは英語だけです。</p></div>
-<div class="panel"><h3>✅ 基本の流れ</h3><ol><li>カテゴリからタグを選ぶ：左のカテゴリ（スマホでは上）を切り替えて、気に入ったカードをタップします。</li><li>サブカテゴリ：キャラクター・表情・ポーズ・衣装では、部位や種類ごとの小見出しでカードがグループ分けされています（目なら目のタグがまとまっています）。カテゴリ一覧に出る小さい項目を押すと、そのグループの見出しまで直接ジャンプできます。</li><li>下のドロワーに溜まる：選んだタグは下のドロワーにチップで溜まります。チップの ＋／− で重み（0.1〜2.0）を調整でき、× で削除できます。ドロワー内の「追加／ネガ追加」欄に英語タグを自由入力して追加もできます。</li><li>コピーして生成AIに貼る：ドロワーのコピーボタンで Positive／Negative をコピーして、Stable Diffusion／PixAI／NovelAI などに貼り付けます。</li></ol></div>
+<div class="panel"><h3>✅ 基本の流れ</h3><ol><li>カテゴリからタグを選ぶ：左のカテゴリ（スマホでは上）を切り替えて、気に入ったカードをタップします。</li><li>サブカテゴリ：キャラクター・表情・ポーズ・衣装では、部位や種類ごとの小見出しでカードがグループ分けされています（目なら目のタグがまとまっています）。カテゴリの右端にある ▸ を押すとサブカテゴリが展開します（開閉は保存されます）。サブカテゴリの項目を押すと、そのグループの見出しまで直接ジャンプできます。</li><li>下のドロワーに溜まる：選んだタグは下のドロワーにチップで溜まります。チップの ＋／− で重み（0.1〜2.0）を調整でき、× で削除できます。ドロワー内の「追加／ネガ追加」欄に英語タグを自由入力して追加もできます。</li><li>コピーして生成AIに貼る：ドロワーのコピーボタンで Positive／Negative をコピーして、Stable Diffusion／PixAI／NovelAI などに貼り付けます。</li></ol></div>
 <div class="panel"><h3>🌟 テンプレートとランダム</h3><p>ヘッダーの「テンプレート」プルダウンから汎用テンプレートを選ぶと、よく使う組み合わせをワンタップで丸ごとセットできます（今の選択は置き換わります）。セットしたあとは、カードやチップで微調整できます。如月優花のテンプレート集は、カテゴリの一番最後にある「おまけ」に入っています（カードを押すと丸ごとセットできます）。ヘッダーの「ランダム」ボタンでも、カテゴリから少しずつ選んで自動で組み立てられます。</p><p style="margin-top:8px" class="gact"><button class="btn p" type="button" onclick="goCat('おまけ')">おまけ（優花テンプレート）を見る</button><button class="btn" type="button" onclick="goCat('キャラクター')">カテゴリから始める</button><button class="btn" type="button" onclick="goCat('カラーピッカー')">カラーピッカーを開く</button></p></div>
 <div class="panel"><h3>🎨 カラーピッカー</h3><p>外側の輪（色相リング）で色合いを、内側の三角で鮮やかさと明るさを選びます。選んだ色は色名（日本語／英語）と HEX で表示されます。「髪に付ける」「目に付ける」などの適用先ボタンを押すと、その色が色タグ（例：light purple hair）としてドロワーに入ります。同じ適用先を押し直すと色タグが差し替わります。</p></div>
 <div class="panel"><h3>📤 ドロワーと共有</h3><p>画面下のドロワーは、右端のトグルボタンで開閉できます。閉じたままでも、バーのボタンから Positive／Negative のコピーと共有ができます。「共有」ボタンを押すと今の構成を埋め込んだ共有URLができ、そのURLを開くと構成がそのまま復元されます。</p></div>
@@ -377,7 +381,7 @@ $("#special").querySelectorAll(".sw").forEach(b=>b.onclick=()=>{hsv=hexToHsv(b.d
 $("#special").querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>applyColor(b.dataset.t,curHex));
 upd(true)}
 function applyColor(key,hex){const en=colorNameEn(hex),jp=colorNameJp(en),[tjp,ten]=TARGETS[key],tag=en+" "+ten,label=jp+"の"+tjp;if(colorTags[key]){const i=hasP(colorTags[key]);if(i>=0)sel.splice(i,1)}colorTags[key]=tag;sel.push({c:CC,p:tag,l:label,w:1});update(false);toast(label+"（"+tag+"）を追加しました")}
-$("#nav").onclick=e=>{const sb=e.target.closest(".snav");if(sb){cur=sb.dataset.k;nav();grid();scrollToSub(sb.dataset.g);if(window.innerWidth<=980)toggleNav(false);return}const b=e.target.closest(".nav");if(b){cur=b.dataset.k;nav();grid();if(window.innerWidth<=980)toggleNav(false)}};
+$("#nav").onclick=e=>{const ex=e.target.closest(".nav-exp");if(ex){const k=ex.dataset.k;let m={};try{m=JSON.parse(localStorage.getItem("sdpb.navExp")||"{}")}catch(err){}const curOpen=m[k]!==undefined?!!m[k]:k===cur;m[k]=!curOpen;try{localStorage.setItem("sdpb.navExp",JSON.stringify(m))}catch(err){}nav();return}const sb=e.target.closest(".snav");if(sb){cur=sb.dataset.k;nav();grid();scrollToSub(sb.dataset.g);if(window.innerWidth<=980)toggleNav(false);return}const b=e.target.closest(".nav");if(b){cur=b.dataset.k;nav();grid();if(window.innerWidth<=980)toggleNav(false)}};
 $("#grid").onclick=e=>{const pr=e.target.closest("[data-pr]");if(pr){applyPreset(+pr.dataset.pr);return}const b=e.target.closest(".card");if(!b||!D[cur])return;const it=D[cur].items[b.dataset.i],i=hasP(it.p);if(i>=0)sel.splice(i,1);else add(cur,it);b.classList.toggle("on",i<0);update()};
 $("#chips").onclick=e=>{const b=e.target.closest("button");if(!b)return;const a=b.dataset.a,i=+b.dataset.i;if(a==="x")sel.splice(i,1);else sel[i].w=Math.round(Math.max(.1,Math.min(2,sel[i].w+(a==="+"?.1:-.1)))*10)/10;update(a==="x")};
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-copy]");if(!b)return;const el=$("#"+b.dataset.copy);if(!el||!el.value){toast("コピーする内容がありません");return}try{await navigator.clipboard.writeText(el.value)}catch(x){el.select();document.execCommand("copy")}toast("コピーしました（英語のみ）")});
