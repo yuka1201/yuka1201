@@ -207,9 +207,9 @@
           <button type="button" class="tab" id="tabImage">🖼️ 画像を使う</button>
         </div>
         <div id="paneText">
-          <label class="f" for="inText">文字（改行で2行にできるよ）</label>
-          <input type="text" id="inText" value="すき" maxlength="12" autocomplete="off">
-          <div class="note">3文字以上は自動で2行に割り振るよ。絵文字1個でもOK。</div>
+          <label class="f" for="inText">文字（横書き1行）</label>
+          <input type="text" id="inText" value="" placeholder="例：すき" maxlength="12" autocomplete="off">
+          <div class="note">横書き1行だよ（長くすると自動で小さくなる）。絵文字1個でもOK。</div>
           <div class="chips" id="textChips"></div>
           <label class="f">絵文字パレット（タップでセット）</label>
           <div class="palette" id="emojiPalette"></div>
@@ -219,8 +219,9 @@
           <div class="drop" id="dropZone">📂 ここをタップして画像を選ぶか、ドラッグ＆ドロップしてね<div class="note">透過PNGがおすすめ。アニメGIFを読み込んだ場合は1コマ目だけ使うよ。</div></div>
           <input type="file" id="inFile" accept="image/*" class="hidden">
         </div>
+        <div class="row" style="margin-top:12px"><input type="checkbox" id="inLinkName" checked style="width:19px;height:19px;accent-color:var(--pink-deep)"><label for="inLinkName" style="font-size:13px;font-weight:800">🔗 文字と絵文字名を連動する（かな→ローマ字で自動生成）</label></div>
         <label class="f" for="inName">絵文字名（Misskeyの <code>:名前:</code> になるよ・半角英数と _ のみ）</label>
-        <input type="text" id="inName" value="suki" maxlength="40" autocomplete="off" spellcheck="false">
+        <input type="text" id="inName" value="" placeholder="文字を入れると自動で付くよ" maxlength="40" autocomplete="off" spellcheck="false">
         <div class="note" id="nameWarn"></div>
       </section>
 
@@ -239,7 +240,7 @@
           <button type="button" data-cm="grad">グラデーション</button>
         </div>
         <div class="row">
-          <input type="color" id="inColor" value="#d16ba5">
+          <input type="color" id="inColor" value="#000000">
           <div class="swatches" id="colorSwatches"></div>
         </div>
         <div class="row hidden" id="gradRow" style="margin-top:8px">
@@ -383,11 +384,11 @@ const SWATCHES=["#d16ba5","#8b6fd8","#f472b6","#ef4444","#f59e0b","#22c55e","#0e
 
 let imgObj=null, imgURL="";
 const state={
-  mode:"text", text:"すき", name:"suki",
-  font:"maru", colorMode:"solid", color:"#d16ba5", color2:"#8b6fd8",
+  mode:"text", text:"", name:"", linkName:true,
+  font:"maru", colorMode:"solid", color:"#000000", color2:"#8b6fd8",
   outline:true, outlineColor:"#ffffff", outlineWidth:13, textSize:100,
   bg:"none", bgColor:"#fdf3f8",
-  effects:[{type:"sparkle"},{type:"bounce",speed:0.75}],
+  effects:[],
   sizeOpt:"none", flipOpt:"none"
 };
 
@@ -403,12 +404,40 @@ function hexToHsl(hex){ const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,g=(n
 function hueShift(hex,deg){ if(!deg) return hex; const [h,s,l]=hexToHsl(hex); return `hsl(${(h+deg)%360} ${s}% ${l}%)`; }
 function textLines(){
   const raw=(state.text||"").replace(/\r/g,"");
-  if(raw.includes("\n")) return raw.split("\n").slice(0,3);
-  const chars=[...raw]; if(chars.length<=2) return [raw];
-  const half=Math.ceil(chars.length/2);
-  return [chars.slice(0,half).join(""), chars.slice(half).join("")];
+  return raw.split("\n").slice(0,3);
 }
 function validName(){ return /^[a-z0-9_]+$/.test(state.name||""); }
+
+/* ---------- 文字→絵文字名の連動（ローマ字変換） ---------- */
+const KANA_MAP={あ:"a",い:"i",う:"u",え:"e",お:"o",か:"ka",き:"ki",く:"ku",け:"ke",こ:"ko",さ:"sa",し:"shi",す:"su",せ:"se",そ:"so",た:"ta",ち:"chi",つ:"tsu",て:"te",と:"to",な:"na",に:"ni",ぬ:"nu",ね:"ne",の:"no",は:"ha",ひ:"hi",ふ:"fu",へ:"he",ほ:"ho",ま:"ma",み:"mi",む:"mu",め:"me",も:"mo",や:"ya",ゆ:"yu",よ:"yo",ら:"ra",り:"ri",る:"ru",れ:"re",ろ:"ro",わ:"wa",を:"wo",ん:"n",が:"ga",ぎ:"gi",ぐ:"gu",げ:"ge",ご:"go",ざ:"za",じ:"ji",ず:"zu",ぜ:"ze",ぞ:"zo",だ:"da",ぢ:"ji",づ:"zu",で:"de",ど:"do",ば:"ba",び:"bi",ぶ:"bu",べ:"be",ぼ:"bo",ぱ:"pa",ぴ:"pi",ぷ:"pu",ぺ:"pe",ぽ:"po",ぁ:"a",ぃ:"i",ぅ:"u",ぇ:"e",ぉ:"o",ゎ:"wa",ゐ:"wi",ゑ:"we"};
+const KANJI_WORDS=["牛乳","女神","猫耳","優勝","天才","大吉","推し","今日","明日","桜","猫","犬","兎","鳥","馬","魚","虫","花","月","星","空","海","山","川","森","雨","雪","風","炎","光","闇","心","愛","夢","力","音","笑","涙","怒","神","草","祝","当","本","車","電","王","男","女","子","人","日","年","夜","朝","耳","目","手","足","口","島","町","村","国","語","字","色","赤","青","白","黒","緑","桃","苺","酒","茶","飯","肉","卵","牛","豚","鶏","龍","鬼"];
+const KANJI_ROMAJI={牛乳:"gyuunyuu",女神:"megami",猫耳:"nekomimi",優勝:"yuushou",天才:"tensai",大吉:"daikichi",推し:"oshi",今日:"kyou",明日:"ashita",桜:"sakura",猫:"neko",犬:"inu",兎:"usagi",鳥:"tori",馬:"uma",魚:"sakana",虫:"mushi",花:"hana",月:"tsuki",星:"hoshi",空:"sora",海:"umi",山:"yama",川:"kawa",森:"mori",雨:"ame",雪:"yuki",風:"kaze",炎:"honoo",光:"hikari",闇:"yami",心:"kokoro",愛:"ai",夢:"yume",力:"chikara",音:"oto",笑:"warai",涙:"namida",怒:"ikari",神:"kami",草:"kusa",祝:"iwai",当:"atari",本:"hon",車:"kuruma",電:"den",王:"ou",男:"otoko",女:"onna",子:"ko",人:"hito",日:"hi",年:"toshi",夜:"yoru",朝:"asa",耳:"mimi",目:"me",手:"te",足:"ashi",口:"kuchi",島:"shima",町:"machi",村:"mura",国:"kuni",語:"go",字:"ji",色:"iro",赤:"aka",青:"ao",白:"shiro",黒:"kuro",緑:"midori",桃:"momo",苺:"ichigo",酒:"sake",茶:"cha",飯:"meshi",肉:"niku",卵:"tamago",牛:"ushi",豚:"buta",鶏:"niwatori",龍:"ryuu",鬼:"oni"};
+function toRomaji(src){
+  let s=""; for(const ch of (src||"")){ const cp=ch.codePointAt(0); s+= (cp>=0x30A1&&cp<=0x30F6)? String.fromCodePoint(cp-0x60): ch; }
+  const syl=[]; let dbl=false, i=0;
+  const pushSyl=v=>{ if(dbl&&v){ v=v[0]+v; dbl=false; } syl.push(v); };
+  while(i<s.length){
+    const rest=s.slice(i);
+    const w=KANJI_WORDS.find(w=>rest.startsWith(w));
+    if(w){ pushSyl(KANJI_ROMAJI[w]); i+=w.length; continue; }
+    const ch=s[i];
+    if(ch==="っ"){ dbl=true; i++; continue; }
+    if(ch==="ー"){ const last=syl[syl.length-1]; if(last) syl.push(last.slice(-1)); i++; continue; }
+    if(ch==="ゃ"||ch==="ゅ"||ch==="ょ"){ const last=syl.pop()||""; const stem=last.replace(/[aiueo]$/,"");
+      const tail=(stem==="sh"||stem==="ch"||stem==="j")? {ゃ:"a",ゅ:"u",ょ:"o"}[ch] : {ゃ:"ya",ゅ:"yu",ょ:"yo"}[ch];
+      pushSyl(stem+tail); i++; continue; }
+    if(KANA_MAP[ch]){ pushSyl(KANA_MAP[ch]); i++; continue; }
+    if(/[a-zA-Z0-9]/.test(ch)){ pushSyl(ch.toLowerCase()); i++; continue; }
+    if(ch===" "||ch==="　"){ pushSyl("_"); i++; continue; }
+    i++;
+  }
+  return syl.join("").replace(/[^a-z0-9_]/g,"").slice(0,40);
+}
+function syncNameFromText(){
+  if(!state.linkName) return;
+  const r=toRomaji(state.text);
+  if(r){ state.name=r; $("inName").value=r; }
+}
 
 /* ---------- 効果UI ---------- */
 function findFx(type){ return state.effects.find(e=>e.type===type); }
@@ -476,11 +505,16 @@ function contentEl(){
   let el;
   if(state.mode==="image" && imgURL){
     el=document.createElement("img"); el.className="pv-img"; el.src=imgURL; el.alt=state.name;
+  } else if(!(state.text||"").trim()) {
+    el=document.createElement("span"); el.className="pv-text";
+    el.style.fontFamily=FONTS[state.font]; el.style.fontSize="calc(var(--cfs) * 0.30)";
+    el.style.color="var(--ink-soft)"; el.textContent="（未入力）";
   } else {
     el=document.createElement("span"); el.className="pv-text";
     el.style.fontFamily=FONTS[state.font];
     const lines=textLines();
-    const fsFactor=(lines.length>1?0.60:0.95)*(state.textSize/100);
+    const maxCh=Math.max(...lines.map(l=>[...l].length),1);
+    const fsFactor=(lines.length>1?0.60:(maxCh<=2?0.95:Math.min(0.95,2.5/maxCh)))*(state.textSize/100);
     el.style.fontSize=`calc(var(--cfs) * ${fsFactor})`;
     el.textContent=lines.join("\n");
     if(state.colorMode==="grad"){ el.style.background=`linear-gradient(180deg, ${state.color}, ${state.color2})`; el.style.webkitBackgroundClip="text"; el.style.backgroundClip="text"; el.style.color="transparent"; }
@@ -545,7 +579,7 @@ function buildMfm(){
 }
 function updateMfm(){
   $("mfmOut").value=buildMfm();
-  $("nameWarn").textContent= validName()? "" : "⚠️ 絵文字名は半角の英小文字・数字・アンダースコアだけにしてね（今の名前だとMisskeyに登録できないよ）";
+  $("nameWarn").textContent= !state.name? "（名前はまだ空だよ。連動オンなら文字から自動で付くよ）" : (validName()? "" : "⚠️ 絵文字名は半角の英小文字・数字・アンダースコアだけにしてね（今の名前だとMisskeyに登録できないよ）");
 }
 
 /* ---------- Canvas描画（PNG/GIF用） ---------- */
@@ -674,7 +708,7 @@ $("btnShare").addEventListener("click",()=>{
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(s))));
   copyText(location.origin+location.pathname+"#s="+b64,"共有URLをコピーしたよ🔗（画像モードの画像自体は含まれないよ）");
 });
-$("btnReset").addEventListener("click",()=>{ try{localStorage.removeItem("misskey-emoji-maker-v1");}catch(e){}
+$("btnReset").addEventListener("click",()=>{ try{localStorage.removeItem("misskey-emoji-maker-v2");}catch(e){}
   location.hash=""; location.reload(); });
 
 /* ---------- 入力の結線 ---------- */
@@ -695,7 +729,8 @@ swatchWire("colorSwatches","inColor"); swatchWire("color2Swatches","inColor2"); 
 $("inOutline").addEventListener("change",()=>{ state.outline=$("inOutline").checked; refresh(); });
 $("inOutlineWidth").addEventListener("input",()=>{ state.outlineWidth=parseInt($("inOutlineWidth").value,10); $("outlineWidthVal").textContent=state.outlineWidth+"%"; refresh(false); saveLocal(); });
 $("inTextSize").addEventListener("input",()=>{ state.textSize=parseInt($("inTextSize").value,10); $("textSizeVal").textContent=state.textSize+"%"; refresh(false); saveLocal(); });
-$("inText").addEventListener("input",()=>{ state.text=$("inText").value; refresh(false); saveLocal(); });
+$("inText").addEventListener("input",()=>{ state.text=$("inText").value; syncNameFromText(); refresh(false); saveLocal(); });
+$("inLinkName").addEventListener("change",()=>{ state.linkName=$("inLinkName").checked; if(state.linkName){ syncNameFromText(); updateMfm(); } saveLocal(); });
 $("inName").addEventListener("input",()=>{ state.name=$("inName").value.trim().toLowerCase().replace(/[^a-z0-9_]/g,"_"); updateMfm(); saveLocal(); });
 $("tabText").addEventListener("click",()=>setMode("text"));
 $("tabImage").addEventListener("click",()=>setMode("image"));
@@ -717,16 +752,16 @@ $("inFile").addEventListener("change",()=>loadImageFile($("inFile").files[0]));
 
 /* チップとパレット */
 TEXT_CHIPS.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=t;
-  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; setMode("text"); refresh(); }); $("textChips").appendChild(b); });
+  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; syncNameFromText(); setMode("text"); refresh(); }); $("textChips").appendChild(b); });
 EMOJI_PALETTE.forEach(t=>{ const b=document.createElement("button"); b.type="button"; b.textContent=t;
-  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; setMode("text"); refresh(); }); $("emojiPalette").appendChild(b); });
+  b.addEventListener("click",()=>{ $("inText").value=t; state.text=t; syncNameFromText(); setMode("text"); refresh(); }); $("emojiPalette").appendChild(b); });
 
 /* ---------- 保存・復元 ---------- */
 let saveTimer=0;
-function saveLocal(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ const s={...state}; localStorage.setItem("misskey-emoji-maker-v1",JSON.stringify(s)); }catch(e){} },300); }
+function saveLocal(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ const s={...state}; localStorage.setItem("misskey-emoji-maker-v2",JSON.stringify(s)); }catch(e){} },300); }
 function applyState(s){
   Object.assign(state,s);
-  $("inText").value=state.text; $("inName").value=state.name;
+  $("inText").value=state.text; $("inName").value=state.name; $("inLinkName").checked=!!state.linkName;
   $("inColor").value=state.color; $("inColor2").value=state.color2; $("inOutlineColor").value=state.outlineColor; $("inBgColor").value=state.bgColor;
   $("inOutline").checked=state.outline; $("inOutlineWidth").value=state.outlineWidth; $("outlineWidthVal").textContent=state.outlineWidth+"%";
   $("inTextSize").value=state.textSize; $("textSizeVal").textContent=state.textSize+"%";
@@ -741,21 +776,21 @@ function refresh(rebuild=true){ mountPreviews(); updateMfm(); updateOrder(); if(
 
 /* ---------- サイトテーマ ---------- */
 const THEMES=[["yuka","🌸","優花"],["white","☀️","白"],["black","🌙","黒"]];
-let siteTheme="yuka";
+let siteTheme="black";
 function applySiteTheme(t,save=true){ siteTheme=t; document.documentElement.dataset.theme=t;
   const meta=THEMES.find(x=>x[0]===t)||THEMES[0]; const btn=$("siteThemeBtn");
   btn.textContent=meta[1]; btn.title=`表示テーマ：${meta[2]}（タップで切替）`;
-  if(save){ try{ localStorage.setItem("misskey-emoji-maker-sitetheme",t); }catch(e){} } }
+  if(save){ try{ localStorage.setItem("misskey-emoji-maker-sitetheme-v2",t); }catch(e){} } }
 $("siteThemeBtn").addEventListener("click",()=>{ const i=THEMES.findIndex(x=>x[0]===siteTheme); applySiteTheme(THEMES[(i+1)%THEMES.length][0]); });
 
 /* ---------- 初期化 ---------- */
 (function init(){
-  try{ siteTheme=localStorage.getItem("misskey-emoji-maker-sitetheme")||"yuka"; }catch(e){}
-  applySiteTheme(THEMES.some(x=>x[0]===siteTheme)?siteTheme:"yuka",false);
+  try{ siteTheme=localStorage.getItem("misskey-emoji-maker-sitetheme-v2")||"black"; }catch(e){}
+  applySiteTheme(THEMES.some(x=>x[0]===siteTheme)?siteTheme:"black",false);
   buildPresets(); buildFxGrid();
   let restored=false;
   if(location.hash.startsWith("#s=")){ try{ const s=JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3))))); applyState(s); restored=true; }catch(e){} }
-  if(!restored){ try{ const raw=localStorage.getItem("misskey-emoji-maker-v1"); if(raw){ applyState(JSON.parse(raw)); restored=true; } }catch(e){} }
+  if(!restored){ try{ const raw=localStorage.getItem("misskey-emoji-maker-v2"); if(raw){ applyState(JSON.parse(raw)); restored=true; } }catch(e){} }
   if(!restored){ applyState(state); }
   refresh();
 })();
