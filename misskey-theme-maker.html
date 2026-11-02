@@ -203,6 +203,16 @@
     #miniBar .mb-dots i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.16);display:block;flex:none}
     .wrap{padding-bottom:104px}
   }
+
+  /* スマホではテンプレートを2列でコンパクトに（プレビューまで短く） */
+  @media (max-width:640px){
+    .samples{grid-template-columns:1fr 1fr;gap:9px}
+    .sample{padding:8px}
+    .mini{height:58px}
+    .sample .sname{font-size:12.5px;margin-top:7px}
+    .sample .sdesc{font-size:10.5px;line-height:1.45}
+    .sample .dots i{width:11px;height:11px}
+  }
 </style>
 </head>
 <body>
