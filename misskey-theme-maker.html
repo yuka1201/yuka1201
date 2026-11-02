@@ -170,7 +170,7 @@
   .chip{font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;background:var(--chip-bg);color:var(--accent-deep)}
   .chip.warn{background:#ffe9e9;color:#c0392b}
   .note-help{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px}
-  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--toast-bg);color:var(--toast-fg);font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+  #toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));bottom:auto;transform:translateX(-50%) translateY(-18px);background:var(--toast-bg);color:var(--toast-fg);font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;box-shadow:0 10px 26px rgba(0,0,0,.3);z-index:80}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .site-theme-row{position:fixed;top:14px;right:16px;z-index:60}
   .theme-icon-btn{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line2);background:var(--badge-bg);box-shadow:var(--card-shadow);backdrop-filter:blur(8px);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
@@ -673,6 +673,41 @@ function applySiteTheme(v, save=true){
   if(save){ try{ localStorage.setItem("misskey-theme-maker-sitetheme", t); }catch(e){} }
 }
 
+/* --- 共有URL（テーマ設定をURLに埋め込む） --- */
+function b64urlEncode(bytes){ let s=""; for(let i=0;i<bytes.length;i+=0x8000){ s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); } return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+function b64urlDecode(str){ const bin=atob(str.replace(/-/g,"+").replace(/_/g,"/")); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i); return bytes; }
+async function encodeState(){
+  const props={};
+  PROP_KEYS.forEach(k=>{ const pr=state.props[k]; if(pr&&pr.on) props[k]=pr.val; });
+  const json=JSON.stringify({v:1,id:state.id,name:state.name,author:state.author,desc:state.desc,base:state.base,props});
+  try{
+    if(window.CompressionStream){
+      const stream=new Blob([json]).stream().pipeThrough(new CompressionStream("gzip"));
+      const buf=new Uint8Array(await new Response(stream).arrayBuffer());
+      return "z"+b64urlEncode(buf);
+    }
+  }catch(e){}
+  return "j"+b64urlEncode(new TextEncoder().encode(json));
+}
+async function decodeState(enc){
+  let bytes=b64urlDecode(enc.slice(1));
+  if(enc[0]==="z"){
+    const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    bytes=new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function applySharedState(o){
+  if(!o||typeof o!=="object"||!o.props||typeof o.props!=="object") return false;
+  const props={};
+  PROP_KEYS.forEach(k=>props[k]={on:false,val:""});
+  Object.entries(o.props).forEach(([k,v])=>{ if(PROP_KEYS.includes(k)&&typeof v==="string") props[k]={on:true,val:v}; });
+  state={ id:(typeof o.id==="string"&&o.id)?o.id:(crypto.randomUUID?crypto.randomUUID():"theme-"+Date.now()),
+    name:String(o.name||"").slice(0,100), author:String(o.author||"").slice(0,100), desc:String(o.desc||"").slice(0,300),
+    base:o.base==="dark"?"dark":"light", sampleId:null, props };
+  return true;
+}
+
 /* --- イベント --- */
 function bindEvents(){
   $("metaName").addEventListener("input",e=>{state.name=e.target.value; updateCode(); saveLocal();});
@@ -748,7 +783,8 @@ function bindEvents(){
     if(state.author) lines.push(`作者：${state.author}`);
     if(state.desc) lines.push(`説明：${state.desc}`);
     lines.push(`ベース：${state.base==="dark"?"ダーク":"ライト"}`);
-    lines.push("","🎨 Misskeyテーマメーカー","https://yuka1201.github.io/yuka1201/misskey-theme-maker.html");
+    const shareUrl="https://yuka1201.github.io/yuka1201/misskey-theme-maker.html#s="+(await encodeState());
+    lines.push("","🎨 Misskeyテーマメーカー（開くとこのテーマが再現されるよ）",shareUrl);
     const text=lines.join("\n");
     if(navigator.share){
       try{ await navigator.share({title:"Misskeyテーマメーカー", text}); }catch(e){/* キャンセル時は何もしない */}
@@ -791,6 +827,11 @@ function init(){
   let siteTheme = "yuka";
   try{ siteTheme = localStorage.getItem("misskey-theme-maker-sitetheme") || "yuka"; }catch(e){}
   renderGroups(); bindEvents(); applySiteTheme(siteTheme, false); syncMetaInputs(); updateAll();
+  if(location.hash.startsWith("#s=")){
+    decodeState(location.hash.slice(3)).then(o=>{
+      if(applySharedState(o)){ syncMetaInputs(); updateAll(); toast("共有されたテーマを読み込んだよ🌸"); }
+    }).catch(()=>{});
+  }
   if("IntersectionObserver" in window){
     const mb=$("miniBar");
     new IntersectionObserver(es=>{ es.forEach(e=>{ mb.classList.toggle("hide", e.isIntersecting); }); }, {threshold:0.2}).observe($("preview"));
