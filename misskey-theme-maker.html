@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misskeyテーマメーカー ― Y.U.K.A Tools</title>
+<meta name="description" content="Misskeyのテーマを、サンプルのプレビューを見ながらグラフィカルに作れるツール。色をタップして変えるだけでテーマコード（JSON5）が出力できます。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎨%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --lav:#b79ced; --lav-deep:#8b6fd8; --pink:#f6a8c9; --pink-deep:#d16ba5;
+    --ink:#3d3355; --ink-soft:#6f6590; --card:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    color:var(--ink); min-height:100vh;
+    background:
+      radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%),
+      radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%),
+      linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:34px 16px 70px}
+  header.top{text-align:center;margin-bottom:26px}
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.75);border:1.5px solid var(--lav);color:var(--lav-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
+  h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:linear-gradient(92deg,var(--lav-deep),#d16ba5 60%,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin-top:10px;color:var(--ink-soft);font-size:14px;line-height:1.8}
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 10px 30px rgba(93,72,160,.12);border:2px solid rgba(183,156,237,.22)}
+  h2.sec{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  h2.sec .hint{font-size:12px;font-weight:600;color:var(--ink-soft)}
+
+  /* サンプルギャラリー */
+  .samples{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .sample{border:2px solid rgba(183,156,237,.3);border-radius:16px;padding:10px;cursor:pointer;background:#fff;transition:transform .15s ease,border-color .15s ease, box-shadow .15s ease;text-align:left;font-family:inherit}
+  .sample:hover{transform:translateY(-3px);border-color:var(--lav);box-shadow:0 10px 22px rgba(93,72,160,.16)}
+  .sample.active{border-color:var(--pink-deep);box-shadow:0 0 0 3px rgba(209,107,165,.25)}
+  .mini{border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.08);height:86px;display:flex;flex-direction:column}
+  .mini-bar{height:16px;display:flex;align-items:center;gap:4px;padding:0 6px}
+  .mini-bar i{width:6px;height:6px;border-radius:50%;display:block}
+  .mini-body{flex:1;padding:7px 8px;display:flex;flex-direction:column;gap:5px}
+  .mini-panel{border-radius:6px;padding:5px 6px;display:flex;flex-direction:column;gap:4px}
+  .mini-line{height:5px;border-radius:3px;opacity:.55}
+  .mini-btn{align-self:flex-start;margin-top:2px;font-size:9px;font-weight:800;color:#fff;border-radius:999px;padding:2px 9px}
+  .sample .sname{margin-top:9px;font-weight:800;font-size:13.5px}
+  .sample .sdesc{font-size:11.5px;color:var(--ink-soft);line-height:1.55;margin-top:2px}
+  .dots{display:flex;gap:5px;margin-top:7px}
+  .dots i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12);display:block}
+
+  .layout{display:grid;grid-template-columns:minmax(340px,460px) 1fr;gap:18px;margin-top:18px;align-items:start}
+  @media (max-width:920px){.layout{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:18px;min-width:0}
+  .sticky{position:sticky;top:14px}
+  @media (max-width:920px){.sticky{position:static}}
+
+  label.f{display:block;font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:10px 0 5px}
+  input[type=text],textarea,select{
+    width:100%;border:1.5px solid rgba(139,111,216,.35);border-radius:10px;padding:9px 11px;
+    font-size:14px;font-family:inherit;color:var(--ink);background:#fdfbff;outline:none}
+  input[type=text]:focus,textarea:focus{border-color:var(--pink-deep)}
+  textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;min-height:230px;resize:vertical}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(139,111,216,.35);background:#fff;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
+  .seg button.on{background:linear-gradient(92deg,var(--lav-deep),var(--pink-deep));color:#fff;border-color:transparent}
+  .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .btn{border:none;border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;transition:transform .12s ease, box-shadow .12s ease}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.main{background:linear-gradient(92deg,var(--lav-deep),var(--pink-deep));color:#fff;box-shadow:0 6px 16px rgba(209,107,165,.35)}
+  .btn.sub{background:#f1eafd;color:var(--lav-deep)}
+  .btn.ghost{background:#fff;border:1.5px solid rgba(139,111,216,.4);color:var(--ink-soft)}
+
+  /* カラー項目カード */
+  details.grp{border:1.5px solid rgba(183,156,237,.3);border-radius:14px;padding:10px 12px;margin-top:10px;background:#fdfbff}
+  details.grp summary{cursor:pointer;font-weight:900;font-size:14px;list-style:none}
+  details.grp summary::-webkit-details-marker{display:none}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+  @media (max-width:480px){.tiles{grid-template-columns:1fr}}
+  .tile{border:1.5px solid rgba(183,156,237,.3);border-radius:12px;padding:8px;background:#fff;transition:box-shadow .2s ease,border-color .2s ease}
+  .tile.off{opacity:.48}
+  .tile.flash{border-color:var(--pink-deep);box-shadow:0 0 0 4px rgba(209,107,165,.35)}
+  .tile .t-head{display:flex;align-items:center;gap:6px}
+  .tile .t-head input[type=checkbox]{width:16px;height:16px;accent-color:var(--pink-deep)}
+  .tile .ja{font-weight:800;font-size:12.5px;line-height:1.3}
+  .tile .key{font-size:10.5px;color:var(--ink-soft);font-family:ui-monospace,monospace}
+  .swatch{height:40px;border-radius:9px;border:1px solid rgba(0,0,0,.1);margin-top:7px;cursor:pointer;position:relative;overflow:hidden}
+  .swatch::after{content:"タップで色を選ぶ";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.55);opacity:0;transition:opacity .15s}
+  .swatch:hover::after{opacity:1}
+  .tile .t-inputs{display:flex;gap:6px;margin-top:7px;align-items:center}
+  .tile input[type=color]{width:38px;height:32px;border:1.5px solid rgba(139,111,216,.35);border-radius:8px;padding:2px;background:#fff;cursor:pointer;flex:none}
+  .tile input[type=text]{padding:6px 8px;font-size:12px;font-family:ui-monospace,monospace}
+
+  /* Misskeyプレビュー */
+  .mk{border-radius:16px;overflow:hidden;border:1px solid rgba(0,0,0,.1);display:flex;min-height:520px;font-size:13.5px;background:var(--pv-bg);color:var(--pv-fg)}
+  .mk [data-pick]{cursor:pointer}
+  .mk [data-pick]:hover{outline:2px dashed var(--pv-accent);outline-offset:-2px}
+  .mk-nav{width:58px;flex:none;background:var(--pv-navBg);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:15px;border-right:1px solid var(--pv-divider)}
+  .mk-nav .logo{font-size:22px}
+  .mk-nav .ic{font-size:18px;color:var(--pv-navFg);width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:12px;position:relative}
+  .mk-nav .ic.act{color:var(--pv-navActive);background:var(--pv-accentedBg)}
+  .mk-nav .ic.act::after{content:"";position:absolute;left:-10px;top:10px;width:4px;height:18px;border-radius:2px;background:var(--pv-navIndicator)}
+  .mk-nav .post{margin-top:auto;width:40px;height:40px;border-radius:50%;border:none;font-size:17px;color:var(--pv-fgOnAccent);background:linear-gradient(135deg,var(--pv-buttonGradateA),var(--pv-buttonGradateB));cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .mk-main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .mk-head{background:var(--pv-header);backdrop-filter:blur(8px);padding:11px 16px;font-weight:900;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--pv-divider);position:sticky;top:0}
+  .mk-head .badge2{background:var(--pv-badge);color:#fff;font-size:10.5px;border-radius:999px;padding:2px 9px;font-weight:800}
+  .mk-body{padding:13px;display:flex;flex-direction:column;gap:11px;overflow:hidden}
+  .panel{background:var(--pv-panel);border-radius:14px;padding:12px 14px;box-shadow:0 2px 10px var(--pv-shadow)}
+  .composer{display:flex;gap:10px}
+  .ava{width:40px;height:40px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;background:linear-gradient(135deg,var(--pv-buttonGradateA),var(--pv-buttonGradateB))}
+  .ava.s{width:34px;height:34px;font-size:12px}
+  .composer .ph{flex:1;color:var(--pv-fg);opacity:.55;padding-top:9px}
+  .btn-post{align-self:flex-end;border:none;border-radius:999px;padding:7px 18px;font-weight:900;color:var(--pv-fgOnAccent);background:linear-gradient(92deg,var(--pv-buttonGradateA),var(--pv-buttonGradateB));cursor:pointer;font-family:inherit}
+  .note .n-head{display:flex;gap:9px;align-items:center}
+  .note .n-name{font-weight:900}
+  .note .n-acct{opacity:.6;font-size:12px}
+  .note .n-time{margin-left:auto;font-size:11.5px;color:var(--pv-dateLabelFg);opacity:.75}
+  .note .n-text{margin-top:6px;line-height:1.65}
+  .mention{color:var(--pv-mention);font-weight:700}
+  .mentionme{color:var(--pv-mentionMe);font-weight:700}
+  .hashtag{color:var(--pv-hashtag);font-weight:700}
+  .lnk{color:var(--pv-link);text-decoration:underline}
+  .n-acts{display:flex;gap:20px;margin-top:9px;font-size:12.5px;opacity:.95}
+  .n-acts .love{color:var(--pv-love)}
+  .renote-line{color:var(--pv-renote);font-weight:800;font-size:12.5px;margin-bottom:7px}
+  .n-acts .rn{color:var(--pv-renote)}
+  .hl{background:var(--pv-panelHighlight);border-radius:10px;padding:8px 10px}
+  .infobox{background:var(--pv-infoBg);color:var(--pv-infoFg);border-radius:10px;padding:9px 12px;font-size:12.5px}
+  .warnbox{background:var(--pv-infoWarnBg);color:var(--pv-infoWarnFg);border-radius:10px;padding:9px 12px;font-size:12.5px}
+  .codebox{background:var(--pv-panelHighlight);border-radius:10px;padding:9px 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.7}
+  .codebox .cs{color:var(--pv-codeString)} .codebox .cn{color:var(--pv-codeNumber)} .codebox .cb{color:var(--pv-codeBoolean)}
+  .widget .w-head{background:var(--pv-panelHeaderBg);color:var(--pv-panelHeaderFg);margin:-12px -14px 10px;padding:9px 14px;border-radius:14px 14px 0 0;font-weight:900;font-size:12.5px}
+  .mk-cols{display:flex;gap:11px}
+  .mk-feed{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0}
+  .mk-side{width:218px;flex:none;display:flex;flex-direction:column;gap:11px}
+  @media (max-width:640px){.mk-side{display:none}.mk-nav{width:48px}}
+  .inp{border:1.5px solid var(--pv-inputBorder);border-radius:9px;padding:7px 10px;font-size:12.5px;background:transparent;color:var(--pv-fg)}
+  .btn-nor{border:none;border-radius:999px;padding:7px 15px;font-weight:800;background:var(--pv-buttonBg);color:var(--pv-fg);cursor:pointer;font-family:inherit}
+  .btn-nor:hover{background:var(--pv-buttonHoverBg)}
+  .switch{width:42px;height:24px;border-radius:999px;background:var(--pv-switchOffBg);position:relative;flex:none}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--pv-switchOffFg)}
+  .switch.on{background:var(--pv-switchOnBg)}
+  .switch.on::after{left:21px;background:var(--pv-switchOnFg)}
+  .swrow{display:flex;align-items:center;gap:9px;font-size:12.5px;margin-top:7px}
+  .contrast{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .chip{font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;background:#f1eafd;color:var(--lav-deep)}
+  .chip.warn{background:#ffe9e9;color:#c0392b}
+  .note-help{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  footer{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:34px;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="badge">Y.U.K.A SYSTEM</span>
+    <h1>🎨 Misskeyテーマメーカー</h1>
+    <p class="sub">サンプルから選んで、色をタップして変えるだけ。<br>右の「Misskeyのサンプル画面」がその場で変わるから、見た目を確認しながら作れるよ。<br>できたらテーマコードをコピーして、Misskeyの「設定 → テーマ → インストール」に貼るだけ！</p>
+  </header>
+
+  <section class="card">
+    <h2 class="sec">🌸 まずはサンプルから選ぶ <span class="hint">タップすると全部の色が切り替わるよ。ここから自分好みに変えていこう</span></h2>
+    <div class="samples" id="samples"></div>
+  </section>
+
+  <div class="layout">
+    <div class="col">
+      <section class="card">
+        <h2 class="sec">📝 テーマの情報</h2>
+        <label class="f">テーマ名</label>
+        <input type="text" id="metaName" placeholder="例：優花さくら">
+        <label class="f">作者</label>
+        <input type="text" id="metaAuthor" placeholder="例：如月優花">
+        <label class="f">説明（任意）</label>
+        <input type="text" id="metaDesc" placeholder="例：薄紫と桜ピンクのテーマ">
+        <label class="f">ベース（明るいテーマ / 暗いテーマ）</label>
+        <div class="seg">
+          <button type="button" id="baseLight">☀️ ライト</button>
+          <button type="button" id="baseDark">🌙 ダーク</button>
+        </div>
+        <div class="rowbtns">
+          <button class="btn sub" type="button" id="btnPalette">✨ アクセントから配色をおまかせ</button>
+          <button class="btn sub" type="button" id="btnDice">🎲 ランダムアクセント</button>
+          <button class="btn ghost" type="button" id="btnNewId">IDを作り直す</button>
+          <button class="btn ghost" type="button" id="btnReset">リセット</button>
+        </div>
+        <p class="note-help">「配色をおまかせ」は、アクセントカラーに合うリンク色・リノート色などを自動で決めてくれるよ。あとから個別に変えられるよ。</p>
+      </section>
+
+      <section class="card">
+        <h2 class="sec">🖌️ 色を変える <span class="hint">右のプレビューの気になる場所をタップしても、ここが開くよ</span></h2>
+        <input type="text" id="propSearch" placeholder="🔍 色の名前で探す（例：背景、ボタン、accent）">
+        <div id="groups"></div>
+        <p class="note-help">チェックを外した色はテーマコードに入らず、ベーステーマの色がそのまま使われるよ。値に <b>@accent</b>（他の色を参照）や <b>:alpha&lt;0.3&lt;@accent</b>（透明化などの関数）も書けるよ。</p>
+      </section>
+    </div>
+
+    <div class="col sticky">
+      <section class="card">
+        <h2 class="sec">👀 サンプル画面（プレビュー） <span class="hint">気になる場所をタップすると、その色を編集できるよ</span></h2>
+        <div class="mk" id="preview">
+          <nav class="mk-nav" data-pick="navBg" title="ナビ背景">
+            <div class="logo">🌸</div>
+            <div class="ic act" data-pick="navActive" title="ナビの選択中">🏠</div>
+            <div class="ic" data-pick="navFg" title="ナビの文字・アイコン">🔔</div>
+            <div class="ic" data-pick="navFg" title="ナビの文字・アイコン">✉️</div>
+            <div class="ic" data-pick="navFg" title="ナビの文字・アイコン">👤</div>
+            <button class="post" data-pick="accent" title="アクセント">✎</button>
+          </nav>
+          <div class="mk-main">
+            <div class="mk-head" data-pick="header" title="ヘッダー"><span>🏠 タイムライン</span><span class="badge2" data-pick="badge" title="バッジ">NEW</span></div>
+            <div class="mk-body" data-pick="bg" title="背景">
+              <div class="panel composer" data-pick="panel" title="パネル">
+                <div class="ava">優</div>
+                <div class="ph">いまどうしてる？</div>
+                <button class="btn-post" data-pick="buttonGradateA" title="グラデーションボタン">ノート</button>
+              </div>
+              <div class="mk-cols">
+                <div class="mk-feed">
+                  <div class="panel note" data-pick="panel" title="パネル">
+                    <div class="n-head"><div class="ava s">優</div><div><span class="n-name" data-pick="fg" title="文字">如月優花</span> <span class="n-acct">@yuka1201</span></div><span class="n-time" data-pick="dateLabelFg" title="日付ラベル">3分前</span></div>
+                    <p class="n-text" data-pick="fg" title="文字">新しいテーマを作ってみたよ！ <span class="mention" data-pick="mention" title="メンション">@中の人</span> 見て見て〜 🌸<br><span class="hashtag" data-pick="hashtag" title="ハッシュタグ">#Misskey</span> <span class="hashtag" data-pick="hashtag" title="ハッシュタグ">#テーマ</span> <span class="lnk" data-pick="link" title="リンク">くわしくはこちら</span></p>
+                    <div class="n-acts"><span>💬 2</span><span class="rn" data-pick="renote" title="リノート">🔁 5</span><span class="love" data-pick="love" title="ハート">♥ 12</span><span>⭐</span></div>
+                  </div>
+                  <div class="panel note" data-pick="panel" title="パネル">
+                    <div class="renote-line" data-pick="renote" title="リノート">🔁 せるさんがリノート</div>
+                    <div class="n-head"><div class="ava s" style="filter:hue-rotate(70deg)">せ</div><div><span class="n-name" data-pick="fg" title="文字">せる</span> <span class="n-acct">@seru</span></div><span class="n-time">1時間前</span></div>
+                    <p class="n-text" data-pick="fg" title="文字"><span class="mentionme" data-pick="mentionMe" title="自分へのメンション">@yuka1201</span> 優花ちゃん、この色合いすごく好き！</p>
+                    <div class="hl" data-pick="panelHighlight" title="パネル強調">引用やハイライトはこんな見た目になるよ</div>
+                    <div class="n-acts"><span>💬 1</span><span class="rn">🔁 3</span><span class="love">♥ 8</span><span>⭐</span></div>
+                  </div>
+                  <div class="infobox" data-pick="infoBg" title="情報ボックス">ℹ️ お知らせサンプル：情報ボックスの色はここに出るよ</div>
+                  <div class="warnbox" data-pick="infoWarnBg" title="警告ボックス">⚠️ 注意サンプル：警告ボックスの色はここに出るよ</div>
+                  <div class="codebox" data-pick="panelHighlight" title="パネル強調"><span class="cs">'さくら'</span> : <span class="cn">1027</span> , 好き : <span class="cb">true</span></div>
+                </div>
+                <aside class="mk-side">
+                  <div class="panel widget" data-pick="panel" title="パネル">
+                    <div class="w-head" data-pick="panelHeaderBg" title="パネルヘッダー">🔥 トレンド</div>
+                    <div class="hashtag" data-pick="hashtag" title="ハッシュタグ">#Misskey</div>
+                    <div class="hashtag" data-pick="hashtag" title="ハッシュタグ">#テーマ作り</div>
+                    <div class="hashtag" data-pick="hashtag" title="ハッシュタグ">#YUKA</div>
+                  </div>
+                  <div class="panel" data-pick="panel" title="パネル">
+                    <div class="inp" data-pick="inputBorder" title="入力欄の枠">🔍 検索ボックス</div>
+                    <div class="swrow"><span class="switch on" data-pick="switchOnBg" title="スイッチON"></span> オン状態</div>
+                    <div class="swrow"><span class="switch" data-pick="switchOffBg" title="スイッチOFF"></span> オフ状態</div>
+                    <div style="margin-top:10px;display:flex;gap:8px">
+                      <button class="btn-nor" data-pick="buttonBg" title="ボタン">ふつうのボタン</button>
+                      <button class="btn-post" data-pick="buttonGradateA" title="グラデーションボタン">決定</button>
+                    </div>
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="contrast" id="contrast"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="sec">📦 テーマコード <span class="hint">Misskeyに貼るのはこれだよ</span></h2>
+        <textarea id="codeOut" spellcheck="false"></textarea>
+        <div class="rowbtns">
+          <button class="btn main" type="button" id="btnCopy">📋 コピーする</button>
+          <button class="btn sub" type="button" id="btnDownload">⬇️ ファイルで保存</button>
+          <button class="btn ghost" type="button" id="btnImport">貼り付けたコードを読み込む</button>
+        </div>
+        <p class="note-help">使い方：Misskeyを開いて「設定 → テーマ → テーマをインストール」で、このコードを貼り付けてね。既存テーマを直したいときは、そのコードをここに貼って「読み込む」を押せば続きから編集できるよ。編集中の内容はこのブラウザに自動保存されるよ。</p>
+      </section>
+    </div>
+  </div>
+
+  <footer>Y.U.K.A ― AI NOTE SYSTEM<br>テーマの仕様は <a href="https://misskey-hub.net/ja/docs/for-users/features/theme/" target="_blank" rel="noopener">Misskey Hub「テーマ」</a> に準拠しているよ🌸</footer>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ===== Misskeyテーマの基本データ（公式ベーステーマ _light.json5 / _dark.json5 より） ===== */
+const PROPS = [
+  // [キー, 日本語ラベル, グループ]
+  ["accent","アクセント","基本の色"],["bg","背景","基本の色"],["fg","文字","基本の色"],
+  ["fgHighlighted","強調した文字","基本の色"],["fgOnAccent","アクセントの上の文字","基本の色"],["fgOnWhite","白の上の文字","基本の色"],
+  ["love","ハート（いいね）","基本の色"],["indicator","インジケーター","基本の色"],
+  ["panel","パネル（カード）","パネルとヘッダー"],["panelHighlight","パネル強調","パネルとヘッダー"],
+  ["panelHeaderBg","パネル見出しの背景","パネルとヘッダー"],["panelHeaderFg","パネル見出しの文字","パネルとヘッダー"],
+  ["divider","区切り線","パネルとヘッダー"],["header","ヘッダー","パネルとヘッダー"],
+  ["windowHeader","ウィンドウ見出し","パネルとヘッダー"],["popup","ポップアップ","パネルとヘッダー"],
+  ["shadow","影","パネルとヘッダー"],["deckBg","デッキの背景","パネルとヘッダー"],
+  ["navBg","ナビの背景","ナビとページ"],["navFg","ナビの文字","ナビとページ"],["navActive","ナビの選択中","ナビとページ"],
+  ["navIndicator","ナビの印","ナビとページ"],["pageHeaderBg","ページ見出しの背景","ナビとページ"],["pageHeaderFg","ページ見出しの文字","ナビとページ"],
+  ["link","リンク","リンクと表現"],["hashtag","ハッシュタグ","リンクと表現"],["mention","メンション","リンクと表現"],
+  ["mentionMe","自分へのメンション","リンクと表現"],["renote","リノート","リンクと表現"],["dateLabelFg","日付ラベル","リンクと表現"],
+  ["buttonBg","ボタンの背景","ボタンと入力"],["buttonHoverBg","ボタンのホバー","ボタンと入力"],
+  ["buttonGradateA","グラデボタン（始点）","ボタンと入力"],["buttonGradateB","グラデボタン（終点）","ボタンと入力"],
+  ["focus","フォーカス","ボタンと入力"],["accentedBg","アクセントの薄い背景","ボタンと入力"],
+  ["inputBorder","入力欄の枠","ボタンと入力"],["inputBorderHover","入力欄の枠（ホバー）","ボタンと入力"],
+  ["switchBg","スイッチの背景","ボタンと入力"],["switchOffBg","スイッチOFFの背景","ボタンと入力"],
+  ["switchOffFg","スイッチOFFのつまみ","ボタンと入力"],["switchOnBg","スイッチONの背景","ボタンと入力"],["switchOnFg","スイッチONのつまみ","ボタンと入力"],
+  ["success","成功","状態とその他"],["error","エラー","状態とその他"],["warn","警告","状態とその他"],
+  ["infoBg","情報ボックスの背景","状態とその他"],["infoFg","情報ボックスの文字","状態とその他"],
+  ["infoWarnBg","警告ボックスの背景","状態とその他"],["infoWarnFg","警告ボックスの文字","状態とその他"],
+  ["badge","バッジ","状態とその他"],["modalBg","モーダルの背景","状態とその他"],
+  ["scrollbarHandle","スクロールバー","状態とその他"],["scrollbarHandleHover","スクロールバー（ホバー）","状態とその他"],
+  ["messageBg","メッセージの背景","状態とその他"],["codeString","コード：文字列","状態とその他"],
+  ["codeNumber","コード：数値","状態とその他"],["codeBoolean","コード：真偽値","状態とその他"],["htmlThemeColor","ブラウザのテーマカラー","状態とその他"]
+];
+const PROP_KEYS = PROPS.map(p=>p[0]);
+const PROP_JA = Object.fromEntries(PROPS.map(p=>[p[0],p[1]]));
+const GROUPS = [...new Set(PROPS.map(p=>p[2]))];
+
+const BASE_LIGHT = {accent:"#86b300",accentedBg:":alpha<0.15<@accent",love:"#dd2e44",focus:":alpha<0.3<@accent",bg:"#fff",fg:"#5f5f5f",fgHighlighted:":darken<3<@fg",fgOnAccent:"#fff",fgOnWhite:"#333",divider:"rgba(0, 0, 0, 0.1)",indicator:"@accent",panel:":lighten<3<@bg",panelHighlight:":darken<3<@panel",panelHeaderBg:":lighten<3<@panel",panelHeaderFg:"@fg",windowHeader:":alpha<0.85<@panel",popup:":lighten<3<@panel",shadow:"rgba(0, 0, 0, 0.1)",header:":alpha<0.7<@panel",navBg:"@panel",navFg:"@fg",navActive:"@accent",navIndicator:"@indicator",pageHeaderBg:"@bg",pageHeaderFg:"@fg",link:"#44a4c1",hashtag:"#ff9156",mention:"@accent",mentionMe:"@mention",renote:"#229e82",modalBg:"rgba(0, 0, 0, 0.3)",scrollbarHandle:"rgba(0, 0, 0, 0.2)",scrollbarHandleHover:"rgba(0, 0, 0, 0.4)",dateLabelFg:"@fg",infoBg:"#e5f5ff",infoFg:"#72818a",infoWarnBg:"#fff0db",infoWarnFg:"#8f6e31",buttonBg:":darken<5<@panel",buttonHoverBg:":darken<10<@panel",buttonGradateA:"@accent",buttonGradateB:":hue<20<@accent",switchBg:"rgba(0, 0, 0, 0.15)",switchOffBg:"rgba(0, 0, 0, 0.1)",switchOffFg:"@panel",switchOnBg:"@accent",switchOnFg:"@fgOnAccent",inputBorder:"rgba(0, 0, 0, 0.1)",inputBorderHover:"rgba(0, 0, 0, 0.2)",badge:"#31b1ce",messageBg:"@bg",success:"#86b300",error:"#ec4137",warn:"#ecb637",codeString:"#b98710",codeNumber:"#0fbbbb",codeBoolean:"#62b70c",deckBg:":darken<3<@bg",htmlThemeColor:"@bg"};
+const BASE_DARK = {accent:"#86b300",accentedBg:":alpha<0.15<@accent",love:"#dd2e44",focus:":alpha<0.3<@accent",bg:"#000",fg:"#dadada",fgHighlighted:":lighten<3<@fg",fgOnAccent:"#fff",fgOnWhite:"#333",divider:"rgba(255, 255, 255, 0.1)",indicator:"@accent",panel:":lighten<3<@bg",panelHighlight:":lighten<3<@panel",panelHeaderBg:":lighten<3<@panel",panelHeaderFg:"@fg",windowHeader:":alpha<0.85<@panel",popup:":lighten<3<@panel",shadow:"rgba(0, 0, 0, 0.3)",header:":alpha<0.7<@panel",navBg:"@panel",navFg:"@fg",navActive:"@accent",navIndicator:"@indicator",pageHeaderBg:"@bg",pageHeaderFg:"@fg",link:"#44a4c1",hashtag:"#ff9156",mention:"@accent",mentionMe:"@mention",renote:"#229e82",modalBg:"rgba(0, 0, 0, 0.5)",scrollbarHandle:"rgba(255, 255, 255, 0.2)",scrollbarHandleHover:"rgba(255, 255, 255, 0.4)",dateLabelFg:"@fg",infoBg:"#253142",infoFg:"#fff",infoWarnBg:"#42321c",infoWarnFg:"#ffbd3e",buttonBg:":lighten<5<@panel",buttonHoverBg:":lighten<10<@panel",buttonGradateA:"@accent",buttonGradateB:":hue<20<@accent",switchBg:"rgba(255, 255, 255, 0.15)",switchOffBg:"rgba(255, 255, 255, 0.1)",switchOffFg:":alpha<0.8<@fg",switchOnBg:"@accentedBg",switchOnFg:"@accent",inputBorder:"rgba(255, 255, 255, 0.1)",inputBorderHover:"rgba(255, 255, 255, 0.2)",badge:"#31b1ce",messageBg:"@bg",success:"#86b300",error:"#ec4137",warn:"#ecb637",codeString:"#ffb675",codeNumber:"#cfff9e",codeBoolean:"#c59eff",deckBg:"#000",htmlThemeColor:"@bg"};
+
+/* ===== サンプルテーマ ===== */
+const SAMPLES = [
+  {id:"yuka", name:"優花さくら", desc:"薄紫×桜ピンクの優花カラー", author:"如月優花", themeName:"優花さくら", base:"light",
+   props:{accent:"#bd6fd6",bg:"#fbf4fb",fg:"#5d4a66",fgOnAccent:"#ffffff",panel:"#ffffff",link:"#5f8fce",hashtag:"#e879a6",mention:"@accent",mentionMe:"@mention",renote:"#3fa98b",love:"#e94a6f",header:":alpha<0.78<@panel",navBg:"@panel",divider:"rgba(93, 74, 102, 0.12)",inputBorder:"rgba(93, 74, 102, 0.14)",buttonBg:":darken<4<@panel",buttonHoverBg:":darken<8<@panel",buttonGradateA:"@accent",buttonGradateB:":hue<28<@accent",focus:":alpha<0.3<@accent",accentedBg:":alpha<0.14<@accent",badge:"#d16ba5",indicator:"@accent"}},
+  {id:"mlight", name:"Misskey ライト", desc:"公式の標準ライトテーマ", author:"syuilo", themeName:"Misskey Light", base:"light",
+   props:{accent:"#86b300",bg:"#ffffff",fg:"#5f5f5f",link:"#44a4c1",hashtag:"#ff9156",mention:"@accent",renote:"#229e82",love:"#dd2e44"}},
+  {id:"mdark", name:"Misskey ダーク", desc:"公式の標準ダークテーマ", author:"syuilo", themeName:"Misskey Dark", base:"dark",
+   props:{accent:"#86b300",bg:"#000000",fg:"#dadada",link:"#44a4c1",hashtag:"#ff9156",mention:"@accent",renote:"#229e82",love:"#dd2e44"}},
+  {id:"danboard", name:"ダンボード", desc:"公式サンプルの紙色テーマ", author:"syuilo", themeName:"Danboard", base:"light",
+   props:{accent:"#da8d31",bg:"#dad4be",fg:"#736c5c",panel:"#ece8dc",renote:"#64986a",link:"#64986a",mention:"@accent",hashtag:"#64986a",header:"rgba(239, 227, 213, 0.75)",navBg:"#d8ceb6",inputBorder:"rgba(0, 0, 0, 0.1)"}},
+  {id:"midnight", name:"ミッドナイト", desc:"深い青の夜空ダーク", author:"如月優花", themeName:"ミッドナイト", base:"dark",
+   props:{accent:"#7aa8ff",bg:"#0a0f1e",fg:"#d7deeb",fgOnAccent:"#ffffff",panel:"#141b30",link:"#7fd4c1",hashtag:"#f2a65a",mention:"@accent",renote:"#38c6a3",love:"#ff5d7d",header:":alpha<0.8<@panel",navBg:"#0e1526",divider:"rgba(215, 222, 235, 0.12)",inputBorder:"rgba(215, 222, 235, 0.16)",buttonGradateA:"@accent",buttonGradateB:":hue<-40<@accent"}},
+  {id:"sorairo", name:"そらいろ", desc:"明るい空色のさわやかライト", author:"如月優花", themeName:"そらいろ", base:"light",
+   props:{accent:"#3d9bd6",bg:"#f2f8fb",fg:"#43555f",fgOnAccent:"#ffffff",panel:"#ffffff",link:"#2f7fc4",hashtag:"#f29f4b",mention:"@accent",renote:"#2fae8f",love:"#ef5d7a",buttonGradateA:"@accent",buttonGradateB:":hue<30<@accent",accentedBg:":alpha<0.13<@accent"}}
+];
+
+/* ===== 色の計算（Misskeyの関数 :lighten / :darken / :alpha / :hue / :saturate と @参照 を解決） ===== */
+function parseColor(str){
+  if(!str) return null;
+  str = String(str).trim();
+  let m = str.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if(m){
+    let h = m[1];
+    if(h.length===3) h = h.split("").map(c=>c+c).join("");
+    return {r:parseInt(h.slice(0,2),16), g:parseInt(h.slice(2,4),16), b:parseInt(h.slice(4,6),16), a:1};
+  }
+  m = str.match(/^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+))?\s*\)$/i);
+  if(m) return {r:+m[1], g:+m[2], b:+m[3], a:m[4]===undefined?1:+m[4]};
+  return null;
+}
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b); let h=0, s=0; const l=(max+min)/2;
+  if(max!==min){
+    const d=max-min; s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    if(max===r) h=(g-b)/d+(g<b?6:0); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60;
+  }
+  return {h, s:s*100, l:l*100};
+}
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360; s=Math.max(0,Math.min(100,s))/100; l=Math.max(0,Math.min(100,l))/100;
+  const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs(((h/60)%2)-1)), m=l-c/2; let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+  return {r:Math.round((r+m)*255), g:Math.round((g+m)*255), b:Math.round((b+m)*255)};
+}
+function colorStr(c){ return c.a>=1 ? `rgb(${c.r}, ${c.g}, ${c.b})` : `rgba(${c.r}, ${c.g}, ${c.b}, ${Math.round(c.a*100)/100})`; }
+function toHex(c){
+  const p=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0");
+  return "#"+p(c.r)+p(c.g)+p(c.b);
+}
+function resolveExpr(expr, eff, seen){
+  if(expr==null) return "";
+  expr = String(expr).trim();
+  seen = seen || new Set();
+  if(expr.startsWith("@")){
+    const key = expr.slice(1);
+    if(seen.has(key) || !(key in eff)) return "#ff00ff";
+    seen.add(key);
+    return resolveExpr(eff[key], eff, seen);
+  }
+  if(expr.startsWith(":")){
+    const m = expr.match(/^:(\w+)<([^<]+)<(.+)$/s);
+    if(m){
+      const fn=m[1], arg=parseFloat(m[2]);
+      const inner = resolveExpr(m[3], eff, seen);
+      const c = parseColor(inner);
+      if(c){
+        const hsl = rgbToHsl(c.r,c.g,c.b);
+        if(fn==="lighten"){ const o=hslToRgb(hsl.h,hsl.s,hsl.l+arg); o.a=c.a; return colorStr(o); }
+        if(fn==="darken"){ const o=hslToRgb(hsl.h,hsl.s,hsl.l-arg); o.a=c.a; return colorStr(o); }
+        if(fn==="hue"){ const o=hslToRgb(hsl.h+arg,hsl.s,hsl.l); o.a=c.a; return colorStr(o); }
+        if(fn==="saturate"){ const o=hslToRgb(hsl.h,hsl.s+arg,hsl.l); o.a=c.a; return colorStr(o); }
+        if(fn==="alpha"){ c.a=Math.max(0,Math.min(1,arg)); return colorStr(c); }
+      }
+      return inner;
+    }
+  }
+  return expr;
+}
+function luminance(c){
+  const f=v=>{ v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); };
+  return 0.2126*f(c.r)+0.7152*f(c.g)+0.0722*f(c.b);
+}
+function contrastRatio(c1,c2){
+  const l1=luminance(c1), l2=luminance(c2);
+  return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);
+}
+// ===== UI =====
+const $ = id=>document.getElementById(id);
+let state = null;
+const tileRefs = {};
+
+function blankState(){
+  const props={};
+  PROP_KEYS.forEach(k=>props[k]={on:false,val:""});
+  return {id:(crypto.randomUUID?crypto.randomUUID():"theme-"+Date.now()), name:"", author:"", desc:"", base:"light", sampleId:null, props};
+}
+function applySample(s, keepId){
+  const st = blankState();
+  if(keepId) st.id = state.id;
+  st.name=s.themeName; st.author=s.author; st.desc=s.desc||""; st.base=s.base; st.sampleId=s.id;
+  Object.entries(s.props).forEach(([k,v])=>{ if(st.props[k]) st.props[k]={on:true,val:v}; });
+  state = st;
+}
+function effectiveProps(){
+  const eff = Object.assign({}, state.base==="dark"?BASE_DARK:BASE_LIGHT);
+  PROP_KEYS.forEach(k=>{ const p=state.props[k]; if(p.on && p.val.trim()!=="") eff[k]=p.val.trim(); });
+  return eff;
+}
+function resolvedMap(){
+  const eff = effectiveProps(); const out={};
+  PROP_KEYS.forEach(k=>{ out[k]=resolveExpr(eff[k], eff); });
+  return out;
+}
+
+/* --- サンプルギャラリー描画 --- */
+function renderSamples(){
+  const box = $("samples"); box.innerHTML="";
+  SAMPLES.forEach(s=>{
+    const eff = Object.assign({}, s.base==="dark"?BASE_DARK:BASE_LIGHT, s.props);
+    const R = k=>resolveExpr(eff[k], eff);
+    const btn=document.createElement("button");
+    btn.type="button"; btn.className="sample"+(state && state.sampleId===s.id?" active":"");
+    btn.innerHTML = `<div class="mini" style="background:${R("bg")}">
+        <div class="mini-bar" style="background:${R("panel")}"><i style="background:${R("accent")}"></i><i style="background:${R("renote")}"></i><i style="background:${R("hashtag")}"></i></div>
+        <div class="mini-body"><div class="mini-panel" style="background:${R("panel")}">
+          <div class="mini-line" style="background:${R("fg")};width:72%"></div>
+          <div class="mini-line" style="background:${R("fg")};width:48%"></div>
+          <span class="mini-btn" style="background:${R("accent")}">ノート</span>
+        </div></div></div>
+      <div class="sname">${s.name}</div><div class="sdesc">${s.desc}</div>
+      <div class="dots"><i style="background:${R("accent")}"></i><i style="background:${R("bg")}"></i><i style="background:${R("panel")}"></i><i style="background:${R("fg")}"></i><i style="background:${R("link")}"></i></div>`;
+    btn.addEventListener("click",()=>{ applySample(s); syncMetaInputs(); renderAll(); toast(`サンプル「${s.name}」を読み込んだよ🌸`); });
+    box.appendChild(btn);
+  });
+}
+
+/* --- カラー項目カード描画 --- */
+function renderGroups(){
+  const box=$("groups"); box.innerHTML="";
+  GROUPS.forEach((g,gi)=>{
+    const det=document.createElement("details"); det.className="grp"; if(gi<3) det.open=true;
+    det.innerHTML=`<summary>${gi===0?"🎨":gi===1?"🪟":gi===2?"🧭":gi===3?"🔗":gi===4?"🔘":"⚙️"} ${g}</summary>`;
+    const tiles=document.createElement("div"); tiles.className="tiles";
+    PROPS.filter(p=>p[2]===g).forEach(([key,ja])=>{
+      const t=document.createElement("div"); t.className="tile"; t.id="card-"+key; t.dataset.key=key;
+      t.innerHTML=`<div class="t-head"><input type="checkbox" title="この色をテーマに入れる">
+          <div><div class="ja">${ja}</div><div class="key">${key}</div></div></div>
+        <div class="swatch" title="タップで色を選ぶ"></div>
+        <div class="t-inputs"><input type="color" value="#888888"><input type="text" spellcheck="false" placeholder="#ffffff / @accent"></div>`;
+      const [chk, sw, col, txt] = [t.querySelector("input[type=checkbox]"), t.querySelector(".swatch"), t.querySelector("input[type=color]"), t.querySelector("input[type=text]")];
+      tileRefs[key]={tile:t, chk, sw, col, txt};
+      chk.addEventListener("change",()=>{ state.props[key].on=chk.checked; state.sampleId=state.sampleId; updateAll(); });
+      sw.addEventListener("click",()=>{ if(!isLiteralColor(txt.value)){ txt.focus(); txt.select(); toast("この色は式でできてるよ。文字で直すか、下のカラーピッカーで色に変えられるよ"); return; } col.click(); });
+      col.addEventListener("input",()=>{ state.props[key]={on:true, val:col.value}; txt.value=col.value; chk.checked=true; updateAll(false); });
+      txt.addEventListener("change",()=>{ state.props[key]={on:true, val:txt.value.trim()}; chk.checked=true; updateAll(); });
+      tiles.appendChild(t);
+    });
+    det.appendChild(tiles); box.appendChild(det);
+  });
+}
+function isLiteralColor(v){ return !!parseColor(v||""); }
+
+/* --- 画面更新 --- */
+function updateTiles(res){
+  PROP_KEYS.forEach(k=>{
+    const r=tileRefs[k]; if(!r) return;
+    const p=state.props[k];
+    r.chk.checked=p.on;
+    r.tile.classList.toggle("off",!p.on);
+    if(document.activeElement!==r.txt) r.txt.value=p.val;
+    r.sw.style.background = res[k] || "#888";
+    const c=parseColor(res[k]); if(c) r.col.value=toHex(c);
+  });
+}
+function updatePreview(res){
+  const pv=$("preview");
+  PROP_KEYS.forEach(k=>pv.style.setProperty("--pv-"+k, res[k]));
+  // コントラストチェック
+  const fg=parseColor(res.fg), bg=parseColor(res.bg), panel=parseColor(res.panel), acc=parseColor(res.accent), onAcc=parseColor(res.fgOnAccent);
+  const chip=(label,ratio)=>{
+    const ok = ratio>=4.5, mid = ratio>=3;
+    return `<span class="chip ${ok?"":"warn"}">${label} ${ratio.toFixed(1)}:1 ${ok?"よく読める◎":mid?"まあまあ○":"読みにくい△"}</span>`;
+  };
+  let html="";
+  if(fg&&bg) html+=chip("文字×背景", contrastRatio(fg,bg));
+  if(fg&&panel) html+=chip("文字×パネル", contrastRatio(fg,panel));
+  if(acc&&onAcc) html+=chip("ボタン文字×アクセント", contrastRatio(onAcc,acc));
+  $("contrast").innerHTML=html;
+}
+function esc(s){ return String(s||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/\n/g,"\\n"); }
+function generateCode(){
+  const lines=[];
+  lines.push("{");
+  lines.push(`\tid: '${esc(state.id)}',`);
+  lines.push(`\tname: '${esc(state.name||"My Theme")}',`);
+  if(state.author) lines.push(`\tauthor: '${esc(state.author)}',`);
+  if(state.desc) lines.push(`\tdesc: '${esc(state.desc)}',`);
+  lines.push(`\tbase: '${state.base}',`);
+  lines.push(`\tprops: {`);
+  PROP_KEYS.forEach(k=>{
+    const p=state.props[k];
+    if(p.on && p.val.trim()!=="") lines.push(`\t\t${k}: '${esc(p.val.trim())}',`);
+  });
+  lines.push(`\t},`);
+  lines.push("}");
+  return lines.join("\n");
+}
+function updateCode(){
+  const ta=$("codeOut");
+  if(document.activeElement!==ta) ta.value=generateCode();
+}
+let saveTimer=null;
+function saveLocal(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ try{ localStorage.setItem("misskey-theme-maker-v1", JSON.stringify(state)); }catch(e){} },300);
+}
+function updateAll(rerenderSamples=true){
+  const res=resolvedMap();
+  updateTiles(res); updatePreview(res); updateCode(); saveLocal();
+  if(rerenderSamples) renderSamples();
+}
+function syncMetaInputs(){
+  $("metaName").value=state.name; $("metaAuthor").value=state.author; $("metaDesc").value=state.desc;
+  $("baseLight").classList.toggle("on", state.base==="light");
+  $("baseDark").classList.toggle("on", state.base==="dark");
+}
+function toast(msg){
+  const t=$("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+/* --- 取り込み（JSON5 / JSON どちらでも緩く読む） --- */
+function unesc(s){ return s.replace(/\\n/g,"\n").replace(/\\'/g,"'").replace(/\\"/g,'"').replace(/\\\\/g,"\\"); }
+function parseThemeCode(text){
+  const pairRe = /"?([A-Za-z0-9_$]+)"?\s*:\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")/g;
+  const propsIdx = text.search(/"?props"?\s*:/);
+  const metaPart = propsIdx>=0 ? text.slice(0,propsIdx) : text;
+  const meta={}; let m;
+  const metaRe = new RegExp(pairRe.source,"g");
+  while((m=metaRe.exec(metaPart))){ meta[m[1]] = unesc(m[2]!==undefined?m[2]:m[3]); }
+  const props={};
+  if(propsIdx>=0){
+    const open = text.indexOf("{", propsIdx);
+    if(open>=0){
+      let depth=0, end=-1;
+      for(let i=open;i<text.length;i++){ if(text[i]==="{")depth++; else if(text[i]==="}"){depth--; if(depth===0){end=i;break;}} }
+      const inner = text.slice(open+1, end>open?end:undefined);
+      const re = new RegExp(pairRe.source,"g");
+      while((m=re.exec(inner))){ if(PROP_KEYS.includes(m[1])) props[m[1]] = unesc(m[2]!==undefined?m[2]:m[3]); }
+    }
+  }
+  return {meta, props};
+}
+
+/* --- イベント --- */
+function bindEvents(){
+  $("metaName").addEventListener("input",e=>{state.name=e.target.value; updateCode(); saveLocal();});
+  $("metaAuthor").addEventListener("input",e=>{state.author=e.target.value; updateCode(); saveLocal();});
+  $("metaDesc").addEventListener("input",e=>{state.desc=e.target.value; updateCode(); saveLocal();});
+  $("baseLight").addEventListener("click",()=>{state.base="light"; syncMetaInputs(); updateAll();});
+  $("baseDark").addEventListener("click",()=>{state.base="dark"; syncMetaInputs(); updateAll();});
+  $("btnNewId").addEventListener("click",()=>{state.id=crypto.randomUUID?crypto.randomUUID():"theme-"+Date.now(); updateCode(); saveLocal(); toast("新しいIDにしたよ");});
+  $("btnReset").addEventListener("click",()=>{ localStorage.removeItem("misskey-theme-maker-v1"); applySample(SAMPLES[0]); syncMetaInputs(); updateAll(); toast("優花さくらに戻したよ🌸"); });
+  $("btnDice").addEventListener("click",()=>{
+    const h=Math.floor(Math.random()*360);
+    const c=hslToRgb(h,65,62);
+    state.props.accent={on:true,val:toHex({...c,a:1})};
+    updateAll(); toast("アクセントをランダムにしたよ🎲");
+  });
+  $("btnPalette").addEventListener("click",()=>{
+    const eff=effectiveProps();
+    const acc=parseColor(resolveExpr(eff.accent,eff))||{r:189,g:111,b:214,a:1};
+    const hsl=rgbToHsl(acc.r,acc.g,acc.b);
+    const set=(k,v)=>{ state.props[k]={on:true,val:v}; };
+    const col=(h,s,l)=>toHex({...hslToRgb(h,s,l),a:1});
+    set("link", col(hsl.h+30,60,48));
+    set("renote", col(hsl.h+150,55,42));
+    set("hashtag", col(hsl.h-35,85,58));
+    set("mention","@accent"); set("mentionMe","@mention");
+    set("love", col(345,72,55));
+    set("buttonGradateA","@accent"); set("buttonGradateB",":hue<28<@accent");
+    set("focus",":alpha<0.3<@accent"); set("accentedBg",":alpha<0.14<@accent");
+    set("indicator","@accent"); set("navActive","@accent");
+    updateAll(); toast("アクセントに合わせて配色したよ✨");
+  });
+  $("propSearch").addEventListener("input",e=>{
+    const q=e.target.value.trim().toLowerCase();
+    PROPS.forEach(([k,ja])=>{
+      const r=tileRefs[k]; if(!r) return;
+      const hit = !q || ja.toLowerCase().includes(q) || k.toLowerCase().includes(q);
+      r.tile.style.display = hit?"":"none";
+    });
+    document.querySelectorAll("details.grp").forEach(d=>{
+      const any=[...d.querySelectorAll(".tile")].some(t=>t.style.display!=="none");
+      d.style.display=any?"":"none"; if(q&&any) d.open=true;
+    });
+  });
+  // プレビューの場所タップ → その色のカードへ
+  $("preview").addEventListener("click",e=>{
+    const el=e.target.closest("[data-pick]"); if(!el) return;
+    const key=el.dataset.pick; const r=tileRefs[key]; if(!r) return;
+    document.querySelectorAll("details.grp").forEach(d=>{ if(d.contains(r.tile)) d.open=true; });
+    r.tile.scrollIntoView({behavior:"smooth", block:"center"});
+    r.tile.classList.add("flash"); setTimeout(()=>r.tile.classList.remove("flash"),1400);
+    toast(`「${PROP_JA[key]||key}（${key}）」を編集してるよ`);
+  });
+  $("btnCopy").addEventListener("click",async()=>{
+    const code=generateCode(); $("codeOut").value=code;
+    try{ await navigator.clipboard.writeText(code); toast("テーマコードをコピーしたよ📋"); }
+    catch(e){ $("codeOut").select(); document.execCommand("copy"); toast("テーマコードをコピーしたよ📋"); }
+  });
+  $("btnDownload").addEventListener("click",()=>{
+    const code=generateCode();
+    const blob=new Blob([code],{type:"text/plain;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=(state.name||"misskey-theme").replace(/[\\/:*?"<>|]/g,"_")+".json5";
+    a.click(); URL.revokeObjectURL(a.href);
+    toast("ファイルに保存したよ⬇️");
+  });
+  $("btnImport").addEventListener("click",()=>{
+    const text=$("codeOut").value;
+    if(!text.trim()){ toast("先にコードを貼り付けてね"); return; }
+    const {meta, props}=parseThemeCode(text);
+    const st=blankState();
+    st.id = meta.id || st.id;
+    st.name = meta.name||""; st.author=meta.author||""; st.desc=meta.desc||"";
+    st.base = meta.base==="dark"?"dark":"light";
+    Object.entries(props).forEach(([k,v])=>{ st.props[k]={on:true,val:v}; });
+    state=st; syncMetaInputs(); updateAll();
+    toast("コードを読み込んだよ🌸");
+  });
+}
+
+/* --- 初期化 --- */
+function init(){
+  let restored=false;
+  try{
+    const raw=localStorage.getItem("misskey-theme-maker-v1");
+    if(raw){ const s=JSON.parse(raw); if(s && s.props && PROP_KEYS.every(k=>k in s.props)){ state=s; restored=true; } }
+  }catch(e){}
+  if(!restored) applySample(SAMPLES[0]);
+  renderGroups(); bindEvents(); syncMetaInputs(); updateAll();
+}
+init();
+</script>
+</body>
+</html>
