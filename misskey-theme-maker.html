@@ -350,6 +350,7 @@
           <button class="btn main" type="button" id="btnCopy">📋 コピーする</button>
           <button class="btn sub" type="button" id="btnDownload">⬇️ ファイルで保存</button>
           <button class="btn ghost" type="button" id="btnImport">貼り付けたコードを読み込む</button>
+          <button class="btn sub" type="button" id="btnShare">📣 テーマを共有</button>
         </div>
         <p class="note-help">使い方：Misskeyを開いて「設定 → テーマ → テーマをインストール」で、このコードを貼り付けてね。既存テーマを直したいときは、そのコードをここに貼って「読み込む」を押せば続きから編集できるよ。編集中の内容はこのブラウザに自動保存されるよ。</p>
       </section>
@@ -735,6 +736,21 @@ function bindEvents(){
     const code=generateCode(); $("codeOut").value=code;
     try{ await navigator.clipboard.writeText(code); toast("テーマコードをコピーしたよ📋"); }
     catch(e){ $("codeOut").select(); document.execCommand("copy"); toast("テーマコードをコピーしたよ📋"); }
+  });
+  $("btnShare").addEventListener("click",async()=>{
+    const lines=["🌸 Misskeyのテーマを作ったよ！"];
+    if(state.name) lines.push(`テーマ名：${state.name}`);
+    if(state.author) lines.push(`作者：${state.author}`);
+    if(state.desc) lines.push(`説明：${state.desc}`);
+    lines.push(`ベース：${state.base==="dark"?"ダーク":"ライト"}`);
+    lines.push("","🎨 Misskeyテーマメーカー","https://yuka1201.github.io/yuka1201/misskey-theme-maker.html");
+    const text=lines.join("\n");
+    if(navigator.share){
+      try{ await navigator.share({title:"Misskeyテーマメーカー", text}); }catch(e){/* キャンセル時は何もしない */}
+    } else {
+      try{ await navigator.clipboard.writeText(text); toast("共有文をコピーしたよ📋 そのまま投稿してね"); }
+      catch(e){ toast("共有文のコピーに失敗しちゃった…"); }
+    }
   });
   $("btnDownload").addEventListener("click",()=>{
     const code=generateCode();
