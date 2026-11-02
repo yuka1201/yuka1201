@@ -1,39 +1,66 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="yuka">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Misskeyテーマメーカー ― Y.U.K.A Tools</title>
-<meta name="description" content="Misskeyのテーマを、サンプルのプレビューを見ながらグラフィカルに作れるツール。色をタップして変えるだけでテーマコード（JSON5）が出力できます。">
+<meta name="description" content="Misskeyのテーマを、テンプレートとプレビューを見ながらグラフィカルに作れるツール。色をタップして変えるだけでテーマコード（JSON5）が出力できます。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎨%3C/text%3E%3C/svg%3E">
 <style>
-  :root{
+  :root, :root[data-theme="white"]{
     --lav:#b79ced; --lav-deep:#8b6fd8; --pink:#f6a8c9; --pink-deep:#d16ba5;
-    --ink:#3d3355; --ink-soft:#6f6590; --card:#ffffff;
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(0,0,0,.04), transparent 60%), linear-gradient(160deg,#f4f4f7 0%,#fbfbfc 100%);
+    --card:#ffffff; --soft-bg:#f6f6f9; --input-bg:#ffffff;
+    --ink:#23232b; --ink-soft:#6d6d78;
+    --line2:rgba(35,35,43,.16); --accent-deep:#4c4c58;
+    --grad:linear-gradient(92deg,#3f3f4a,#767684);
+    --chip-bg:#eeeef1; --badge-bg:rgba(255,255,255,.85);
+    --card-shadow:0 10px 30px rgba(30,30,40,.08); --hover-shadow:0 10px 22px rgba(30,30,40,.12);
+    --btn-shadow:0 6px 16px rgba(30,30,40,.18); --flash-ring:rgba(76,76,88,.25);
+    --toast-bg:#23232b; --toast-fg:#ffffff;
+  }
+  :root[data-theme="black"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(122,132,255,.14), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(70,70,140,.18), transparent 60%), linear-gradient(160deg,#0b0c16 0%,#12122a 100%);
+    --card:#171932; --soft-bg:#101124; --input-bg:#0f1020;
+    --ink:#eceefb; --ink-soft:#9a9ec0;
+    --line2:rgba(236,238,251,.20); --accent-deep:#c3b3f7;
+    --grad:linear-gradient(92deg,#4a4e78,#7d84b8);
+    --chip-bg:#23233d; --badge-bg:rgba(23,25,50,.85);
+    --card-shadow:0 10px 30px rgba(0,0,0,.40); --hover-shadow:0 10px 22px rgba(0,0,0,.45);
+    --btn-shadow:0 6px 16px rgba(0,0,0,.40); --flash-ring:rgba(185,168,245,.35);
+    --toast-bg:#eceefb; --toast-fg:#171932;
+  }
+  :root[data-theme="yuka"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%), linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+    --card:#ffffff; --soft-bg:#fdfbff; --input-bg:#fdfbff;
+    --ink:#3d3355; --ink-soft:#6f6590;
+    --line2:rgba(183,156,237,.35); --accent-deep:#8b6fd8;
+    --grad:linear-gradient(92deg,#8b6fd8,#d16ba5 60%,#f6a8c9);
+    --chip-bg:#f1eafd; --badge-bg:rgba(255,255,255,.75);
+    --card-shadow:0 10px 30px rgba(93,72,160,.12); --hover-shadow:0 10px 22px rgba(93,72,160,.16);
+    --btn-shadow:0 6px 16px rgba(209,107,165,.35); --flash-ring:rgba(209,107,165,.30);
+    --toast-bg:#3d3355; --toast-fg:#ffffff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
     font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
     color:var(--ink); min-height:100vh;
-    background:
-      radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%),
-      radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%),
-      linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+    background:var(--bg-img);
   }
   .wrap{max-width:1240px;margin:0 auto;padding:34px 16px 70px}
   header.top{text-align:center;margin-bottom:26px}
-  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:rgba(255,255,255,.75);border:1.5px solid var(--lav);color:var(--lav-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
-  h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:linear-gradient(92deg,var(--lav-deep),#d16ba5 60%,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:var(--badge-bg);border:1.5px solid var(--line2);color:var(--accent-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
+  h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
   .sub{margin-top:10px;color:var(--ink-soft);font-size:14px;line-height:1.8}
-  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 10px 30px rgba(93,72,160,.12);border:2px solid rgba(183,156,237,.22)}
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--card-shadow);border:2px solid var(--line2)}
   h2.sec{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px}
   h2.sec .hint{font-size:12px;font-weight:600;color:var(--ink-soft)}
 
   /* サンプルギャラリー */
   .samples{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
-  .sample{border:2px solid rgba(183,156,237,.3);border-radius:16px;padding:10px;cursor:pointer;background:#fff;transition:transform .15s ease,border-color .15s ease, box-shadow .15s ease;text-align:left;font-family:inherit}
-  .sample:hover{transform:translateY(-3px);border-color:var(--lav);box-shadow:0 10px 22px rgba(93,72,160,.16)}
-  .sample.active{border-color:var(--pink-deep);box-shadow:0 0 0 3px rgba(209,107,165,.25)}
+  .sample{border:2px solid var(--line2);border-radius:16px;padding:10px;cursor:pointer;background:var(--card);color:var(--ink);transition:transform .15s ease,border-color .15s ease, box-shadow .15s ease;text-align:left;font-family:inherit}
+  .sample:hover{transform:translateY(-3px);border-color:var(--accent-deep);box-shadow:var(--hover-shadow)}
+  .sample.active{border-color:var(--accent-deep);box-shadow:0 0 0 3px var(--flash-ring)}
   .mini{border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.08);height:86px;display:flex;flex-direction:column}
   .mini-bar{height:16px;display:flex;align-items:center;gap:4px;padding:0 6px}
   .mini-bar i{width:6px;height:6px;border-radius:50%;display:block}
@@ -54,38 +81,38 @@
 
   label.f{display:block;font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:10px 0 5px}
   input[type=text],textarea,select{
-    width:100%;border:1.5px solid rgba(139,111,216,.35);border-radius:10px;padding:9px 11px;
-    font-size:14px;font-family:inherit;color:var(--ink);background:#fdfbff;outline:none}
-  input[type=text]:focus,textarea:focus{border-color:var(--pink-deep)}
+    width:100%;border:1.5px solid var(--line2);border-radius:10px;padding:9px 11px;
+    font-size:14px;font-family:inherit;color:var(--ink);background:var(--input-bg);outline:none}
+  input[type=text]:focus,textarea:focus{border-color:var(--accent-deep)}
   textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;min-height:230px;resize:vertical}
   .seg{display:flex;gap:8px}
-  .seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid rgba(139,111,216,.35);background:#fff;font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
-  .seg button.on{background:linear-gradient(92deg,var(--lav-deep),var(--pink-deep));color:#fff;border-color:transparent}
+  .seg button{flex:1;padding:9px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);font-weight:800;cursor:pointer;font-family:inherit;color:var(--ink-soft)}
+  .seg button.on{background:var(--grad);color:#fff;border-color:transparent}
   .rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
   .btn{border:none;border-radius:999px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;font-family:inherit;transition:transform .12s ease, box-shadow .12s ease}
   .btn:hover{transform:translateY(-1px)}
-  .btn.main{background:linear-gradient(92deg,var(--lav-deep),var(--pink-deep));color:#fff;box-shadow:0 6px 16px rgba(209,107,165,.35)}
-  .btn.sub{background:#f1eafd;color:var(--lav-deep)}
-  .btn.ghost{background:#fff;border:1.5px solid rgba(139,111,216,.4);color:var(--ink-soft)}
+  .btn.main{background:var(--grad);color:#fff;box-shadow:var(--btn-shadow)}
+  .btn.sub{background:var(--chip-bg);color:var(--accent-deep)}
+  .btn.ghost{background:var(--card);border:1.5px solid var(--line2);color:var(--ink-soft)}
 
   /* カラー項目カード */
-  details.grp{border:1.5px solid rgba(183,156,237,.3);border-radius:14px;padding:10px 12px;margin-top:10px;background:#fdfbff}
+  details.grp{border:1.5px solid var(--line2);border-radius:14px;padding:10px 12px;margin-top:10px;background:var(--soft-bg)}
   details.grp summary{cursor:pointer;font-weight:900;font-size:14px;list-style:none}
   details.grp summary::-webkit-details-marker{display:none}
   .tiles{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
   @media (max-width:480px){.tiles{grid-template-columns:1fr}}
-  .tile{border:1.5px solid rgba(183,156,237,.3);border-radius:12px;padding:8px;background:#fff;transition:box-shadow .2s ease,border-color .2s ease}
+  .tile{border:1.5px solid var(--line2);border-radius:12px;padding:8px;background:var(--card);transition:box-shadow .2s ease,border-color .2s ease}
   .tile.off{opacity:.48}
-  .tile.flash{border-color:var(--pink-deep);box-shadow:0 0 0 4px rgba(209,107,165,.35)}
+  .tile.flash{border-color:var(--accent-deep);box-shadow:0 0 0 4px var(--flash-ring)}
   .tile .t-head{display:flex;align-items:center;gap:6px}
-  .tile .t-head input[type=checkbox]{width:16px;height:16px;accent-color:var(--pink-deep)}
+  .tile .t-head input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent-deep)}
   .tile .ja{font-weight:800;font-size:12.5px;line-height:1.3}
   .tile .key{font-size:10.5px;color:var(--ink-soft);font-family:ui-monospace,monospace}
   .swatch{height:40px;border-radius:9px;border:1px solid rgba(0,0,0,.1);margin-top:7px;cursor:pointer;position:relative;overflow:hidden}
   .swatch::after{content:"タップで色を選ぶ";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.55);opacity:0;transition:opacity .15s}
   .swatch:hover::after{opacity:1}
   .tile .t-inputs{display:flex;gap:6px;margin-top:7px;align-items:center}
-  .tile input[type=color]{width:38px;height:32px;border:1.5px solid rgba(139,111,216,.35);border-radius:8px;padding:2px;background:#fff;cursor:pointer;flex:none}
+  .tile input[type=color]{width:38px;height:32px;border:1.5px solid var(--line2);border-radius:8px;padding:2px;background:var(--card);cursor:pointer;flex:none}
   .tile input[type=text]{padding:6px 8px;font-size:12px;font-family:ui-monospace,monospace}
 
   /* Misskeyプレビュー */
@@ -140,11 +167,13 @@
   .switch.on::after{left:21px;background:var(--pv-switchOnFg)}
   .swrow{display:flex;align-items:center;gap:9px;font-size:12.5px;margin-top:7px}
   .contrast{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .chip{font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;background:#f1eafd;color:var(--lav-deep)}
+  .chip{font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;background:var(--chip-bg);color:var(--accent-deep)}
   .chip.warn{background:#ffe9e9;color:#c0392b}
   .note-help{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px}
-  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;box-shadow:0 10px 26px rgba(0,0,0,.3)}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--toast-bg);color:var(--toast-fg);font-weight:800;font-size:13.5px;border-radius:999px;padding:10px 22px;opacity:0;pointer-events:none;transition:all .25s ease;z-index:50;box-shadow:0 10px 26px rgba(0,0,0,.3)}
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .theme-sel{min-height:42px;padding:0 14px;border-radius:10px;border:1.5px solid var(--line2);background:var(--card);color:var(--ink);font:inherit;font-weight:800;cursor:pointer;box-shadow:var(--card-shadow)}
+  .site-theme-row{margin-top:16px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:13px;font-weight:800;color:var(--ink-soft)}
   footer{text-align:center;color:var(--ink-soft);font-size:12.5px;margin-top:34px;line-height:1.8}
 </style>
 </head>
@@ -153,11 +182,12 @@
   <header class="top">
     <span class="badge">Y.U.K.A SYSTEM</span>
     <h1>🎨 Misskeyテーマメーカー</h1>
-    <p class="sub">サンプルから選んで、色をタップして変えるだけ。<br>右の「Misskeyのサンプル画面」がその場で変わるから、見た目を確認しながら作れるよ。<br>できたらテーマコードをコピーして、Misskeyの「設定 → テーマ → インストール」に貼るだけ！</p>
+    <p class="sub">テンプレートから選んで、色をタップして変えるだけ。<br>右の「Misskeyのサンプル画面」がその場で変わるから、見た目を確認しながら作れるよ。<br>できたらテーマコードをコピーして、Misskeyの「設定 → テーマ → インストール」に貼るだけ！</p>
+    <div class="site-theme-row"><label for="siteThemeSel">サイトの表示</label><select id="siteThemeSel" class="theme-sel" aria-label="サイトの表示テーマ選択"><option value="white">白</option><option value="black">黒</option><option value="yuka">優花</option></select></div>
   </header>
 
   <section class="card">
-    <h2 class="sec">🌸 まずはサンプルから選ぶ <span class="hint">タップすると全部の色が切り替わるよ。ここから自分好みに変えていこう</span></h2>
+    <h2 class="sec">🌸 まずはテンプレートから選ぶ <span class="hint">タップすると全部の色が切り替わるよ。ここから自分好みに変えていこう</span></h2>
     <div class="samples" id="samples"></div>
   </section>
 
@@ -442,7 +472,7 @@ function renderSamples(){
         </div></div></div>
       <div class="sname">${s.name}</div><div class="sdesc">${s.desc}</div>
       <div class="dots"><i style="background:${R("accent")}"></i><i style="background:${R("bg")}"></i><i style="background:${R("panel")}"></i><i style="background:${R("fg")}"></i><i style="background:${R("link")}"></i></div>`;
-    btn.addEventListener("click",()=>{ applySample(s); syncMetaInputs(); renderAll(); toast(`サンプル「${s.name}」を読み込んだよ🌸`); });
+    btn.addEventListener("click",()=>{ applySample(s); syncMetaInputs(); updateAll(); toast(`テンプレート「${s.name}」を読み込んだよ🌸`); });
     box.appendChild(btn);
   });
 }
@@ -565,6 +595,14 @@ function parseThemeCode(text){
   return {meta, props};
 }
 
+/* --- サイト自体の表示テーマ（白 / 黒 / 優花） --- */
+function applySiteTheme(v, save=true){
+  const t = ["white","black","yuka"].includes(v) ? v : "yuka";
+  document.documentElement.dataset.theme = t;
+  const sel = $("siteThemeSel"); if(sel) sel.value = t;
+  if(save){ try{ localStorage.setItem("misskey-theme-maker-sitetheme", t); }catch(e){} }
+}
+
 /* --- イベント --- */
 function bindEvents(){
   $("metaName").addEventListener("input",e=>{state.name=e.target.value; updateCode(); saveLocal();});
@@ -617,6 +655,7 @@ function bindEvents(){
     r.tile.classList.add("flash"); setTimeout(()=>r.tile.classList.remove("flash"),1400);
     toast(`「${PROP_JA[key]||key}（${key}）」を編集してるよ`);
   });
+  $("siteThemeSel").addEventListener("change",e=>{ applySiteTheme(e.target.value); toast("サイトの表示を変えたよ"); });
   $("btnCopy").addEventListener("click",async()=>{
     const code=generateCode(); $("codeOut").value=code;
     try{ await navigator.clipboard.writeText(code); toast("テーマコードをコピーしたよ📋"); }
@@ -653,7 +692,9 @@ function init(){
     if(raw){ const s=JSON.parse(raw); if(s && s.props && PROP_KEYS.every(k=>k in s.props)){ state=s; restored=true; } }
   }catch(e){}
   if(!restored) applySample(SAMPLES[0]);
-  renderGroups(); bindEvents(); syncMetaInputs(); updateAll();
+  let siteTheme = "yuka";
+  try{ siteTheme = localStorage.getItem("misskey-theme-maker-sitetheme") || "yuka"; }catch(e){}
+  renderGroups(); bindEvents(); applySiteTheme(siteTheme, false); syncMetaInputs(); updateAll();
 }
 init();
 </script>
