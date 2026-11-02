@@ -74,7 +74,7 @@
   .dots i{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.12);display:block}
 
   .layout{display:grid;grid-template-columns:minmax(340px,460px) 1fr;gap:18px;margin-top:18px;align-items:start}
-  @media (max-width:920px){.layout{grid-template-columns:1fr}}
+  @media (max-width:920px){.layout{display:flex;flex-direction:column}.layout .col{display:contents}.card-preview{order:1}.card-info{order:2}.card-colors{order:3}.card-code{order:4}.mk{min-height:440px}}
   .col{display:flex;flex-direction:column;gap:18px;min-width:0}
   .sticky{position:sticky;top:14px}
   @media (max-width:920px){.sticky{position:static}}
@@ -192,6 +192,17 @@
   .sec-t{white-space:nowrap}
   .btn-nor,.btn-post{white-space:nowrap}
   textarea{line-break:normal}
+
+  /* スマホ用ミニ配色バー */
+  #miniBar{display:none}
+  @media (max-width:920px){
+    #miniBar{display:flex;align-items:center;gap:10px;position:fixed;left:10px;right:10px;bottom:10px;z-index:55;padding:9px 14px;border-radius:999px;border:1.5px solid rgba(0,0,0,.14);box-shadow:0 10px 26px rgba(0,0,0,.25);cursor:pointer;font-size:12.5px;font-weight:800;transition:opacity .25s ease,transform .25s ease}
+    #miniBar.hide{opacity:0;pointer-events:none;transform:translateY(12px)}
+    #miniBar .mb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:32vw}
+    #miniBar .mb-dots{display:flex;gap:5px;margin-left:auto}
+    #miniBar .mb-dots i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.16);display:block;flex:none}
+    .wrap{padding-bottom:104px}
+  }
 </style>
 </head>
 <body>
@@ -210,7 +221,7 @@
 
   <div class="layout">
     <div class="col">
-      <section class="card">
+      <section class="card card-info">
         <h2 class="sec">📝 テーマの情報</h2>
         <label class="f">テーマ名</label>
         <input type="text" id="metaName" placeholder="例：優花さくら">
@@ -232,7 +243,7 @@
         <p class="note-help">「配色をおまかせ」は、アクセントカラーに合うリンク色・リノート色などを自動で決めてくれるよ。あとから個別に変えられるよ。</p>
       </section>
 
-      <section class="card">
+      <section class="card card-colors">
         <h2 class="sec"><span class="sec-t">🖌️ 色を変える</span> <span class="hint">右のプレビューの気になる場所をタップしても、ここが開くよ</span></h2>
         <input type="text" id="propSearch" placeholder="🔍 色の名前で探す（例：背景、ボタン、accent）">
         <div id="groups"></div>
@@ -241,7 +252,7 @@
     </div>
 
     <div class="col sticky">
-      <section class="card">
+      <section class="card card-preview">
         <h2 class="sec"><span class="sec-t">👀 サンプル画面（プレビュー）</span> <span class="hint">気になる場所をタップすると、その色を編集できるよ</span></h2>
         <div class="mk" id="preview">
           <nav class="mk-nav" data-pick="navBg" title="ナビ背景">
@@ -302,7 +313,7 @@
         <div class="contrast" id="contrast"></div>
       </section>
 
-      <section class="card">
+      <section class="card card-code">
         <h2 class="sec"><span class="sec-t">📦 テーマコード</span> <span class="hint">Misskeyに貼るのはこれだよ</span></h2>
         <textarea id="codeOut" spellcheck="false"></textarea>
         <div class="rowbtns">
@@ -317,6 +328,7 @@
 
   <footer>Y.U.K.A ― AI NOTE SYSTEM<br>テーマの仕様は <a href="https://misskey-hub.net/ja/docs/for-users/features/theme/" target="_blank" rel="noopener">Misskey Hub「テーマ」</a> に準拠しているよ🌸</footer>
 </div>
+<div id="miniBar" title="タップでプレビューへ移動"><span class="mb-name">My Theme</span><span class="mb-dots"><i data-mb="bg"></i><i data-mb="panel"></i><i data-mb="accent"></i><i data-mb="fg"></i><i data-mb="link"></i><i data-mb="renote"></i></span><span class="mb-go">プレビュー 👀</span></div>
 <div id="toast"></div>
 
 <script>
@@ -541,6 +553,12 @@ function updatePreview(res){
     const ok = ratio>=4.5, mid = ratio>=3;
     return `<span class="chip ${ok?"":"warn"}">${label} ${ratio.toFixed(1)}:1 ${ok?"よく読める◎":mid?"まあまあ○":"読みにくい△"}</span>`;
   };
+  const mb=$("miniBar");
+  if(mb){
+    mb.style.background=res.panel; mb.style.color=res.fg;
+    mb.querySelector(".mb-name").textContent = state.name || "My Theme";
+    mb.querySelectorAll("[data-mb]").forEach(d=>{ d.style.background = res[d.dataset.mb] || "#888"; });
+  }
   let html="";
   if(fg&&bg) html+=chip("文字×背景", contrastRatio(fg,bg));
   if(fg&&panel) html+=chip("文字×パネル", contrastRatio(fg,panel));
@@ -682,6 +700,7 @@ function bindEvents(){
     applySiteTheme(next);
     toast(`サイトの表示を「${SITE_THEME_NAME[next]}」にしたよ`);
   });
+  $("miniBar").addEventListener("click",()=>{ document.querySelector(".card-preview").scrollIntoView({behavior:"smooth", block:"start"}); });
   $("btnCopy").addEventListener("click",async()=>{
     const code=generateCode(); $("codeOut").value=code;
     try{ await navigator.clipboard.writeText(code); toast("テーマコードをコピーしたよ📋"); }
@@ -721,6 +740,10 @@ function init(){
   let siteTheme = "yuka";
   try{ siteTheme = localStorage.getItem("misskey-theme-maker-sitetheme") || "yuka"; }catch(e){}
   renderGroups(); bindEvents(); applySiteTheme(siteTheme, false); syncMetaInputs(); updateAll();
+  if("IntersectionObserver" in window){
+    const mb=$("miniBar");
+    new IntersectionObserver(es=>{ es.forEach(e=>{ mb.classList.toggle("hide", e.isIntersecting); }); }, {threshold:0.2}).observe($("preview"));
+  }
 }
 init();
 </script>
