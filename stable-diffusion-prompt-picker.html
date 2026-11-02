@@ -105,6 +105,14 @@ body{padding-bottom:var(--drawer-pad,60px)}
 .side .nav{border:1.5px solid var(--ln);background:var(--cd);margin-bottom:6px}
 .side .nav:last-child{margin-bottom:0}
 .side .nav.act{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,var(--cd))}
+#themeSel{display:none}
+#themePill{position:fixed;top:10px;right:10px;z-index:75;display:flex;gap:2px;background:var(--pn);border:1px solid var(--ln);border-radius:999px;padding:3px;box-shadow:var(--sh)}
+#themePill button{border:0;background:transparent;color:var(--sb);font:inherit;font-size:13px;font-weight:700;border-radius:999px;padding:6px 12px;min-height:34px;cursor:pointer}
+#themePill button.act{background:var(--ac);color:#fff}
+#nav-tab{display:none}
+@media(min-width:981px){header{padding-right:186px}}
+@media(max-width:980px){#nav-tab{display:block;position:fixed;left:0;top:44%;z-index:55;writing-mode:vertical-rl;background:var(--ac);color:#fff;border:0;border-radius:0 12px 12px 0;padding:13px 7px;font:inherit;font-weight:700;letter-spacing:.12em;cursor:pointer;box-shadow:var(--sh)}body.nav-open #nav-tab{opacity:0;pointer-events:none}h1{padding-right:120px}}
+@media(max-width:640px){#themePill{top:8px;right:8px}#themePill button{font-size:12px;padding:5px 9px;min-height:32px}}
 </style>
 </head>
 <body>
@@ -120,6 +128,7 @@ body{padding-bottom:var(--drawer-pad,60px)}
 <button class="btn" onclick="sel=[];colorTags={};update(true)"><i data-i="trash"></i>クリア</button>
 <select id="tplSel" class="theme-sel tpl-sel" aria-label="テンプレート選択" onchange="onTplPick(this.value)"><option value="" selected>テンプレート</option></select>
 <select id="themeSel" class="theme-sel" aria-label="テーマ選択" onchange="applyTheme(this.value)"><option value="white">白</option><option value="black">黒</option><option value="yuka">優花</option></select>
+<div id="themePill" role="group" aria-label="表示テーマ"><button type="button" data-th="white" onclick="applyTheme('white')">明</button><button type="button" data-th="black" onclick="applyTheme('black')">暗</button><button type="button" data-th="yuka" onclick="applyTheme('yuka')">優花</button></div>
 </header>
 <main>
 <nav class="side" id="nav"></nav>
@@ -130,6 +139,7 @@ body{padding-bottom:var(--drawer-pad,60px)}
 <div id="special"></div>
 </div>
 </main>
+<button id="nav-tab" type="button" onclick="toggleNav(true)">カテゴリ</button>
 <div id="nav-backdrop" onclick="toggleNav(false)"></div>
 <button id="nav-close" type="button" onclick="toggleNav(false)" aria-label="カテゴリを閉じる">✕</button>
 <div id="drawer">
@@ -359,6 +369,6 @@ const d=$("#shareDlg"),t=$("#shareUrlTxt");if(d&&t){t.value=url;if(typeof d.show
 function copyShareUrl(){const t=$("#shareUrlTxt");if(!t)return;t.focus();t.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}if(ok){toast("共有URLをコピーしました")}else if(navigator.clipboard){navigator.clipboard.writeText(t.value).then(()=>toast("共有URLをコピーしました")).catch(()=>{})}}
 boot();buildTplSelect();update(true);initDrawer();if(sharedLoaded)toast("共有されたプロンプトを読み込みました");
 </script>
-<script>function toggleNav(force){const open=typeof force==="boolean"?force:!document.body.classList.contains("nav-open");document.body.classList.toggle("nav-open",open);const b=document.getElementById("nav-open");if(b)b.setAttribute("aria-expanded",String(open))}document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("nav-open"))toggleNav(false)});</script>
+<script>function toggleNav(force){const open=typeof force==="boolean"?force:!document.body.classList.contains("nav-open");document.body.classList.toggle("nav-open",open);const b=document.getElementById("nav-open");if(b)b.setAttribute("aria-expanded",String(open))}document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.body.classList.contains("nav-open"))toggleNav(false)});function syncThemePill(){const t=document.documentElement.dataset.theme||"yuka";document.querySelectorAll("#themePill button").forEach(b=>b.classList.toggle("act",b.dataset.th===t))}new MutationObserver(syncThemePill).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});syncThemePill();</script>
 </body>
 </html>
