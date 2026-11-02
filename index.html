@@ -30,14 +30,24 @@
     overflow-x:hidden;
   }
   /* 漂う桜の花びら */
-  .petals{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .petals{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
   .petal{
     position:absolute;top:-4vh;font-size:20px;opacity:.55;
     animation:fall linear infinite;
   }
   @keyframes fall{
     0%{transform:translate3d(0,-4vh,0) rotate(0deg)}
-    100%{transform:translate3d(6vw,108vh,0) rotate(340deg)}
+    50%{transform:translate3d(3vw,52vh,0) rotate(170deg)}
+    100%{transform:translate3d(-1vw,108vh,0) rotate(340deg)}
+  }
+  @media (max-width:768px){
+    .petal{font-size:14px !important;opacity:.45}
+    .petal:nth-child(2),.petal:nth-child(4){display:none}
+    @keyframes fall{
+      0%{transform:translate3d(0,-4vh,0) rotate(0deg)}
+      50%{transform:translate3d(2vw,52vh,0) rotate(170deg)}
+      100%{transform:translate3d(-1vw,108vh,0) rotate(340deg)}
+    }
   }
   .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:56px 20px 64px}
 
