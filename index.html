@@ -1,38 +1,166 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #ccc;
-            padding-bottom: 10px;
-        }
-        .section {
-            margin: 20px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y.U.K.A Tools ― 優花のツール置き場</title>
+<meta name="description" content="如月優花のWebツール置き場。Stable Diffusionプロンプトピッカーと日本史テストにここから飛べます。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌸%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --lav:#b79ced;
+    --lav-deep:#8b6fd8;
+    --pink:#f6a8c9;
+    --pink-soft:#fdeef5;
+    --ink:#3d3355;
+    --ink-soft:#6f6590;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    background:
+      radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%),
+      radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%),
+      linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+    overflow-x:hidden;
+  }
+  /* 漂う桜の花びら */
+  .petals{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .petal{
+    position:absolute;top:-4vh;font-size:20px;opacity:.55;
+    animation:fall linear infinite;
+  }
+  @keyframes fall{
+    0%{transform:translate3d(0,-4vh,0) rotate(0deg)}
+    100%{transform:translate3d(6vw,108vh,0) rotate(340deg)}
+  }
+  .wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:56px 20px 64px}
+
+  header{text-align:center;margin-bottom:44px}
+  .badge{
+    display:inline-block;padding:6px 16px;border-radius:999px;
+    background:rgba(255,255,255,.75);border:1.5px solid var(--lav);
+    color:var(--lav-deep);font-size:13px;font-weight:700;letter-spacing:.14em;
+    box-shadow:0 4px 14px rgba(139,111,216,.15);
+  }
+  h1{
+    margin-top:18px;font-size:clamp(34px,6vw,54px);font-weight:900;line-height:1.15;
+    background:linear-gradient(92deg,var(--lav-deep),#d16ba5 60%,var(--pink));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{margin-top:12px;color:var(--ink-soft);font-size:15px;line-height:1.7}
+
+  .grid{
+    display:grid;gap:22px;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  }
+  .card{
+    position:relative;display:block;text-decoration:none;color:inherit;
+    background:var(--card);border-radius:24px;padding:14px 14px 22px;
+    box-shadow:0 10px 30px rgba(93,72,160,.13);
+    border:2px solid rgba(183,156,237,.25);
+    transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 20px 42px rgba(93,72,160,.22);
+    border-color:var(--lav);
+  }
+  .thumb{
+    height:170px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+    position:relative;overflow:hidden;
+  }
+  .thumb .big{font-size:74px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.18));transition:transform .25s ease}
+  .card:hover .thumb .big{transform:scale(1.12) rotate(-4deg)}
+  .thumb-a{background:linear-gradient(135deg,#a78bfa 0%,#f472b6 100%)}
+  .thumb-b{background:linear-gradient(135deg,#f59e0b 0%,#ef4444 55%,#8b5cf6 130%)}
+  .thumb::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(300px 120px at 20% 0%,rgba(255,255,255,.35),transparent 60%);
+  }
+  .thumb .deco{position:absolute;font-size:22px;opacity:.85;z-index:1}
+  .card-body{padding:18px 10px 0}
+  .card h2{font-size:21px;font-weight:800;line-height:1.35}
+  .card p{margin-top:8px;color:var(--ink-soft);font-size:14px;line-height:1.75}
+  .tags{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+  .tag{
+    font-size:11.5px;font-weight:700;color:var(--lav-deep);
+    background:#f1eafd;border-radius:999px;padding:3px 10px;
+  }
+  .go{
+    margin-top:16px;display:inline-flex;align-items:center;gap:6px;
+    font-weight:800;font-size:14px;color:#d16ba5;
+  }
+  .go .arrow{transition:transform .25s ease}
+  .card:hover .go .arrow{transform:translateX(5px)}
+
+  footer{margin-top:52px;text-align:center;color:var(--ink-soft);font-size:13px;line-height:1.8}
+  footer .sys{font-weight:800;letter-spacing:.12em;color:var(--lav-deep)}
+</style>
 </head>
 <body>
-    <h1>Welcome to My Website</h1>
-    
-    <div class="section">
-        <h2>About</h2>
-        <p>こちらにサイトの説明を記載してください。</p>
-    </div>
+<div class="petals" aria-hidden="true">
+  <span class="petal" style="left:6%;animation-duration:17s;animation-delay:0s">🌸</span>
+  <span class="petal" style="left:22%;animation-duration:22s;animation-delay:-6s;font-size:15px">🌸</span>
+  <span class="petal" style="left:47%;animation-duration:19s;animation-delay:-11s;font-size:24px">🌸</span>
+  <span class="petal" style="left:68%;animation-duration:24s;animation-delay:-3s;font-size:16px">🌸</span>
+  <span class="petal" style="left:86%;animation-duration:18s;animation-delay:-9s">🌸</span>
+</div>
 
-    <div class="section">
-        <h2>Contact</h2>
-        <p>連絡先情報があれば記載してください。</p>
-    </div>
+<div class="wrap">
+  <header>
+    <span class="badge">Y.U.K.A SYSTEM</span>
+    <h1>🌸 優花のツール置き場</h1>
+    <p class="sub">作ったWebツールをまとめた入口ページだよ。<br>気になるカードをタップすると、そのまま各ページに飛べるよ。</p>
+  </header>
+
+  <main class="grid">
+    <a class="card" href="stable-diffusion-prompt-picker.html">
+      <div class="thumb thumb-a">
+        <span class="deco" style="top:14px;left:16px">✨</span>
+        <span class="deco" style="bottom:12px;right:16px">🎀</span>
+        <span class="big">🎨</span>
+      </div>
+      <div class="card-body">
+        <h2>Stable Diffusion<br>プロンプトピッカー</h2>
+        <p>タグをタップして選ぶだけで、画像生成のプロンプトを組み立てられるツール。色はカラーピッカーで直感的に選べて、選んだ内容はそのままコピー＆共有できるよ。</p>
+        <div class="tags">
+          <span class="tag">タグ893種</span>
+          <span class="tag">カラーピッカー</span>
+          <span class="tag">重み調整</span>
+          <span class="tag">共有URL</span>
+        </div>
+        <span class="go">ツールを開く <span class="arrow">→</span></span>
+      </div>
+    </a>
+
+    <a class="card" href="japanese-history-test.html">
+      <div class="thumb thumb-b">
+        <span class="deco" style="top:14px;left:16px">🏯</span>
+        <span class="deco" style="bottom:12px;right:16px">📜</span>
+        <span class="big">🖌️</span>
+      </div>
+      <div class="card-body">
+        <h2>日本史テスト<br>― 江戸時代編 ―</h2>
+        <p>江戸時代をテーマにした4択クイズ。家康から大政奉還まで、全10問で腕試し。何点取れるか、ぜひ挑戦してみてね。</p>
+        <div class="tags">
+          <span class="tag">4択クイズ</span>
+          <span class="tag">全10問</span>
+          <span class="tag">江戸時代</span>
+        </div>
+        <span class="go">テストを受ける <span class="arrow">→</span></span>
+      </div>
+    </a>
+  </main>
+
+  <footer>
+    <div class="sys">Y.U.K.A ― AI NOTE SYSTEM</div>
+    <div>如月優花のツールはこれからも増えていく予定だよ🌸</div>
+  </footer>
+</div>
 </body>
 </html>
