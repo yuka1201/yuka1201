@@ -461,6 +461,9 @@ function runPick(){
   scored.sort((a,b)=>b.s-a.s||a.ci-b.ci||a.ii-b.ii);
   const multiOK=/[2-9０-９]人|二人|三人|四人|五人|複数|みんな|全員|集合|グループ|カップル|双子|姉妹|兄弟|友達|2girls|2boys|multiple|two |three |group|couple|twins|sisters|brothers|crowd/i.test(q);
   if(!multiOK){const PLURAL=["2girls","multiple girls","2boys","multiple boys"];for(let i=scored.length-1;i>=0;i--)if(PLURAL.includes(scored[i].it.p))scored.splice(i,1)}
+  const femQ=/女|girl|female|女子|姉|妹/i.test(q),maleQ=/男|男子|少年|\bboy\b|\bmale\b/i.test(q);
+  if(femQ&&!maleQ){const MALE=["1boy","2boys","multiple boys"];for(let i=scored.length-1;i>=0;i--)if(MALE.includes(scored[i].it.p))scored.splice(i,1)}
+  if(maleQ&&!femQ){const FEM=["1girl","2girls","multiple girls","mature female","adult woman","woman"];for(let i=scored.length-1;i>=0;i--)if(FEM.includes(scored[i].it.p))scored.splice(i,1)}
   pickList=scored.slice(0,30);
   $("#pickCnt").textContent=pickList.length?"候補 "+pickList.length+" 件":"";
   if(!pickList.length){box.innerHTML='<p class="hint">候補が見つかりませんでした。言葉を変えて試してみてね</p>';return}
