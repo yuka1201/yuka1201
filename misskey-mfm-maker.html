@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Misskey MFMメーカー ― Y.U.K.A Tools</title>
-<meta name="description" content="Misskeyの文字装飾（MFM）をかんたんに作れるツール。アニメーションや色を重ねて、文字をドラッグで好きな位置に配置すると $[position] として数値化されるよ。">
+<meta name="description" content="Misskeyの文字装飾（MFM）をかんたんに作れるツール。パーツを最大20個まで重ねて、それぞれドラッグで好きな位置に配置すると $[position] として数値化されるよ。">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🪄%3C/text%3E%3C/svg%3E">
 <style>
   :root, :root[data-theme="white"]{
@@ -236,6 +236,13 @@
   .posrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
   .posrow .unit{font-size:12.5px;font-weight:800;color:var(--ink-soft)}
   .posrow input[type=number]{width:104px;border:1.5px solid var(--line2);border-radius:10px;background:var(--input-bg);color:var(--ink);font-family:inherit;font-size:14px;padding:8px 10px}
+
+  .dragbox.sel{outline:2px dashed var(--pink-deep);outline-offset:3px;border-radius:8px}
+  .partrow{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line2);border-radius:12px;padding:7px 9px;margin-top:7px;cursor:pointer;background:var(--input-bg)}
+  .partrow.on{border-color:var(--pink-deep);background:var(--chip-bg)}
+  .partrow .plabel{flex:1;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .partrow .ppos{font-size:11.5px;font-weight:800;color:var(--ink-soft);white-space:nowrap}
+  .partrow .pbtn{border:1.5px solid var(--line2);background:var(--soft-bg);color:var(--ink);border-radius:9px;padding:4px 9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
 </style>
 </head>
 <body>
@@ -244,18 +251,27 @@
   <header class="top">
     <span class="badge">Y.U.K.A SYSTEM</span>
     <h1>🪄 Misskey MFMメーカー</h1>
-    <p class="sub">Misskeyの<b>文字装飾（MFM）</b>を、選んで・ドラッグして・コピーするだけのツールだよ。<br>アニメーションや色を重ねて、文字を<b>ドラッグで好きな位置</b>に置くと、その位置が <b>$[position]</b> として数値化されるよ。</p>
+    <p class="sub">Misskeyの<b>文字装飾（MFM）</b>を、選んで・ドラッグして・コピーするだけのツールだよ。<br><b>パーツを最大20個</b>まで重ねられて、それぞれ<b>ドラッグで好きな位置</b>に置くと、その位置が <b>$[position]</b> として数値化されるよ。</p>
   </header>
 
   <div class="howto">
-    <div class="step"><span class="n">1</span><span class="st">文字と装飾をえらぶ</span><br><span class="sd">飾りたい文字を入れて、アニメーションや色を重ねよう</span></div>
-    <div class="step"><span class="n">2</span><span class="st">ドラッグで位置を決める</span><br><span class="sd">ステージ上の文字を掴んで動かすと、位置が数値（em）になるよ</span></div>
+    <div class="step"><span class="n">1</span><span class="st">パーツを作る</span><br><span class="sd">パーツごとに文字と装飾を変えて、20個まで重ねられるよ</span></div>
+    <div class="step"><span class="n">2</span><span class="st">ドラッグで位置を決める</span><br><span class="sd">ステージ上のパーツを掴んで動かすと、位置が数値（em）になるよ</span></div>
     <div class="step"><span class="n">3</span><span class="st">コードをコピー</span><br><span class="sd">出てきたMFMコードをノートに貼るだけ！</span></div>
   </div>
 
   <div class="narrow">
+    <section class="card card-parts">
+      <h2 class="sec">🧩 パーツ <span class="hint" id="partsCount"></span></h2>
+      <div id="partsList"></div>
+      <div class="btnrow">
+        <button type="button" class="btn small" id="btnAddPart">＋ パーツを追加</button>
+        <span class="note">パーツを選ぶと、下の「文字と装飾」でそのパーツを編集できるよ。</span>
+      </div>
+    </section>
+
     <section class="card card-deco">
-      <h2 class="sec">✏️ 文字と装飾</h2>
+      <h2 class="sec">✏️ 文字と装飾 <span class="hint" id="editorTarget"></span></h2>
       <label class="f">飾りたい文字</label>
       <textarea id="mfmText" rows="2" placeholder="例：おはよー！今日もがんばろ🌸"></textarea>
       <label class="f">アニメーション（何個でも重ねられるよ）</label>
@@ -283,9 +299,8 @@
         <label><input type="checkbox" id="mfmStrike"> 打ち消し</label>
         <label><input type="checkbox" id="mfmSmall"> 小さく</label>
         <label><input type="checkbox" id="mfmBlur"> ぼかし</label>
-        <label><input type="checkbox" id="mfmCenter"> 中央寄せ</label>
       </div>
-      <label class="f">プリセット</label>
+      <label class="f">プリセット（選んだパーツに適用）</label>
       <div class="btnrow" style="margin-top:2px">
         <button type="button" class="btn small sub" data-mfm-preset="party">🎉 わーい</button>
         <button type="button" class="btn small sub" data-mfm-preset="rainbow">🌈 虹色ゆらゆら</button>
@@ -294,19 +309,22 @@
     </section>
 
     <section class="card card-stage">
-      <h2 class="sec">🎯 プレビューと位置 <span class="hint">文字をドラッグして好きな位置へ</span></h2>
-      <div class="mfm-stage" id="mfmStage"><div class="dragbox" id="dragBox"></div></div>
+      <h2 class="sec">🎯 プレビューと位置 <span class="hint">パーツをドラッグして好きな位置へ</span></h2>
+      <div class="mfm-stage" id="mfmStage"></div>
       <div class="posrow">
-        <span class="unit">位置（em）</span>
+        <span class="unit">選択中の位置（em）</span>
         <label class="unit">X <input type="number" id="mfmPosX" step="0.25" value="0"></label>
         <label class="unit">Y <input type="number" id="mfmPosY" step="0.25" value="0"></label>
         <button type="button" class="btn small sub" id="btnPosReset">↺ 位置リセット</button>
       </div>
-      <div class="note">ステージ上の文字をドラッグすると、そのずれがMFMの <code>$[position.x=…,y=…]</code> として数値化されるよ。単位は em（だいたい文字1個分の高さ）で、Xは右が＋、Yは下が＋。数字を直接変えてもいいよ。位置が 0,0 のときはコードに入らないよ。プレビューは近似表示だよ。</div>
+      <div class="note">ステージ上のパーツをドラッグすると、そのずれがMFMの <code>$[position.x=…,y=…]</code> として数値化されるよ。単位は em（だいたい文字1個分の高さ）で、Xは右が＋、Yは下が＋。数字を直接変えてもいいよ。位置が 0,0 のときはコードに入らないよ。プレビューは近似表示だよ。</div>
     </section>
 
     <section class="card card-out2">
       <h2 class="sec">📤 MFMコード</h2>
+      <div class="mfm-deco" style="margin-bottom:8px">
+        <label><input type="checkbox" id="mfmCenterAll"> 全体を中央寄せ</label>
+      </div>
       <textarea class="code" id="mfmCodeOut" rows="3" readonly placeholder="文字を入れると、ここにコードが出るよ"></textarea>
       <div class="btnrow">
         <button type="button" class="btn small" id="btnCopyMfmCode">📋 MFMコードをコピー</button>
@@ -359,50 +377,70 @@ function segWire(id,attr,cb){ $(id).querySelectorAll("button").forEach(b=>b.addE
   $(id).querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); cb(b.dataset[attr]); })); }
 function segSet(id,attr,val){ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset[attr]===String(val))); }
 
-/* ---------- MFMメーカー ---------- */
+/* ---------- MFMメーカー（パーツ式） ---------- */
 const MFM_FX=[["spin","🌀 回転"],["bounce","🏀 バウンド"],["jump","⬆️ ジャンプ"],["shake","📳 シェイク"],["twitch","⚡ ビクッ"],["jelly","🍮 ゼリー"],["tada","🎉 タダー"],["rainbow","🌈 虹色"],["sparkle","✨ キラキラ"]];
+const PARTS_MAX=20;
 const EM=20; /* ステージの1em = 20px */
-const mfm={text:"",fx:[],size:"none",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0};
-try{ let rawM=localStorage.getItem("misskey-mfm-maker-v1");
-  if(!rawM) rawM=localStorage.getItem("misskey-emoji-maker-mfm-v1"); /* 絵文字メーカー時代の設定を引き継ぐ */
-  if(rawM) Object.assign(mfm,JSON.parse(rawM)); }catch(e){}
-function saveMfm(){ try{ localStorage.setItem("misskey-mfm-maker-v1",JSON.stringify(mfm)); }catch(e){} }
-function fmtEm(px){ const v=Math.round(px/EM*100)/100; return String(v); }
-function mfmCode(){
-  let s=mfm.text; if(!s) return "";
-  if(mfm.strike) s=`~~${s}~~`;
-  if(mfm.italic) s=`*${s}*`;
-  if(mfm.bold) s=`**${s}**`;
-  if(mfm.small) s=`<small>${s}</small>`;
-  if(mfm.font!=="none") s=`$[font.${mfm.font} ${s}]`;
-  if(mfm.fgOn) s=`$[fg.color=${mfm.fg.replace("#","").toUpperCase()} ${s}]`;
-  if(mfm.bgOn) s=`$[bg.color=${mfm.bg.replace("#","").toUpperCase()} ${s}]`;
-  if(mfm.blur) s=`$[blur ${s}]`;
-  MFM_FX.forEach(([t])=>{ if(mfm.fx.includes(t)) s=`$[${t} ${s}]`; });
-  if(mfm.flip==="h") s=`$[flip ${s}]`; else if(mfm.flip==="v") s=`$[flip.v ${s}]`; else if(mfm.flip==="hv") s=`$[flip.h,v ${s}]`;
-  if(mfm.size!=="none") s=`$[${mfm.size} ${s}]`;
-  if(mfm.posX||mfm.posY){
-    const parts=[];
-    if(mfm.posX) parts.push(`x=${fmtEm(mfm.posX)}`);
-    if(mfm.posY) parts.push(`y=${fmtEm(mfm.posY)}`);
-    s=`$[position.${parts.join(",")} ${s}]`;
+let partSeq=0;
+function newPart(){
+  return {id:"p"+Date.now().toString(36)+(partSeq++), text:"", fx:[], size:"none", flip:"none", font:"none",
+    fgOn:false, fg:"#e6492d", bgOn:false, bg:"#fff3a1",
+    bold:false, italic:false, strike:false, small:false, blur:false, posX:0, posY:0};
+}
+let parts=[newPart()], selId=parts[0].id, centerAll=false;
+try{
+  const raw2=localStorage.getItem("misskey-mfm-maker-v2");
+  if(raw2){ const d=JSON.parse(raw2);
+    if(Array.isArray(d.parts)&&d.parts.length){ parts=d.parts.map(p=>Object.assign(newPart(),p)); selId=d.selId||parts[0].id; centerAll=!!d.centerAll; }
+  } else {
+    const raw1=localStorage.getItem("misskey-mfm-maker-v1")||localStorage.getItem("misskey-emoji-maker-mfm-v1");
+    if(raw1){ const d=JSON.parse(raw1); const p=Object.assign(newPart(),d); delete p.center; parts=[p]; selId=p.id; }
   }
-  if(mfm.center) s=`<center>\n${s}\n</center>`;
+}catch(e){}
+if(!parts.some(p=>p.id===selId)) selId=parts[0].id;
+function cur(){ return parts.find(p=>p.id===selId)||parts[0]; }
+function saveDoc(){ try{ localStorage.setItem("misskey-mfm-maker-v2",JSON.stringify({parts,selId,centerAll})); }catch(e){} }
+function fmtEm(px){ return String(Math.round(px/EM*100)/100); }
+function partCode(p){
+  let s=p.text; if(!s) return "";
+  if(p.strike) s=`~~${s}~~`;
+  if(p.italic) s=`*${s}*`;
+  if(p.bold) s=`**${s}**`;
+  if(p.small) s=`<small>${s}</small>`;
+  if(p.font!=="none") s=`$[font.${p.font} ${s}]`;
+  if(p.fgOn) s=`$[fg.color=${p.fg.replace("#","").toUpperCase()} ${s}]`;
+  if(p.bgOn) s=`$[bg.color=${p.bg.replace("#","").toUpperCase()} ${s}]`;
+  if(p.blur) s=`$[blur ${s}]`;
+  MFM_FX.forEach(([t])=>{ if(p.fx.includes(t)) s=`$[${t} ${s}]`; });
+  if(p.flip==="h") s=`$[flip ${s}]`; else if(p.flip==="v") s=`$[flip.v ${s}]`; else if(p.flip==="hv") s=`$[flip.h,v ${s}]`;
+  if(p.size!=="none") s=`$[${p.size} ${s}]`;
+  if(p.posX||p.posY){
+    const pr=[];
+    if(p.posX) pr.push(`x=${fmtEm(p.posX)}`);
+    if(p.posY) pr.push(`y=${fmtEm(p.posY)}`);
+    s=`$[position.${pr.join(",")} ${s}]`;
+  }
   return s;
 }
-function renderMfm(){
-  const box=$("dragBox"); box.innerHTML="";
-  let node=document.createElement("span"); node.textContent=mfm.text||"プレビュー"; node.style.whiteSpace="pre-wrap";
-  if(mfm.fgOn) node.style.color=mfm.fg;
-  if(mfm.bgOn){ node.style.background=mfm.bg; node.style.borderRadius="6px"; node.style.padding="0 7px"; }
-  if(mfm.bold) node.style.fontWeight="900";
-  if(mfm.italic) node.style.fontStyle="italic";
-  if(mfm.strike) node.style.textDecoration="line-through";
-  if(mfm.small) node.style.fontSize="0.72em";
-  if(mfm.font==="serif") node.style.fontFamily="serif";
-  if(mfm.font==="monospace") node.style.fontFamily="monospace";
-  if(mfm.blur && !mfm.fx.includes("rainbow")) node.style.filter="blur(2px)";
-  const list=MFM_FX.map(x=>x[0]).filter(t=>mfm.fx.includes(t));
+function fullCode(){
+  let s=parts.map(partCode).filter(x=>x).join(" ");
+  if(s && centerAll) s=`<center>\n${s}\n</center>`;
+  return s;
+}
+function buildTree(p){
+  let node=document.createElement("span");
+  node.textContent=p.text||"（未入力）"; node.style.whiteSpace="pre-wrap";
+  if(!p.text) node.style.color="var(--ink-soft)";
+  if(p.fgOn) node.style.color=p.fg;
+  if(p.bgOn){ node.style.background=p.bg; node.style.borderRadius="6px"; node.style.padding="0 7px"; }
+  if(p.bold) node.style.fontWeight="900";
+  if(p.italic) node.style.fontStyle="italic";
+  if(p.strike) node.style.textDecoration="line-through";
+  if(p.small) node.style.fontSize="0.72em";
+  if(p.font==="serif") node.style.fontFamily="serif";
+  if(p.font==="monospace") node.style.fontFamily="monospace";
+  if(p.blur && !p.fx.includes("rainbow")) node.style.filter="blur(2px)";
+  const list=MFM_FX.map(x=>x[0]).filter(t=>p.fx.includes(t));
   for(let i=list.length-1;i>=0;i--){
     const t2=list[i], wrap=document.createElement("span"); wrap.className="fxs";
     if(t2==="sparkle"){
@@ -414,49 +452,99 @@ function renderMfm(){
     } else { wrap.style.cssText=fxCssAnim({type:t2,speed:1}); wrap.appendChild(node); }
     node=wrap;
   }
-  if(mfm.flip!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.transform=`scale(${mfm.flip==="h"||mfm.flip==="hv"?-1:1}, ${mfm.flip==="v"||mfm.flip==="hv"?-1:1})`; w.appendChild(node); node=w; }
-  if(mfm.size!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.fontSize={x2:"1.35em",x3:"1.7em",x4:"2.05em"}[mfm.size]; w.appendChild(node); node=w; }
-  box.appendChild(node);
-  box.style.transform=`translate(calc(-50% + ${mfm.posX}px), calc(-50% + ${mfm.posY}px))`;
-  if(document.activeElement!==$("mfmPosX")) $("mfmPosX").value=fmtEm(mfm.posX);
-  if(document.activeElement!==$("mfmPosY")) $("mfmPosY").value=fmtEm(mfm.posY);
-  const code=mfmCode();
+  if(p.flip!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.transform=`scale(${p.flip==="h"||p.flip==="hv"?-1:1}, ${p.flip==="v"||p.flip==="hv"?-1:1})`; w.appendChild(node); node=w; }
+  if(p.size!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.fontSize={x2:"1.35em",x3:"1.7em",x4:"2.05em"}[p.size]; w.appendChild(node); node=w; }
+  return node;
+}
+function renderStage(){
+  const st=$("mfmStage"); st.innerHTML="";
+  parts.forEach(p=>{
+    const box=document.createElement("div");
+    box.className="dragbox"+(p.id===selId?" sel":""); box.dataset.id=p.id;
+    box.style.transform=`translate(calc(-50% + ${p.posX}px), calc(-50% + ${p.posY}px))`;
+    box.appendChild(buildTree(p));
+    st.appendChild(box);
+  });
+}
+function renderCode(){
+  const code=fullCode();
   $("mfmCodeOut").value=code;
   $("mfmCount").textContent=code?`コード ${[...code].length} 文字`:"";
-  saveMfm();
+  if(document.activeElement!==$("mfmPosX")) $("mfmPosX").value=fmtEm(cur().posX);
+  if(document.activeElement!==$("mfmPosY")) $("mfmPosY").value=fmtEm(cur().posY);
+  saveDoc();
 }
-function syncMfmUI(){
-  $("mfmText").value=mfm.text;
-  document.querySelectorAll("#mfmFxChips .chip").forEach(c=>c.classList.toggle("on",mfm.fx.includes(c.dataset.fx)));
-  segSet("mfmSizeSeg","v",mfm.size); segSet("mfmFlipSeg","v",mfm.flip); segSet("mfmFontSeg","v",mfm.font);
-  $("mfmFgOn").checked=mfm.fgOn; $("mfmFg").value=mfm.fg;
-  $("mfmBgOn").checked=mfm.bgOn; $("mfmBg").value=mfm.bg;
-  $("mfmBold").checked=mfm.bold; $("mfmItalic").checked=mfm.italic; $("mfmStrike").checked=mfm.strike;
-  $("mfmSmall").checked=mfm.small; $("mfmBlur").checked=mfm.blur; $("mfmCenter").checked=mfm.center;
+function renderPartsList(){
+  const list=$("partsList"); list.innerHTML="";
+  $("partsCount").textContent=`${parts.length} / ${PARTS_MAX} 個`;
+  parts.forEach((p,i)=>{
+    const row=document.createElement("div"); row.className="partrow"+(p.id===selId?" on":"");
+    const lab=document.createElement("span"); lab.className="plabel";
+    lab.textContent=`${i+1}. ${p.text||"（未入力）"}`; row.appendChild(lab);
+    if(p.posX||p.posY){ const pp=document.createElement("span"); pp.className="ppos"; pp.textContent=`x=${fmtEm(p.posX)}, y=${fmtEm(p.posY)}`; row.appendChild(pp); }
+    const mk=(txt,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="pbtn"; b.textContent=txt;
+      b.addEventListener("click",e=>{ e.stopPropagation(); fn(); }); return b; };
+    row.appendChild(mk("↑",()=>movePart(i,-1)));
+    row.appendChild(mk("↓",()=>movePart(i,1)));
+    row.appendChild(mk("✕",()=>delPart(i)));
+    row.addEventListener("click",()=>{ selId=p.id; syncEditor(); renderStage(); renderPartsList(); renderCode(); });
+    list.appendChild(row);
+  });
+  $("editorTarget").textContent=`パーツ${parts.findIndex(p=>p.id===selId)+1}を編集中`;
 }
+function movePart(i,dir){
+  const j=i+dir; if(j<0||j>=parts.length) return;
+  const tmp=parts[i]; parts[i]=parts[j]; parts[j]=tmp;
+  renderPartsList(); renderCode();
+}
+function delPart(i){
+  if(parts.length<=1){ parts[0]=newPart(); selId=parts[0].id; }
+  else { const gone=parts.splice(i,1)[0]; if(gone.id===selId) selId=parts[Math.min(i,parts.length-1)].id; }
+  syncEditor(); renderStage(); renderPartsList(); renderCode();
+}
+function syncEditor(){
+  const p=cur();
+  $("mfmText").value=p.text;
+  document.querySelectorAll("#mfmFxChips .chip").forEach(c=>c.classList.toggle("on",p.fx.includes(c.dataset.fx)));
+  segSet("mfmSizeSeg","v",p.size); segSet("mfmFlipSeg","v",p.flip); segSet("mfmFontSeg","v",p.font);
+  $("mfmFgOn").checked=p.fgOn; $("mfmFg").value=p.fg;
+  $("mfmBgOn").checked=p.bgOn; $("mfmBg").value=p.bg;
+  $("mfmBold").checked=p.bold; $("mfmItalic").checked=p.italic; $("mfmStrike").checked=p.strike;
+  $("mfmSmall").checked=p.small; $("mfmBlur").checked=p.blur;
+  $("editorTarget").textContent=`パーツ${parts.findIndex(q=>q.id===selId)+1}を編集中`;
+}
+function edited(){ renderStage(); renderPartsList(); renderCode(); }
 MFM_FX.forEach(([t,label])=>{ const c=document.createElement("button"); c.type="button"; c.className="chip"; c.dataset.fx=t; c.textContent=label;
-  c.addEventListener("click",()=>{ const i=mfm.fx.indexOf(t); if(i>=0)mfm.fx.splice(i,1); else mfm.fx.push(t); syncMfmUI(); renderMfm(); });
+  c.addEventListener("click",()=>{ const p=cur(); const i=p.fx.indexOf(t); if(i>=0)p.fx.splice(i,1); else p.fx.push(t); syncEditor(); edited(); });
   $("mfmFxChips").appendChild(c); });
-$("mfmText").addEventListener("input",e=>{ mfm.text=e.target.value; renderMfm(); });
-segWire("mfmSizeSeg","v",v=>{ mfm.size=v; renderMfm(); });
-segWire("mfmFlipSeg","v",v=>{ mfm.flip=v; renderMfm(); });
-segWire("mfmFontSeg","v",v=>{ mfm.font=v; renderMfm(); });
-[["mfmFgOn","fgOn"],["mfmBgOn","bgOn"],["mfmBold","bold"],["mfmItalic","italic"],["mfmStrike","strike"],["mfmSmall","small"],["mfmBlur","blur"],["mfmCenter","center"]].forEach(([id,key])=>{
-  $(id).addEventListener("change",e=>{ mfm[key]=e.target.checked; renderMfm(); });
+$("mfmText").addEventListener("input",e=>{ cur().text=e.target.value; renderStage(); renderPartsList(); renderCode(); });
+segWire("mfmSizeSeg","v",v=>{ cur().size=v; edited(); });
+segWire("mfmFlipSeg","v",v=>{ cur().flip=v; edited(); });
+segWire("mfmFontSeg","v",v=>{ cur().font=v; edited(); });
+[["mfmFgOn","fgOn"],["mfmBgOn","bgOn"],["mfmBold","bold"],["mfmItalic","italic"],["mfmStrike","strike"],["mfmSmall","small"],["mfmBlur","blur"]].forEach(([id,key])=>{
+  $(id).addEventListener("change",e=>{ cur()[key]=e.target.checked; edited(); });
 });
-$("mfmFg").addEventListener("input",e=>{ mfm.fg=e.target.value; if(!mfm.fgOn){ mfm.fgOn=true; $("mfmFgOn").checked=true; } renderMfm(); });
-$("mfmBg").addEventListener("input",e=>{ mfm.bg=e.target.value; if(!mfm.bgOn){ mfm.bgOn=true; $("mfmBgOn").checked=true; } renderMfm(); });
+$("mfmFg").addEventListener("input",e=>{ const p=cur(); p.fg=e.target.value; if(!p.fgOn){ p.fgOn=true; $("mfmFgOn").checked=true; } edited(); });
+$("mfmBg").addEventListener("input",e=>{ const p=cur(); p.bg=e.target.value; if(!p.bgOn){ p.bgOn=true; $("mfmBgOn").checked=true; } edited(); });
 const MFM_PRESETS={
-  party:{text:"わーい！",fx:["tada","sparkle"],size:"x2",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0},
-  rainbow:{text:"ゆらゆら〜",fx:["rainbow","jelly"],size:"none",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0},
-  news:{text:"お知らせ！",fx:["spin"],size:"x2",flip:"none",font:"none",fgOn:true,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:true,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0}
+  party:{text:"わーい！",fx:["tada","sparkle"],size:"x2",flip:"none",font:"none",fgOn:false,bgOn:false,bold:false,italic:false,strike:false,small:false,blur:false},
+  rainbow:{text:"ゆらゆら〜",fx:["rainbow","jelly"],size:"none",flip:"none",font:"none",fgOn:false,bgOn:false,bold:false,italic:false,strike:false,small:false,blur:false},
+  news:{text:"お知らせ！",fx:["spin"],size:"x2",flip:"none",font:"none",fgOn:true,fg:"#e6492d",bgOn:false,bold:true,italic:false,strike:false,small:false,blur:false}
 };
 document.querySelectorAll("[data-mfm-preset]").forEach(b=>b.addEventListener("click",()=>{
-  Object.assign(mfm, JSON.parse(JSON.stringify(MFM_PRESETS[b.dataset.mfmPreset])));
-  syncMfmUI(); renderMfm(); toast("プリセットを適用したよ✨");
+  Object.assign(cur(), JSON.parse(JSON.stringify(MFM_PRESETS[b.dataset.mfmPreset])));
+  syncEditor(); edited(); toast("プリセットを適用したよ✨");
 }));
+$("btnAddPart").addEventListener("click",()=>{
+  if(parts.length>=PARTS_MAX){ toast(`パーツは${PARTS_MAX}個までだよ`); return; }
+  const p=newPart(); const n=parts.length;
+  p.posX=((n%5)-2)*22; p.posY=(((n+2)%5)-2)*22;
+  parts.push(p); selId=p.id;
+  syncEditor(); edited(); toast(`パーツ${parts.length}を追加したよ`);
+});
+$("mfmCenterAll").addEventListener("change",e=>{ centerAll=e.target.checked; renderCode(); });
 $("btnCopyMfmCode").addEventListener("click",async()=>{
-  const code=mfmCode(); if(!code){ toast("まず文字を入れてね"); return; }
+  const code=fullCode(); if(!code){ toast("まず文字を入れてね"); return; }
   try{ await navigator.clipboard.writeText(code); toast("MFMコードをコピーしたよ📋"); }
   catch(e){ $("mfmCodeOut").select(); toast("コードを選んだよ、そのままコピーしてね"); }
 });
@@ -464,25 +552,32 @@ $("btnCopyMfmCode").addEventListener("click",async()=>{
 const stage=$("mfmStage");
 let drag=null;
 stage.addEventListener("pointerdown",e=>{
-  drag={sx:e.clientX, sy:e.clientY, ox:mfm.posX, oy:mfm.posY};
+  const box=e.target.closest(".dragbox"); if(!box) return;
+  const p=parts.find(q=>q.id===box.dataset.id); if(!p) return;
+  if(selId!==p.id){ selId=p.id; syncEditor(); renderStage(); renderPartsList(); }
+  drag={id:p.id, sx:e.clientX, sy:e.clientY, ox:p.posX, oy:p.posY};
   try{ stage.setPointerCapture(e.pointerId); }catch(err){}
   e.preventDefault();
 });
 stage.addEventListener("pointermove",e=>{
   if(!drag) return;
+  const p=parts.find(q=>q.id===drag.id); if(!p) return;
   const r=stage.getBoundingClientRect();
-  mfm.posX=Math.round(Math.max(-r.width/2, Math.min(r.width/2, drag.ox+(e.clientX-drag.sx))));
-  mfm.posY=Math.round(Math.max(-r.height/2, Math.min(r.height/2, drag.oy+(e.clientY-drag.sy))));
-  renderMfm();
+  p.posX=Math.round(Math.max(-r.width/2, Math.min(r.width/2, drag.ox+(e.clientX-drag.sx))));
+  p.posY=Math.round(Math.max(-r.height/2, Math.min(r.height/2, drag.oy+(e.clientY-drag.sy))));
+  const box=stage.querySelector(`.dragbox[data-id="${p.id}"]`);
+  if(box) box.style.transform=`translate(calc(-50% + ${p.posX}px), calc(-50% + ${p.posY}px))`;
+  renderCode();
 });
-["pointerup","pointercancel"].forEach(ev=>stage.addEventListener(ev,()=>{ drag=null; }));
-$("mfmPosX").addEventListener("input",e=>{ const v=parseFloat(e.target.value); mfm.posX=isNaN(v)?0:Math.round(v*EM); renderMfm(); });
-$("mfmPosY").addEventListener("input",e=>{ const v=parseFloat(e.target.value); mfm.posY=isNaN(v)?0:Math.round(v*EM); renderMfm(); });
-$("btnPosReset").addEventListener("click",()=>{ mfm.posX=0; mfm.posY=0; renderMfm(); toast("位置を真ん中に戻したよ"); });
+["pointerup","pointercancel"].forEach(ev=>stage.addEventListener(ev,()=>{ if(drag){ drag=null; renderPartsList(); renderCode(); } }));
+$("mfmPosX").addEventListener("input",e=>{ const v=parseFloat(e.target.value); cur().posX=isNaN(v)?0:Math.round(v*EM); renderStage(); renderCode(); });
+$("mfmPosY").addEventListener("input",e=>{ const v=parseFloat(e.target.value); cur().posY=isNaN(v)?0:Math.round(v*EM); renderStage(); renderCode(); });
+$("btnPosReset").addEventListener("click",()=>{ const p=cur(); p.posX=0; p.posY=0; renderStage(); renderPartsList(); renderCode(); toast("位置を真ん中に戻したよ"); });
 
 /* ---------- 初期化 ---------- */
 try{ const st=localStorage.getItem("misskey-mfm-maker-sitetheme")||"black"; applySiteTheme(THEMES.some(x=>x[0]===st)?st:"black",false); }catch(e){ applySiteTheme("black",false); }
-syncMfmUI(); renderMfm();
+$("mfmCenterAll").checked=centerAll;
+syncEditor(); renderStage(); renderPartsList(); renderCode();
 </script>
 </body>
 </html>
