@@ -115,7 +115,7 @@
   <div class="about">
     <b>このギャラリーについて</b><br>
     ここにあるのは、イラストコミッションサービス <b>Skeb</b> を通して、絵師さんに描いていただいた如月優花の作品だよ。
-    作品をタップすると、大きな画像と絵師さんの情報が見られるよ。これから新しい作品が増えたら、ここに少しずつ追加していく予定だよ。
+    作品をタップすると、大きな画像と絵師さんの情報が見られるよ。これから新しい作品が増えたら、ここに少しずつ追加していく予定だよ。<br><b>AI学習について：掲載・リンクしているイラストを、AIの学習に使うことはしていないよ。</b>
   </div>
 
   <h2 class="section-title">⭐ 特集（画像付きで展示） <span class="count" id="count"></span></h2>
@@ -123,7 +123,7 @@
 
 
   <h2 class="section-title" style="margin-top:40px">🎨 Skeb作品リンク集 <span class="count" id="lcount"></span></h2>
-  <p class="links-note">君のSkebページ（@yukanekomimicat）で、ログインしなくても見られる範囲から拾った、如月優花の絵だけのリンク集だよ。R18の絵は非ログインでは出てこないから、ここにも入ってないよ。画像は転載せず、元のSkeb作品ページへリンクしてるから、大きな絵はそっちで見てね。</p>
+  <p class="links-note">君のSkebページ（@yukanekomimicat）で、ログインしなくても見られる範囲から拾った、如月優花の絵だけのリンク集だよ。R18の絵は非ログインでは出てこないから、ここにも入ってないよ。画像は転載せず、元のSkeb作品ページへリンクしてるから、大きな絵はそっちで見てね。リンク先の作品も、AI学習には使っていないよ。</p>
   <div style="margin-top:14px"><input class="filter" id="filter" type="search" placeholder="絵師さんの名前で探す…（例：こべりん）" aria-label="絵師さんの名前で探す"></div>
   <main class="links-grid" id="lgrid"></main>
   <p class="links-note" id="lnone" style="display:none;margin-top:14px">その名前の絵師さんは見つからなかったよ。</p>
@@ -132,7 +132,9 @@
     <b>著作権・転載について</b><br>
     展示しているイラストの著作権は、各作品の絵師さんにあります。このページでは、Skebの依頼者として作品を紹介しています。
     画像の無断転載・再配布・二次利用はしないでください。表示しているのはWeb用に最適化した画像で、原寸データは掲載していません。
-    絵師さんへのリクエストは、各作品の詳細からSkebページへどうぞ。
+    絵師さんへのリクエストは、各作品の詳細からSkebページへどうぞ。<br><br>
+    <b>AI学習について</b><br>
+    このページに掲載・リンクしているイラストを、生成AIを含むAIの学習・トレーニングデータとして使用することはありません。サイト運営者（中の人）およびY.U.K.Aシステムも、これらの作品でAI学習は行っていません。
   </div>
 
   <footer>
@@ -212,6 +214,27 @@
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeModal(); });
 
   var LINK_WORKS = [["メ・バヂス・バ名言bot", "GRONGIKBTIT", "https://skeb.jp/@GRONGIKBTIT/works/546", "おまかせ構図"], ["ポポカビ", "ppkby", "https://skeb.jp/@ppkby/works/24", "おまかせ構図"], ["らぴらんど", "Arara_P_Land", "https://skeb.jp/@Arara_P_Land/works/8", "おまかせ構図"], ["くまだ", "8bit_m", "https://skeb.jp/@8bit_m/works/29", "センチメンタルな雰囲気"], ["lil", "lil_xyzw", "https://skeb.jp/@lil_xyzw/works/12", "SNS再開記念"], ["猫間するめ", "ut168", "https://skeb.jp/@ut168/works/12", "おまかせ構図"], ["四季 あんこ", "kisi0024", "https://skeb.jp/@kisi0024/works/192", "おまかせ構図"], ["necono", "nekonosora1207", "https://skeb.jp/@nekonosora1207/works/6", "Xで見た絵柄で"], ["CXAXUK", "CXAXUK", "https://skeb.jp/@CXAXUK/works/30", "おまかせ構図"], ["根口六九", "neguchi69", "https://skeb.jp/@neguchi69/works/8", "ケモノ化イラスト"], ["yonaguni", "toru4792", "https://skeb.jp/@toru4792/works/66", "Xで見た絵柄で"], ["さあもん", "salmonkomaku", "https://skeb.jp/@salmonkomaku/works/375", "おまかせ構図"], ["メルキィ", "Merkii_White", "https://skeb.jp/@Merkii_White/works/7", "Xで見た絵柄で"], ["はしもとあやね", "enayacomic", "https://skeb.jp/@enayacomic/works/8", "おまかせ構図"], ["福賀千奈", "TinaFukuga", "https://skeb.jp/@TinaFukuga/works/3", "おまかせ構図"], ["御魚ゆゅ", "UoSakana_oO", "https://skeb.jp/@UoSakana_oO/works/98", "おまかせ構図"], ["ライム", "ranse237", "https://skeb.jp/@ranse237/works/826", "Xで見た絵柄で"], ["おさかなかえる", "oshakanakaeru", "https://skeb.jp/@oshakanakaeru/works/13", "おまかせ構図"], ["L\"ょーく2号", "hosipoke", "https://skeb.jp/@hosipoke/works/9", "好きな構図・ポーズで"], ["ことね", "5tone14on", "https://skeb.jp/@5tone14on/works/1", "Xで見た絵柄で"], ["ゆち", "yuchi_coconala", "https://skeb.jp/@yuchi_coconala/works/85", "おまかせ構図"], ["kt", "asechiruk", "https://skeb.jp/@asechiruk/works/15", "Xで見た絵柄で"], ["めりのうる", "merino_me_me", "https://skeb.jp/@merino_me_me/works/19", "おまかせ構図"], ["夢眠 ねるこ", "yoku_neruco_", "https://skeb.jp/@yoku_neruco_/works/10", "おまかせ構図"], ["七色ないろ", "716", "https://skeb.jp/@716/works/98", "Xで見た絵柄で"], ["※新垢へ移行しました🐱", "mitunekoxxx", "https://skeb.jp/@mitunekoxxx/works/2", "Xで見た絵柄で"], ["ひよりみ紅茶", "yuki_hiyori00", "https://skeb.jp/@yuki_hiyori00/works/11", "如月優花のイラスト"], ["キネタム", "kinetamu", "https://skeb.jp/@kinetamu/works/57", "おまかせ構図"], ["なすさん🍆なこちゃん☠️", "nasty_nasu", "https://skeb.jp/@nasty_nasu/works/19", "SNSで見た絵柄で"], ["mot(モット)", "motmottto", "https://skeb.jp/@motmottto/works/68", "おまかせ構図"], ["GP倉庫@けろん", "gpsoukokeron", "https://skeb.jp/@gpsoukokeron/works/19", "Xで見た絵柄で"], ["さざめ", "tak2310777", "https://skeb.jp/@tak2310777/works/14", "SNSで見た絵柄で"], ["Chibiるぅ", "3232ru", "https://skeb.jp/@3232ru/works/2", "おまかせ構図"], ["黒衣りあ", "kuroi_ria", "https://skeb.jp/@kuroi_ria/works/13", "如月優花のイラスト"], ["キノエダ", "kinoed_a", "https://skeb.jp/@kinoed_a/works/1", "おまかせ構図"], ["ヒヨヨ", "kou_hiyoyo", "https://skeb.jp/@kou_hiyoyo/works/1260", "おまかせ構図"], ["えくぼかよ", "ekubokayo", "https://skeb.jp/@ekubokayo/works/16", "おまかせ構図"], ["こべりん", "covellin", "https://skeb.jp/@covellin/works/1", "SNSで見た絵柄で"], ["御神あずき", "Mikami_Azuki", "https://skeb.jp/@Mikami_Azuki/works/2", "おまかせ構図"], ["あおえ*🐾おえかき", "aoe_oekaky", "https://skeb.jp/@aoe_oekaky/works/1", "如月優花のイラスト"], ["KANARIA", "jJ7h7vH9pu6t1q2", "https://skeb.jp/@jJ7h7vH9pu6t1q2/works/3", "素敵な絵柄で"], ["Anna", "anna0911031", "https://skeb.jp/@anna0911031/works/30", "おまかせ構図"], ["らすちむ", "Rasuchimu", "https://skeb.jp/@Rasuchimu/works/66", "おまかせ構図"], ["えのきらぼ", "Enoki_udon", "https://skeb.jp/@Enoki_udon/works/17", "可愛らしい絵柄で"], ["ゆうたん", "YU_tan0609SR", "https://skeb.jp/@YU_tan0609SR/works/2", "如月優花のイラスト"], ["めな", "mena_uni", "https://skeb.jp/@mena_uni/works/58", "可愛らしい絵柄で"], ["星乃", "RK__O3O6", "https://skeb.jp/@RK__O3O6/works/78", "おまかせ構図"], ["ゆあ@絵", "yua_rrrr", "https://skeb.jp/@yua_rrrr/works/2", "おまかせ構図"], ["よくと", "yokuto_h", "https://skeb.jp/@yokuto_h/works/18", "おまかせ構図"], ["朱院蒼紋", "akenoin", "https://skeb.jp/@akenoin/works/73", "おまかせ構図"], ["white.", "white_illust", "https://skeb.jp/@white_illust/works/45", "おまかせ構図"], ["🥥ココゲロ🐸", "Hrimfaxi501JFW", "https://skeb.jp/@Hrimfaxi501JFW/works/5", "健全絵"]];
+  var lgrid = document.getElementById('lgrid');
+  document.getElementById('lcount').textContent = '（' + LINK_WORKS.length + '作品）';
+  LINK_WORKS.forEach(function(w){
+    var a = document.createElement('a');
+    a.className = 'lcard'; a.href = w[2]; a.target = '_blank'; a.rel = 'noopener';
+    a.setAttribute('data-search', (w[0] + ' @' + w[1]).toLowerCase());
+    a.innerHTML = '<div class="lc-name">' + w[0] + ' さん</div>' +
+      '<div class="lc-id">@' + w[1] + '</div>' +
+      '<div class="lc-note">如月優花のイラスト／' + w[3] + '</div>' +
+      '<span class="lc-go">Skebで作品を見る →</span>';
+    lgrid.appendChild(a);
+  });
+  document.getElementById('filter').addEventListener('input', function(e){
+    var q = e.target.value.trim().toLowerCase(); var shown = 0;
+    lgrid.querySelectorAll('.lcard').forEach(function(c){
+      var hit = !q || c.getAttribute('data-search').indexOf(q) !== -1;
+      c.style.display = hit ? '' : 'none'; if(hit) shown++;
+    });
+    document.getElementById('lnone').style.display = shown ? 'none' : '';
+  });
+
 </script>
 </body>
 </html>
