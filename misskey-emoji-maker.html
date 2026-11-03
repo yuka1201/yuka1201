@@ -66,7 +66,7 @@
   .howto .step .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;align-items:center;justify-content:center;font-size:12px;margin-right:6px;vertical-align:-5px}
 
   .layout{display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:18px;align-items:start}
-  @media (max-width:920px){.layout{display:flex;flex-direction:column}.layout .col{display:contents}.card-preview{order:1}.card-src{order:2}.card-design{order:3}.card-fx{order:4}.card-out{order:5}}
+  @media (max-width:920px){.layout{display:flex;flex-direction:column}.layout .col{display:contents}.card-preview{order:1}.card-src{order:2}.card-parts{order:3}.card-design{order:4}.card-fx{order:5}.card-out{order:6}}
   .col{display:flex;flex-direction:column;gap:18px;min-width:0;width:100%}
   .sticky{position:sticky;top:14px}
   @media (max-width:920px){.sticky{position:static}}
@@ -175,6 +175,18 @@
   .btn.sub{background:var(--card);color:var(--accent-deep);border:2px solid var(--line2);box-shadow:none}
   .btn.small{padding:9px 14px;font-size:13px;border-radius:11px}
   .btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .chiprow{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 2px}
+  .pv-parts{width:100%;height:100%;display:block}
+  .addrow{display:flex;gap:8px}
+  .addrow input{flex:1}
+  .partrow{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line2);border-radius:12px;padding:7px 9px;margin-top:7px;cursor:pointer;background:var(--input-bg)}
+  .partrow.on{border-color:var(--pink-deep);background:var(--chip-bg)}
+  .partrow .plabel{flex:1;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .partrow .pbtn{border:1.5px solid var(--line2);background:var(--soft-bg);color:var(--ink);border-radius:9px;padding:4px 9px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit}
+  .pcrow{display:flex;align-items:center;gap:9px;margin-top:7px}
+  .pcrow .cap{width:52px;font-size:12.5px;font-weight:800;color:var(--ink-soft);flex:0 0 auto}
+  .pcrow input[type=range]{flex:1}
+  .pcrow .val{width:56px;text-align:right;font-size:12.5px;font-weight:800;flex:0 0 auto}
   .hidden{display:none !important}
   .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-90px);background:var(--toast-bg);color:var(--toast-fg);padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:800;z-index:99;transition:transform .3s ease;box-shadow:0 10px 26px rgba(0,0,0,.25);max-width:88vw;text-align:center}
   .toast.show{transform:translate(-50%,0)}
@@ -261,6 +273,51 @@
         <label class="f" for="inName">絵文字名（Misskeyの <code>:名前:</code> になるよ・半角英数と _ のみ）</label>
         <input type="text" id="inName" value="" placeholder="文字を入れると自動で付くよ" maxlength="40" autocomplete="off" spellcheck="false">
         <div class="note" id="nameWarn"></div>
+      </section>
+
+      <section class="card card-parts">
+        <h2 class="sec">🧩 パーツ組み合わせ <span class="hint">最大20個まで重ねられるよ</span></h2>
+        <div class="seg" id="partsModeSeg">
+          <button type="button" data-pm="off" class="active">従来（文字・画像）</button>
+          <button type="button" data-pm="on">パーツ組み合わせ</button>
+        </div>
+        <div id="partsBody" class="hidden">
+          <label class="f">絵文字パーツ（タップで追加）</label>
+          <div class="chiprow" id="partsPalette"></div>
+          <label class="f">テキストパーツ</label>
+          <div class="addrow">
+            <input type="text" id="partTextInput" placeholder="例：すごい！" maxlength="12">
+            <button type="button" class="btn small" id="btnAddTextPart">＋ 追加</button>
+          </div>
+          <div class="btnrow">
+            <label class="btn small sub" for="partImgFile" style="cursor:pointer">🖼 画像パーツを追加</label>
+            <input type="file" id="partImgFile" accept="image/*" class="hidden">
+            <span class="note" id="partsCount"></span>
+          </div>
+          <label class="f">パーツ一覧（上が手前だよ）</label>
+          <div id="partsList"></div>
+          <div id="partCtl" class="hidden">
+            <label class="f">選んだパーツの調整</label>
+            <div class="pcrow"><span class="cap">サイズ</span><input type="range" id="pcScale" min="20" max="250" value="100"><span class="val" id="pcScaleVal">100%</span></div>
+            <div class="pcrow"><span class="cap">回転</span><input type="range" id="pcRot" min="-180" max="180" value="0"><span class="val" id="pcRotVal">0°</span></div>
+            <div class="pcrow"><span class="cap">横位置</span><input type="range" id="pcX" min="-256" max="256" value="0"><span class="val" id="pcXVal">0</span></div>
+            <div class="pcrow"><span class="cap">縦位置</span><input type="range" id="pcY" min="-256" max="256" value="0"><span class="val" id="pcYVal">0</span></div>
+            <div class="mfm-colorrow" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px">
+              <label style="font-size:12.5px;font-weight:800">フォント <select id="pcFont" style="width:auto;padding:6px 9px">
+                <option value="maru">まる文字</option><option value="gothic">ゴシック</option><option value="mincho">明朝</option><option value="mono">等幅</option>
+              </select></label>
+              <label style="font-size:12.5px;font-weight:800">色 <input type="color" id="pcColor" value="#000000"></label>
+              <button type="button" class="chip" id="pcFlipH">↔ 左右反転</button>
+              <button type="button" class="chip" id="pcFlipV">↕ 上下反転</button>
+            </div>
+            <div class="btnrow">
+              <button type="button" class="btn small sub" id="btnPartUp">⬆ 手前へ</button>
+              <button type="button" class="btn small sub" id="btnPartDown">⬇ 奥へ</button>
+              <button type="button" class="btn small sub" id="btnDelPart">🗑 削除</button>
+            </div>
+            <div class="note">大きなプレビューでパーツをドラッグしても動かせるよ。効果（回転・キラキラなど）は絵文字全体にかかるよ。</div>
+          </div>
+        </div>
       </section>
 
       <section class="card card-design">
@@ -430,7 +487,8 @@ const state={
   outline:false, outlineColor:"#ffffff", outlineWidth:13, textSize:100,
   bg:"none", bgColor:"#fdf3f8",
   effects:[],
-  sizeOpt:"none", flipOpt:"none"
+  sizeOpt:"none", flipOpt:"none",
+  partsMode:false, parts:[], selPart:null
 };
 
 /* ---------- 小物 ---------- */
@@ -543,6 +601,13 @@ function fxCssAnim(e){
   }
 }
 function contentEl(){
+  if(state.partsMode && state.parts && state.parts.length){
+    const cv=document.createElement("canvas"); cv.className="pv-parts"; drawPartsPreview(cv);
+    const box=document.createElement("span"); box.className="box fxs"; box.appendChild(cv);
+    if(state.bg!=="none"){ box.style.background=state.bgColor; box.style.borderRadius=state.bg==="circle"?"50%":state.bg==="round"?"22%":"0"; }
+    if(state.flipOpt!=="none"){ box.style.transform=`scale(${state.flipOpt==="h"||state.flipOpt==="hv"?-1:1}, ${state.flipOpt==="v"||state.flipOpt==="hv"?-1:1})`; }
+    return box;
+  }
   let el;
   if(state.mode==="image" && imgURL){
     el=document.createElement("img"); el.className="pv-img"; el.src=imgURL; el.alt=state.name;
@@ -659,7 +724,9 @@ function drawContent(size,t,forGif){
     } else if(e.type==="rainbow"){ hue=(360*p)%360; }
   }
   const box=size*0.94;
-  if(state.mode==="image" && imgObj){
+  if(state.partsMode && state.parts && state.parts.length){
+    drawParts(ctx,size,hue);
+  } else if(state.mode==="image" && imgObj){
     if(hue) ctx.filter=`hue-rotate(${hue}deg)`;
     const sc=Math.min(box/imgObj.naturalWidth, box/imgObj.naturalHeight);
     const w=imgObj.naturalWidth*sc, h=imgObj.naturalHeight*sc;
@@ -814,6 +881,7 @@ function applyState(s){
   $("bgColorRow").classList.toggle("hidden",state.bg==="none");
   setMode(state.mode==="image"&&imgObj? "image":"text");
   buildFxGrid();
+  syncPartsUI();
 }
 function refresh(rebuild=true){ mountPreviews(); updateMfm(); updateOrder(); if(rebuild) saveLocal(); }
 
@@ -830,6 +898,175 @@ if("IntersectionObserver" in window){
   const mb=$("miniBar");
   new IntersectionObserver(es=>{ es.forEach(e=>{ mb.classList.toggle("hide", e.isIntersecting); }); }, {threshold:0.2}).observe(document.querySelector(".card-preview"));
 }
+
+/* ---------- パーツ組み合わせ ---------- */
+const PARTS_MAX=20;
+const PARTS_PALETTE=["🍮","⭐","❤️","✨","🔥","💧","🌸","👀","👄","💢","💤","🎀","🔔","🍒","🍀","💎","😀","😍","😴","❗","❓","💯","👑","🎵"];
+const partImgCache={};
+let partSeq=0;
+function partImg(p){
+  if(!p.imgData) return null;
+  let im=partImgCache[p.id];
+  if(!im){ im=new Image(); im.onload=()=>refresh(false); im.src=p.imgData; partImgCache[p.id]=im; }
+  return im.naturalWidth? im : null;
+}
+function partRadius(p){
+  return p.kind==="img" ? 512*0.31*(p.scale/100)+24 : 512*0.20*(p.scale/100)+24;
+}
+function drawParts(c,size,hue){
+  for(const p of state.parts){
+    c.save();
+    c.translate(p.dx/512*size, p.dy/512*size);
+    if(p.rot) c.rotate(p.rot*Math.PI/180);
+    c.scale(p.flipH?-1:1, p.flipV?-1:1);
+    if(p.kind==="img"){
+      const im=partImg(p);
+      if(im){
+        if(hue) c.filter=`hue-rotate(${hue}deg)`;
+        const b=size*0.62*(p.scale/100);
+        const sc=Math.min(b/im.naturalWidth, b/im.naturalHeight);
+        c.drawImage(im, -im.naturalWidth*sc/2, -im.naturalHeight*sc/2, im.naturalWidth*sc, im.naturalHeight*sc);
+        c.filter="none";
+      }
+    } else {
+      let fs=size*0.40*(p.scale/100);
+      const fam=FONTS[p.font]||FONTS.maru;
+      c.font=`900 ${fs}px ${fam}`;
+      const w=c.measureText(p.text||"").width, maxW=size*0.92;
+      if(w>maxW){ fs*=maxW/w; c.font=`900 ${fs}px ${fam}`; }
+      c.textAlign="center"; c.textBaseline="middle";
+      c.fillStyle=hue? hueShift(p.color,hue) : p.color;
+      c.fillText(p.text||"",0,0);
+    }
+    c.restore();
+  }
+}
+function drawPartsPreview(cv){
+  const c=cv.getContext("2d"); const S=512; cv.width=S; cv.height=S;
+  c.clearRect(0,0,S,S);
+  drawParts(c,S,0);
+  const sel=state.parts.find(p=>p.id===state.selPart);
+  if(sel && state.partsMode){
+    c.save(); c.strokeStyle="#d16ba5"; c.lineWidth=3; c.setLineDash([10,7]);
+    c.beginPath(); c.arc(S/2+sel.dx, S/2+sel.dy, partRadius(sel)*0.62, 0, Math.PI*2); c.stroke(); c.restore();
+  }
+}
+function selPartObj(){ return state.parts.find(p=>p.id===state.selPart)||null; }
+function addPart(part){
+  if(state.parts.length>=PARTS_MAX){ toast(`パーツは${PARTS_MAX}個までだよ`); return null; }
+  const n=state.parts.length;
+  part.id="p"+Date.now().toString(36)+(partSeq++);
+  part.dx=((n%5)-2)*22; part.dy=(((n+2)%5)-2)*22;
+  state.parts.push(part); state.selPart=part.id;
+  if(!state.partsMode){ state.partsMode=true; }
+  syncPartsUI(); refresh();
+  return part;
+}
+function renderPartsList(){
+  const list=$("partsList"); list.innerHTML="";
+  $("partsCount").textContent=`パーツ ${state.parts.length} / ${PARTS_MAX}`;
+  if(!state.parts.length){ list.innerHTML='<div class="note">まだパーツがないよ。上の絵文字やテキストから追加してね。</div>'; return; }
+  for(let i=state.parts.length-1;i>=0;i--){
+    const p=state.parts[i];
+    const row=document.createElement("div"); row.className="partrow"+(p.id===state.selPart?" on":"");
+    const lab=document.createElement("span"); lab.className="plabel";
+    lab.textContent= p.kind==="img" ? "🖼 画像パーツ" : (p.text||"（テキスト）");
+    row.appendChild(lab);
+    const mkBtn=(txt,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="pbtn"; b.textContent=txt;
+      b.addEventListener("click",e=>{ e.stopPropagation(); fn(); }); return b; };
+    row.appendChild(mkBtn("⬆",()=>movePart(i,1)));
+    row.appendChild(mkBtn("⬇",()=>movePart(i,-1)));
+    row.appendChild(mkBtn("✕",()=>{ state.parts.splice(i,1); if(state.selPart===p.id) state.selPart=state.parts.length? state.parts[state.parts.length-1].id : null; syncPartsUI(); refresh(); }));
+    row.addEventListener("click",()=>{ state.selPart=p.id; syncPartsUI(); refresh(false); });
+    list.appendChild(row);
+  }
+}
+function movePart(i,dir){
+  const j=i+dir; if(j<0||j>=state.parts.length) return;
+  const tmp=state.parts[i]; state.parts[i]=state.parts[j]; state.parts[j]=tmp;
+  syncPartsUI(); refresh();
+}
+function syncPartCtl(){
+  const p=selPartObj();
+  $("partCtl").classList.toggle("hidden",!p);
+  if(!p) return;
+  $("pcScale").value=p.scale; $("pcScaleVal").textContent=p.scale+"%";
+  $("pcRot").value=p.rot; $("pcRotVal").textContent=p.rot+"°";
+  $("pcX").value=p.dx; $("pcXVal").textContent=p.dx;
+  $("pcY").value=p.dy; $("pcYVal").textContent=p.dy;
+  $("pcFont").value=p.font||"maru"; $("pcColor").value=p.color||"#000000";
+  const fh=$("pcFlipH"), fv=$("pcFlipV");
+  fh.style.background=p.flipH?"var(--grad)":""; fh.style.color=p.flipH?"#fff":"";
+  fv.style.background=p.flipV?"var(--grad)":""; fv.style.color=p.flipV?"#fff":"";
+}
+function syncPartsUI(){
+  if(!state.parts) state.parts=[];
+  segSet("partsModeSeg","pm",state.partsMode?"on":"off");
+  $("partsBody").classList.toggle("hidden",!state.partsMode);
+  renderPartsList(); syncPartCtl();
+}
+PARTS_PALETTE.forEach(g=>{
+  const b=document.createElement("button"); b.type="button"; b.className="chip"; b.textContent=g; b.style.fontSize="17px";
+  b.addEventListener("click",()=>addPart({kind:"text",text:g,scale:100,rot:0,flipH:false,flipV:false,font:"maru",color:"#000000"}));
+  $("partsPalette").appendChild(b);
+});
+function addTextPart(){
+  const v=($("partTextInput").value||"").trim(); if(!v){ toast("テキストを入れてね"); return; }
+  if(addPart({kind:"text",text:v,scale:100,rot:0,flipH:false,flipV:false,font:"maru",color:"#000000"})) $("partTextInput").value="";
+}
+$("btnAddTextPart").addEventListener("click",addTextPart);
+$("partTextInput").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); addTextPart(); } });
+$("partImgFile").addEventListener("change",e=>{
+  const f=e.target.files&&e.target.files[0]; e.target.value="";
+  if(!f) return;
+  const url=URL.createObjectURL(f); const img=new Image();
+  img.onload=()=>{ const S=512, sc=Math.min(1,S/Math.max(img.naturalWidth,img.naturalHeight));
+    const c=document.createElement("canvas"); c.width=Math.max(1,Math.round(img.naturalWidth*sc)); c.height=Math.max(1,Math.round(img.naturalHeight*sc));
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url);
+    addPart({kind:"img",text:"",imgData:c.toDataURL("image/png"),scale:100,rot:0,flipH:false,flipV:false,font:"maru",color:"#000000"}); };
+  img.onerror=()=>{ URL.revokeObjectURL(url); toast("画像を読み込めなかったよ"); };
+  img.src=url;
+});
+segWire("partsModeSeg","pm",v=>{ state.partsMode=(v==="on"); syncPartsUI(); refresh(); });
+[["pcScale","scale","%"],["pcRot","rot","°"],["pcX","dx",""],["pcY","dy",""]].forEach(([id,key,unit])=>{
+  $(id).addEventListener("input",e=>{ const p=selPartObj(); if(!p) return; p[key]=parseInt(e.target.value,10)||0;
+    $(id+"Val").textContent=p[key]+unit; document.querySelectorAll(".pv-parts").forEach(drawPartsPreview); saveLocal(); });
+});
+$("pcFont").addEventListener("change",e=>{ const p=selPartObj(); if(p){ p.font=e.target.value; refresh(); } });
+$("pcColor").addEventListener("input",e=>{ const p=selPartObj(); if(p){ p.color=e.target.value; document.querySelectorAll(".pv-parts").forEach(drawPartsPreview); saveLocal(); } });
+$("pcFlipH").addEventListener("click",()=>{ const p=selPartObj(); if(p){ p.flipH=!p.flipH; syncPartCtl(); refresh(); } });
+$("pcFlipV").addEventListener("click",()=>{ const p=selPartObj(); if(p){ p.flipV=!p.flipV; syncPartCtl(); refresh(); } });
+$("btnPartUp").addEventListener("click",()=>{ const i=state.parts.findIndex(p=>p.id===state.selPart); if(i>=0) movePart(i,1); });
+$("btnPartDown").addEventListener("click",()=>{ const i=state.parts.findIndex(p=>p.id===state.selPart); if(i>=0) movePart(i,-1); });
+$("btnDelPart").addEventListener("click",()=>{ const i=state.parts.findIndex(p=>p.id===state.selPart); if(i>=0){ state.parts.splice(i,1); state.selPart=state.parts.length? state.parts[Math.min(i,state.parts.length-1)].id : null; syncPartsUI(); refresh(); } });
+/* 大プレビューでのドラッグ */
+let pdrag=null;
+$("stage").addEventListener("pointerdown",e=>{
+  if(!state.partsMode||!state.parts.length) return;
+  const cv=$("stage").querySelector(".pv-parts"); if(!cv) return;
+  const r=cv.getBoundingClientRect(); if(!r.width) return;
+  const x=(e.clientX-r.left)/r.width*512, y=(e.clientY-r.top)/r.height*512;
+  for(let i=state.parts.length-1;i>=0;i--){
+    const p=state.parts[i];
+    if(Math.hypot(x-(256+p.dx), y-(256+p.dy))<=partRadius(p)){
+      state.selPart=p.id; pdrag={id:p.id};
+      try{ $("stage").setPointerCapture(e.pointerId); }catch(err){}
+      syncPartsUI(); document.querySelectorAll(".pv-parts").forEach(drawPartsPreview);
+      e.preventDefault(); return;
+    }
+  }
+});
+$("stage").addEventListener("pointermove",e=>{
+  if(!pdrag) return;
+  const cv=$("stage").querySelector(".pv-parts"); if(!cv) return;
+  const p=state.parts.find(q=>q.id===pdrag.id); if(!p) return;
+  const r=cv.getBoundingClientRect(); if(!r.width) return;
+  const x=(e.clientX-r.left)/r.width*512, y=(e.clientY-r.top)/r.height*512;
+  p.dx=Math.round(Math.max(-256,Math.min(256,x-256)));
+  p.dy=Math.round(Math.max(-256,Math.min(256,y-256)));
+  syncPartCtl(); document.querySelectorAll(".pv-parts").forEach(drawPartsPreview);
+});
+["pointerup","pointercancel"].forEach(ev2=>$("stage").addEventListener(ev2,()=>{ if(pdrag){ pdrag=null; refresh(); } }));
 
 /* ---------- 初期化 ---------- */
 (function init(){
