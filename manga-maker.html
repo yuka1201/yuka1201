@@ -622,7 +622,7 @@ function buildShapeGrid(){
   });
 }
 let zTop=10;
-function addEl(el){el.z=++zTop;const k=curPage().elements.length%5;el.x=Math.min(58,el.x+k*4);el.y=Math.min(72,el.y+k*4);curPage().elements.push(el);selEl=el.id;render();scheduleSave();return el}
+function addEl(el){el.z=++zTop;const k=curPage().elements.length%6;el.x=Math.min(52,el.x+k*7);el.y=Math.min(66,el.y+k*6);curPage().elements.push(el);selEl=el.id;render();scheduleSave();return el}
 function addBubble(shape,text){
   return addEl({id:uid(),kind:"bubble",shape:shape||"normal",text:text||"セリフ",x:32,y:12,w:36,h:17,fs:22,rot:0,tail:"bottom",color:"#111111",opacity:100});
 }
