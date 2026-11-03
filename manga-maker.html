@@ -239,7 +239,7 @@ footer{max-width:1280px;margin:0 auto;padding:6px 14px 40px}
     </section>
 
     <section class="card">
-      <h3>💬 フキダシ <span class="mini">形を選んで追加 / 選択中は形を変更</span></h3>
+      <h3>💬 フキダシ <span class="mini">形を選ぶと追加されます（形の変更は下の編集欄から）</span></h3>
       <div class="shape-grid" id="shapeGrid"></div>
       <div class="chip-row" style="margin-top:6px">
         <button class="chip" data-preset-bubble="narration" type="button">＋ ナレーション枠</button>
@@ -282,6 +282,7 @@ footer{max-width:1280px;margin:0 auto;padding:6px 14px 40px}
       <div class="row"><label for="elemRot">回転</label><input type="range" id="elemRot" min="-45" max="45" step="1" value="0"><span class="val" id="elemRotV">0°</span></div>
       <div class="row"><label for="elemW">幅</label><input type="range" id="elemW" min="10" max="95" step="1" value="34"><span class="val" id="elemWV">34%</span></div>
       <div class="row"><label for="elemH">高さ</label><input type="range" id="elemH" min="6" max="80" step="1" value="16"><span class="val" id="elemHV">16%</span></div>
+      <div class="row" id="shapeRow"><label for="elemShape">フキダシの形</label><select id="elemShape" style="width:auto;flex:1"></select></div>
       <div class="row" id="tailRow"><label for="elemTail">しっぽの向き</label><select id="elemTail" style="width:auto;flex:1"><option value="bottom">下</option><option value="bottom-left">左下</option><option value="bottom-right">右下</option><option value="top">上</option><option value="left">左</option><option value="right">右</option><option value="none">なし</option></select></div>
       <div class="row"><label for="elemColor">文字の色</label><input type="color" id="elemColor" value="#111111"><label for="elemOpacity" style="min-width:44px">不透明度</label><input type="range" id="elemOpacity" min="20" max="100" step="1" value="100" style="flex:1"><span class="val" id="elemOpacityV">100%</span></div>
       <div class="chip-row">
@@ -527,6 +528,8 @@ function syncControls(){
     $("#elemH").value=Math.round(el.h);$("#elemHV").textContent=Math.round(el.h)+"%";
     $("#elemTail").value=el.tail||"bottom";
     $("#tailRow").style.display=el.kind==="bubble"?"flex":"none";
+    $("#shapeRow").style.display=el.kind==="bubble"?"flex":"none";
+    if(el.kind==="bubble")$("#elemShape").value=el.shape;
     $("#elemColor").value=el.color||"#111111";
     $("#elemOpacity").value=el.opacity==null?100:el.opacity;$("#elemOpacityV").textContent=(el.opacity==null?100:el.opacity)+"%";
   }
@@ -603,6 +606,9 @@ function setLayout(key){
   selPanel=0;render();scheduleSave();toast("コマ割りを「"+LAYOUTS[key].label+"」にしたよ");
 }
 function buildShapeGrid(){
+  const selShape=$("#elemShape");
+  selShape.innerHTML=SHAPES.map(s=>'<option value="'+s.id+'">'+s.label+'</option>').join("")+'<option value="black">黒ナレーション</option>';
+  selShape.addEventListener("change",e=>{const el=curPage().elements.find(x=>x.id===selEl);if(el&&el.kind==="bubble"){el.shape=e.target.value;if(el.shape==="black"){el.color="#ffffff";el.tail="none"}render();scheduleSave()}});
   const grid=$("#shapeGrid");grid.innerHTML="";
   SHAPES.forEach(sh=>{
     const wrap=document.createElement("div");wrap.className="shape-wrap";
@@ -611,16 +617,12 @@ function buildShapeGrid(){
     if(sh.id==="black"){demo.style.background="#111"}
     b.appendChild(demo);
     const sm=document.createElement("small");sm.textContent=sh.label;b.appendChild(sm);
-    b.addEventListener("click",()=>{
-      const sel=curPage().elements.find(e=>e.id===selEl);
-      if(sel&&sel.kind==="bubble"){sel.shape=sh.id;render();scheduleSave();toast("フキダシの形を「"+sh.label+"」に変更")}
-      else addBubble(sh.id);
-    });
+    b.addEventListener("click",()=>{addBubble(sh.id);toast("「"+sh.label+"」フキダシを追加")});
     wrap.appendChild(b);grid.appendChild(wrap);
   });
 }
 let zTop=10;
-function addEl(el){el.z=++zTop;curPage().elements.push(el);selEl=el.id;render();scheduleSave();return el}
+function addEl(el){el.z=++zTop;const k=curPage().elements.length%5;el.x=Math.min(58,el.x+k*4);el.y=Math.min(72,el.y+k*4);curPage().elements.push(el);selEl=el.id;render();scheduleSave();return el}
 function addBubble(shape,text){
   return addEl({id:uid(),kind:"bubble",shape:shape||"normal",text:text||"セリフ",x:32,y:12,w:36,h:17,fs:22,rot:0,tail:"bottom",color:"#111111",opacity:100});
 }
