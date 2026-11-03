@@ -459,10 +459,10 @@ function runPick(){
   const nsfwOK=/裸|全裸|ヌード|エロ|エッチ|えっち|セックス|おっぱい|巨乳|貧乳|下着|ランジェリー|パンティ|ブラジャー|際どい|露出|透け|nude|naked|sex|erotic|lingerie|underwear|panties|cleavage|breasts|nsfw/i.test(q);
   Object.entries(D).forEach(([c,v],ci)=>{if(c==="NSFW"&&!nsfwOK)return;(v.items||[]).forEach((it,ii)=>{const s=pickScore(q,it);if(s>0)scored.push({c,it,s,ci,ii})})});
   scored.sort((a,b)=>b.s-a.s||a.ci-b.ci||a.ii-b.ii);
+  const multiOK=/[2-9０-９]人|二人|三人|四人|五人|複数|みんな|全員|集合|グループ|カップル|双子|姉妹|兄弟|友達|2girls|2boys|multiple|two |three |group|couple|twins|sisters|brothers|crowd/i.test(q);
+  if(!multiOK){const PLURAL=["2girls","multiple girls","2boys","multiple boys"];for(let i=scored.length-1;i>=0;i--)if(PLURAL.includes(scored[i].it.p))scored.splice(i,1)}
   pickList=scored.slice(0,30);
-  let autoSolo=false;
-  if(pickList.length&&!/[2-9０-９]人|二人|三人|四人|五人|複数|みんな|全員|集合|グループ|カップル|双子|姉妹|兄弟|友達|2girls|2boys|multiple|two |three |group|couple|twins|sisters|brothers|crowd/i.test(q)&&hasP("solo")<0&&!sel.some(x=>["2girls","multiple girls","2boys","multiple boys"].includes(x.p))){const sit=((D["キャラクター"]||{}).items||[]).find(x=>x.p==="solo");if(sit){add("キャラクター",sit);update(true);autoSolo=true;toast("人数の指定がなかったので「1人だけ（solo）」を追加しました")}}
-  $("#pickCnt").textContent=pickList.length?"候補 "+pickList.length+" 件"+(autoSolo?"（soloを自動追加）":""):"";
+  $("#pickCnt").textContent=pickList.length?"候補 "+pickList.length+" 件":"";
   if(!pickList.length){box.innerHTML='<p class="hint">候補が見つかりませんでした。言葉を変えて試してみてね</p>';return}
   box.innerHTML=pickList.map((r,i)=>{const v=D[r.c];const on=hasP(r.it.p)>=0;return `<button class="pick-row${on?" on":""}" type="button" style="--c:${v.c}" onclick="togglePick(${i})"><span class="tile">${itemTile(r.it.p,v,r.it,18)}</span><span class="pl"><b>${esc(r.it.l)}</b><span>${esc(r.it.p)}</span></span><span class="pc">${esc(r.c)}</span><span class="ck2">✓</span></button>`}).join("");
 }
