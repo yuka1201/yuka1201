@@ -237,7 +237,7 @@
   .posrow .unit{font-size:12.5px;font-weight:800;color:var(--ink-soft)}
   .posrow input[type=number]{width:104px;border:1.5px solid var(--line2);border-radius:10px;background:var(--input-bg);color:var(--ink);font-family:inherit;font-size:14px;padding:8px 10px}
 
-  .note-mock{border:1.5px solid var(--line2);border-radius:16px;background:var(--input-bg);padding:14px 14px 8px}
+  .note-mock{border:1.5px solid var(--line2);border-radius:16px;background-color:var(--input-bg);padding:14px 14px 8px}
   .nm-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .nm-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#b79ced,#f6a8c9);display:flex;align-items:center;justify-content:center;font-size:22px;flex:0 0 auto}
   .nm-name{font-weight:900;font-size:14.5px;line-height:1.3}
@@ -245,7 +245,8 @@
   .nm-time{margin-left:auto;font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
   .nm-menu{color:var(--ink-soft);font-weight:900}
   .nm-foot{display:flex;gap:28px;padding:10px 8px 2px;color:var(--ink-soft);font-size:15px}
-  .note-mock .mfm-stage{border:none;border-radius:10px;background-color:transparent}
+  .note-mock.mfm-stage{height:auto}
+  .nm-body{min-height:225px}
   .dragbox.sel{outline:2px dashed var(--pink-deep);outline-offset:3px;border-radius:8px}
   .partrow{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line2);border-radius:12px;padding:7px 9px;margin-top:7px;cursor:pointer;background:var(--input-bg)}
   .partrow.on{border-color:var(--pink-deep);background:var(--chip-bg)}
@@ -319,14 +320,14 @@
 
     <section class="card card-stage">
       <h2 class="sec">🎯 プレビューと位置 <span class="hint">ノートの中での見え方だよ</span></h2>
-      <div class="note-mock">
+      <div class="note-mock mfm-stage" id="mfmStage">
         <div class="nm-head">
           <div class="nm-avatar">🌸</div>
           <div><div class="nm-name">如月ユカ（Y.U.K.A）</div><div class="nm-handle">@yuka1201</div></div>
           <div class="nm-time">たった今</div>
           <div class="nm-menu">…</div>
         </div>
-        <div class="mfm-stage" id="mfmStage"></div>
+        <div class="nm-body"></div>
         <div class="nm-foot"><span>💬</span><span>🔁</span><span>❤️</span><span>➕</span><span>…</span></div>
       </div>
       <div class="posrow">
@@ -335,7 +336,7 @@
         <label class="unit">Y <input type="number" id="mfmPosY" step="0.25" value="0"></label>
         <button type="button" class="btn small sub" id="btnPosReset">↺ 位置リセット</button>
       </div>
-      <div class="note">ノート本文のエリアが配置ステージだよ。本文の中央が基準（0,0）で、パーツをドラッグすると、そのずれがMFMの <code>$[position.x=…,y=…]</code> として数値化されるよ。単位は em（だいたい文字1個分の高さ）で、Xは右が＋、Yは下が＋。数字を直接変えてもいいよ。位置が 0,0 のときはコードに入らないよ。プレビューは近似表示だよ。</div>
+      <div class="note">ノート全体が配置ステージだよ。アイコンや名前の上にパーツを被せることもできるよ。ノートの中央が基準（0,0）で、パーツをドラッグすると、そのずれがMFMの <code>$[position.x=…,y=…]</code> として数値化されるよ。単位は em（だいたい文字1個分の高さ）で、Xは右が＋、Yは下が＋。数字を直接変えてもいいよ。位置が 0,0 のときはコードに入らないよ。プレビューは近似表示だよ。</div>
     </section>
 
     <section class="card card-out2">
@@ -475,7 +476,7 @@ function buildTree(p){
   return node;
 }
 function renderStage(){
-  const st=$("mfmStage"); st.innerHTML="";
+  const st=$("mfmStage"); st.querySelectorAll(".dragbox").forEach(b=>b.remove());
   parts.forEach(p=>{
     const box=document.createElement("div");
     box.className="dragbox"+(p.id===selId?" sel":""); box.dataset.id=p.id;
