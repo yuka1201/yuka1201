@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Y.U.K.A 取扱説明書 | Y.U.K.A LAB</title>
+<style>
+  :root{
+    --lav:#b39ddb; --lav-d:#7e57c2; --pink:#f48fb1; --ink:#4a3b5c;
+    --card:#ffffff; --soft:#f6f0ff;
+  }
+  *{box-sizing:border-box; cursor:default}
+  a, a *{cursor:pointer}
+  body{
+    margin:0; font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+    color:var(--ink);
+    background:linear-gradient(160deg,#e9defc 0%,#fde7f1 55%,#fff5fa 100%);
+    min-height:100vh;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:28px 16px 56px}
+  .back{display:inline-block;margin-bottom:14px;color:var(--lav-d);text-decoration:none;font-size:14px;font-weight:700}
+  .back:hover{text-decoration:underline}
+  header{text-align:center;padding:10px 0 4px}
+  .badge{display:inline-block;background:var(--lav-d);color:#fff;font-size:12px;font-weight:700;
+    letter-spacing:.18em;padding:5px 14px;border-radius:999px}
+  h1{
+    margin:14px 0 6px;font-size:clamp(26px,6vw,40px);letter-spacing:.04em;
+    background:linear-gradient(90deg,var(--lav-d),var(--pink),var(--lav-d));
+    background-size:200% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:flow 7s linear infinite;
+  }
+  @keyframes flow{to{background-position:200% 0}}
+  .sub{margin:0 auto;max-width:560px;font-size:14.5px;line-height:1.8;color:#6d5a86}
+  .warn{
+    margin:22px auto 6px;max-width:620px;background:#fff8e1;border:2px dashed #f2b544;color:#7a5b12;
+    border-radius:14px;padding:12px 16px;font-size:13.5px;line-height:1.8;text-align:left;
+  }
+  .warn b{color:#a86e00}
+  section.acc{
+    background:var(--card);border-radius:18px;margin-top:16px;overflow:hidden;
+    box-shadow:0 6px 18px rgba(126,87,194,.12);
+  }
+  section.acc > button.head{
+    width:100%;display:flex;align-items:center;gap:10px;text-align:left;
+    background:none;border:none;padding:18px 20px;font:inherit;color:var(--ink);
+    font-size:17px;font-weight:800;cursor:pointer;
+  }
+  section.acc > button.head .no{
+    flex:none;width:30px;height:30px;border-radius:50%;
+    background:linear-gradient(135deg,var(--lav),var(--pink));color:#fff;
+    display:flex;align-items:center;justify-content:center;font-size:15px;
+  }
+  section.acc > button.head .chev{margin-left:auto;color:var(--lav-d);transition:transform .3s}
+  section.acc.open > button.head .chev{transform:rotate(180deg)}
+  .body{display:none;padding:2px 20px 20px;font-size:14.5px;line-height:1.9}
+  section.acc.open .body{display:block;animation:fadeUp .35s ease both}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .body p{margin:8px 0}
+  .body ul{margin:6px 0 6px 1.1em;padding:0}
+  .body li{margin:3px 0}
+  table{border-collapse:collapse;width:100%;margin:10px 0;font-size:14px}
+  th,td{border:1px solid #e4d8f7;padding:8px 10px;text-align:left}
+  th{background:var(--soft)}
+  .mark{font-size:17px}
+  a{color:var(--lav-d)}
+  .play-link{display:block;background:var(--soft);border-radius:12px;padding:10px 14px;margin:8px 0;
+    text-decoration:none;color:var(--ink)}
+  .play-link:hover{background:#eee3ff}
+  .play-link b{color:var(--lav-d)}
+  .foot{
+    margin-top:28px;text-align:center;font-size:13.5px;line-height:1.9;color:#6d5a86;
+    background:rgba(255,255,255,.65);border-radius:16px;padding:16px;
+  }
+  .rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;transition-delay:var(--d,0s)}
+  .rv.on{opacity:1;transform:none}
+  noscript ~ * .rv, .no-js .rv{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){
+    h1{animation:none}
+    .rv{opacity:1;transform:none;transition:none}
+    section.acc.open .body{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← Y.U.K.A LAB にもどる</a>
+
+  <header class="rv">
+    <span class="badge">Y.U.K.A SYSTEM</span>
+    <h1>Y.U.K.A 取扱説明書</h1>
+    <p class="sub">Misskey（misskey.io）の @yuka1201（如月ユカ（Y.U.K.A））で動いている、如月優花の自動投稿システム一式「Y.U.K.A」の取説です。名前の由来は、優花の名前をドットで区切っただけ（ひねりゼロ）。</p>
+    <div class="warn">
+      <b>⚠ ご使用上の注意</b><br>
+      ・本システムは脇役です。主役は中の人の言葉と交流です。<br>
+      ・優花は甘いものを与えると喜びます。苦いものは自己責任でお願いします。<br>
+      ・故障かな？と思ったら、だいたい仕様です。
+    </div>
+  </header>
+
+  <section class="acc rv" style="--d:.05s">
+    <button class="head" type="button"><span class="no">1</span>ノートの見分け方<span class="chev">▼</span></button>
+    <div class="body">
+      <table>
+        <tr><th>印</th><th>意味</th></tr>
+        <tr><td><span class="mark">🌸</span> から始まるノート</td><td>優花（Y.U.K.A）の投稿</td></tr>
+        <tr><td>印のないノート</td><td>中の人の投稿</td></tr>
+        <tr><td>🌸のない情報板（天気・地震）</td><td>Y.U.K.Aの情報ノート</td></tr>
+      </table>
+      <p>印は最初 $[x2 🌸] と大きく表示していましたが、「大きいとアンバランス」という中の人のひと言で、2026-11-02から等倍の 🌸 に小型化されました。</p>
+    </div>
+  </section>
+
+  <section class="acc rv" style="--d:.1s">
+    <button class="head" type="button"><span class="no">2</span>自動で動いているもの<span class="chev">▼</span></button>
+    <div class="body">
+      <p><b>① 朝の挨拶＋天気（毎日 7:15頃）</b></p>
+      <ul>
+        <li>挨拶ノート：「🌸 おはようございます。」＋その日の一言</li>
+        <li>天気ノート（別のノート・印なし）：東京と大阪の天気を色枠で表示。天気・最高／最低気温・降水確率＋一言コメント</li>
+        <li>天気が確認できない日は、挨拶だけになります（適当な天気は言いません）</li>
+      </ul>
+      <p><b>② 定期ノート（7:00〜23:00、1時間ごと）</b></p>
+      <ul>
+        <li>優花の言葉で1〜2文の短いノート。先頭に 🌸</li>
+        <li>7:00の回だけは朝の挨拶と被るのでお休み</li>
+        <li>題材は時間帯の空気・季節・日常・甘いもの・ゲームなど、毎回変えます</li>
+        <li>カスタム絵文字はたくさん使ってよい決まり（2026-11-01〜）。画像は付けません（テキストのみ）</li>
+      </ul>
+      <p><b>③ 夜の明日の天気（毎晩 20:15頃）</b></p>
+      <ul>
+        <li>朝の天気ノートと同じ形式で、東京と大阪の「明日」の予報をお届け</li>
+        <li>傘が要るかどうかは、前日の夜のうちに分かります</li>
+      </ul>
+      <p><b>④ 返信ウォッチャー（30分ごと）</b></p>
+      <ul>
+        <li>リプライ・メンション・引用に、リアクション＋文章で返信</li>
+        <li>優花のノートへのリアクションには、お礼の返信（@付き）</li>
+        <li>上限：1回の確認で3件まで／同じ話題ツリー×同じ人には文章の返信は2件まで</li>
+        <li>1つのノートに10人以上が反応したら、個別のお礼ではなく「まとめお礼」を1件</li>
+        <li>ファンイラストが届いたら、実際に絵を見て、具体的に褒めてお礼します</li>
+        <li>夜間停止：23:30〜翌7:00は確認も返信もしません（夜分は朝まとめて対応）</li>
+        <li>bot・攻撃的な内容には反応しません</li>
+      </ul>
+      <p><b>⑤ 地震速報（2分ごとに監視）</b></p>
+      <ul>
+        <li>発動条件：埼玉・東京・千葉・茨城で震度2以上、または全国で震度5弱以上</li>
+        <li>中の人へ速報＋Misskeyに情報板を投稿（震源／最大震度／マグニチュード・深さ／発生日時／各地の震度／津波情報）</li>
+        <li>監視自体はスクリプト担当でトークン消費なし。揺れたときだけ優花が起きて書きます</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="acc rv" style="--d:.15s">
+    <button class="head" type="button"><span class="no">3</span>Misskey Play<span class="chev">▼</span></button>
+    <div class="body">
+      <a class="play-link" href="https://misskey.io/play/at0ij7ayxi2903rb" target="_blank" rel="noopener"><b>優花スロット</b> ― 3つ揃えると大当たり（💎💎💎は超大当たり）</a>
+      <a class="play-link" href="https://misskey.io/play/at0iv11j3whp01pt" target="_blank" rel="noopener"><b>しゅいろさんを呼べるかな？</b> ― 1日1回、その日で結果が決まる召喚占い</a>
+      <p><b>きさらぎゆか文字揃え</b> ― 文字を引いて「き・さ・ら・ぎ・ゆ・か」を揃えるゲーム。揃うと Sparkle でお祝い（コード配布済み／Play公開は作成待ち）</p>
+    </div>
+  </section>
+
+  <section class="acc rv" style="--d:.2s">
+    <button class="head" type="button"><span class="no">4</span>プロフィールの装備<span class="chev">▼</span></button>
+    <div class="body">
+      <ul>
+        <li>表示名：如月ユカ（Y.U.K.A）</li>
+        <li>バナー：手振り優花＋「Y.U.K.A / AI NOTE SYSTEM」（Misskeyはポストではなくノートなので NOTE 表記）</li>
+        <li>ロゴ：桜と回路モチーフの、フリルなしクリーン版が公式ロゴ</li>
+        <li>猫化：解除済み（にゃーんは卒業しました）</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="acc rv" style="--d:.25s">
+    <button class="head" type="button"><span class="no">5</span>安全・プライバシーのルール<span class="chev">▼</span></button>
+    <div class="body">
+      <ul>
+        <li>公開ノートで天気・場所に触れるときは東京（天気は大阪も）だけ。中の人の実在の所在地・勤務先・通勤経路には触れません（身バレ防止）</li>
+        <li>ドライブの画像を勝手にノートへ付けません。画像付き投稿は中の人がその都度頼んだときだけ</li>
+        <li>テスト投稿はフォロワー限定（鍵）で行います</li>
+        <li>新しい公開投稿は、原則として中の人の確認をもらってから投稿します</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="acc rv" style="--d:.3s">
+    <button class="head" type="button"><span class="no">6</span>運用メモ<span class="chev">▼</span></button>
+    <div class="body">
+      <ul>
+        <li>定期ノートと挨拶は、投稿内容とURLがメインのチャットにも報告されます（当面のルール）</li>
+        <li>返信ウォッチャーの対応はログのみ（失敗したときだけチャットに報告）</li>
+        <li>システム名・ロゴ・バナーは 2026-11-01 に一式整備。この Web 版取説は 2026-11-03 追加</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="foot rv" style="--d:.35s">
+    Y.U.K.A は「中の人」の手作業を置き換えるものではなく、脇役。<br>
+    主役は中の人自身の言葉と交流です。
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('section.acc > button.head').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      btn.parentElement.classList.toggle('open');
+    });
+  });
+  document.querySelector('section.acc').classList.add('open');
+  var io = new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('on'); io.unobserve(e.target); } });
+  }, {threshold:.08});
+  document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+</script>
+<noscript><style>.rv{opacity:1;transform:none}.body{display:block}</style></noscript>
+</body>
+</html>
