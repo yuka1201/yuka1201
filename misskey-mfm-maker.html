@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="black">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misskey MFMメーカー ― Y.U.K.A Tools</title>
+<meta name="description" content="Misskeyの文字装飾（MFM）をかんたんに作れるツール。アニメーションや色を重ねて、文字をドラッグで好きな位置に配置すると $[position] として数値化されるよ。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🪄%3C/text%3E%3C/svg%3E">
+<style>
+  :root, :root[data-theme="white"]{
+    --lav:#b79ced; --lav-deep:#8b6fd8; --pink:#f6a8c9; --pink-deep:#d16ba5;
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(0,0,0,.04), transparent 60%), linear-gradient(160deg,#f4f4f7 0%,#fbfbfc 100%);
+    --card:#ffffff; --soft-bg:#f6f6f9; --input-bg:#ffffff;
+    --ink:#23232b; --ink-soft:#6d6d78;
+    --line2:rgba(35,35,43,.16); --accent-deep:#4c4c58;
+    --grad:linear-gradient(92deg,#3f3f4a,#767684);
+    --chip-bg:#eeeef1; --badge-bg:rgba(255,255,255,.85);
+    --card-shadow:0 10px 30px rgba(30,30,40,.08); --hover-shadow:0 10px 22px rgba(30,30,40,.12);
+    --btn-shadow:0 6px 16px rgba(30,30,40,.18); --flash-ring:rgba(76,76,88,.25);
+    --toast-bg:#23232b; --toast-fg:#ffffff;
+  }
+  :root[data-theme="black"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(122,132,255,.14), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(70,70,140,.18), transparent 60%), linear-gradient(160deg,#0b0c16 0%,#12122a 100%);
+    --card:#171932; --soft-bg:#101124; --input-bg:#0f1020;
+    --ink:#eceefb; --ink-soft:#9a9ec0;
+    --line2:rgba(236,238,251,.20); --accent-deep:#c3b3f7;
+    --grad:linear-gradient(92deg,#4a4e78,#7d84b8);
+    --chip-bg:#23233d; --badge-bg:rgba(23,25,50,.85);
+    --card-shadow:0 10px 30px rgba(0,0,0,.40); --hover-shadow:0 10px 22px rgba(0,0,0,.45);
+    --btn-shadow:0 6px 16px rgba(0,0,0,.40); --flash-ring:rgba(185,168,245,.35);
+    --toast-bg:#eceefb; --toast-fg:#171932;
+  }
+  :root[data-theme="yuka"]{
+    --bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%), linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+    --card:#ffffff; --soft-bg:#fdfbff; --input-bg:#fdfbff;
+    --ink:#3d3355; --ink-soft:#6f6590;
+    --line2:rgba(183,156,237,.35); --accent-deep:#8b6fd8;
+    --grad:linear-gradient(92deg,#8b6fd8,#d16ba5 60%,#f6a8c9);
+    --chip-bg:#f1eafd; --badge-bg:rgba(255,255,255,.75);
+    --card-shadow:0 10px 30px rgba(93,72,160,.12); --hover-shadow:0 10px 22px rgba(93,72,160,.16);
+    --btn-shadow:0 6px 16px rgba(209,107,165,.35); --flash-ring:rgba(209,107,165,.30);
+    --toast-bg:#3d3355; --toast-fg:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",Meiryo,system-ui,sans-serif;
+    color:var(--ink); min-height:100vh; background:var(--bg-img);
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:34px 16px 70px}
+  header.top{text-align:center;margin-bottom:22px}
+  .badge{display:inline-block;padding:6px 16px;border-radius:999px;background:var(--badge-bg);border:1.5px solid var(--line2);color:var(--accent-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
+  h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin-top:10px;color:var(--ink-soft);font-size:14px;line-height:1.8}
+  .sub b{color:var(--accent-deep)}
+  .site-theme-row{position:fixed;top:16px;right:16px;z-index:60}
+  .theme-icon-btn{width:46px;height:46px;border-radius:50%;border:1.5px solid var(--line2);background:var(--badge-bg);box-shadow:var(--card-shadow);backdrop-filter:blur(8px);font-size:21px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s ease}
+  .theme-icon-btn:hover{transform:scale(1.1) rotate(-6deg)}
+  @media (max-width:520px){.site-theme-row{top:10px;right:10px}.theme-icon-btn{width:42px;height:42px;font-size:19px}}
+
+  .card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--card-shadow);border:2px solid var(--line2)}
+  h2.sec{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  h2.sec .hint{font-size:12px;font-weight:600;color:var(--ink-soft)}
+  .howto{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+  .howto .step{flex:1;min-width:200px;background:var(--card);border:2px solid var(--line2);border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.65;box-shadow:var(--card-shadow)}
+  .howto .step b{display:block;font-size:14px;margin-bottom:3px}
+  .howto .step .n{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;align-items:center;justify-content:center;font-size:12px;margin-right:6px;vertical-align:-5px}
+
+  .layout{display:grid;grid-template-columns:minmax(360px,520px) 1fr;gap:18px;align-items:start}
+  @media (max-width:920px){.layout{display:flex;flex-direction:column}.layout .col{display:contents}.card-preview{order:1}.card-src{order:2}.card-design{order:3}.card-fx{order:4}.card-out{order:5}.card-mfm{order:6}}
+  .col{display:flex;flex-direction:column;gap:18px;min-width:0;width:100%}
+  .sticky{position:sticky;top:14px}
+  @media (max-width:920px){.sticky{position:static}}
+
+  label.f{display:block;font-size:12.5px;font-weight:800;color:var(--ink-soft);margin:12px 0 5px}
+  label.f:first-of-type{margin-top:2px}
+  input[type=text],textarea,select{
+    width:100%;border:1.5px solid var(--line2);border-radius:12px;background:var(--input-bg);color:var(--ink);
+    font-family:inherit;font-size:15px;padding:10px 12px;outline:none;
+  }
+  input[type=text]:focus,textarea:focus,select:focus{border-color:var(--accent-deep);box-shadow:0 0 0 3px var(--flash-ring)}
+  textarea{resize:vertical;line-height:1.6}
+  textarea.code{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;word-break:break-all}
+  input[type=range]{width:100%;accent-color:var(--pink-deep);height:28px}
+  input[type=color]{width:52px;height:38px;border:1.5px solid var(--line2);border-radius:10px;background:var(--input-bg);padding:3px;cursor:pointer}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row > *{flex:0 0 auto}
+  .grow{flex:1 1 auto !important;min-width:0}
+  .val{font-size:12.5px;font-weight:800;color:var(--accent-deep);min-width:44px;text-align:right}
+  .note{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:6px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:6px}
+  .tab{flex:1;padding:10px;border-radius:12px;border:2px solid var(--line2);background:var(--soft-bg);color:var(--ink);font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:all .15s ease}
+  .tab.active{border-color:var(--accent-deep);background:var(--chip-bg);box-shadow:0 0 0 3px var(--flash-ring)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .chip{border:1.5px solid var(--line2);background:var(--chip-bg);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .12s ease}
+  .chip:hover{transform:translateY(-2px)}
+  .palette{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:8px}
+  .palette button{font-size:21px;padding:7px 0;border-radius:12px;border:1.5px solid var(--line2);background:var(--soft-bg);cursor:pointer;transition:transform .12s ease;line-height:1.2}
+  .palette button:hover{transform:scale(1.12)}
+  .drop{border:2px dashed var(--line2);border-radius:16px;padding:22px 14px;text-align:center;color:var(--ink-soft);font-size:13.5px;line-height:1.8;cursor:pointer;background:var(--soft-bg);transition:border-color .15s ease}
+  .drop:hover,.drop.over{border-color:var(--accent-deep)}
+  .drop img{max-width:120px;max-height:120px;display:block;margin:0 auto 8px}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap}
+  .sw{width:30px;height:30px;border-radius:50%;border:2px solid rgba(0,0,0,.12);cursor:pointer;padding:0;transition:transform .12s ease}
+  .sw:hover{transform:scale(1.15)}
+  .seg{display:flex;border:1.5px solid var(--line2);border-radius:12px;overflow:hidden}
+  .seg button{flex:1;padding:8px 4px;border:0;background:var(--soft-bg);color:var(--ink);font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer}
+  .seg button.active{background:var(--grad);color:#fff}
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .preset{border:2px solid var(--line2);background:var(--soft-bg);color:var(--ink);border-radius:14px;padding:8px 13px;font-family:inherit;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s ease;text-align:left}
+  .preset:hover{transform:translateY(-2px);border-color:var(--accent-deep)}
+  .preset small{display:block;font-weight:600;color:var(--ink-soft);font-size:11px;margin-top:2px}
+  .fxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:10px}
+  .fx{border:2px solid var(--line2);border-radius:16px;padding:11px 12px;background:var(--soft-bg);transition:border-color .15s ease, box-shadow .15s ease}
+  .fx.on{border-color:var(--accent-deep);background:var(--card);box-shadow:0 0 0 3px var(--flash-ring)}
+  .fx-head{display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+  .fx-head input{width:19px;height:19px;margin-top:2px;accent-color:var(--pink-deep);cursor:pointer;flex:0 0 auto}
+  .fx-head .ic{font-size:20px;line-height:1.25}
+  .fx-head .nm{font-weight:900;font-size:13.5px;line-height:1.35}
+  .fx-head .ds{font-size:11.5px;color:var(--ink-soft);line-height:1.5}
+  .fx-ctl{display:none;margin-top:9px;border-top:1.5px dashed var(--line2);padding-top:8px}
+  .fx.on .fx-ctl{display:block}
+  .fx-ctl .row{flex-wrap:nowrap}
+  .fx-ctl label{font-size:11.5px;font-weight:800;color:var(--ink-soft);white-space:nowrap}
+  .fx-ctl select{padding:6px 8px;font-size:13px;border-radius:9px}
+  .orderline{font-size:12px;color:var(--ink-soft);margin-top:12px;line-height:1.8}
+  .orderline b{color:var(--accent-deep)}
+
+  /* プレビュー */
+  .checker{
+    background-color:#fff;
+    background-image:linear-gradient(45deg,#dcd6ea 25%,transparent 25%),linear-gradient(-45deg,#dcd6ea 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#dcd6ea 75%),linear-gradient(-45deg,transparent 75%,#dcd6ea 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;
+    border-radius:16px;border:1.5px solid var(--line2);
+  }
+  :root[data-theme="black"] .checker{background-color:#2a2c4a;background-image:linear-gradient(45deg,#3a3c5e 25%,transparent 25%),linear-gradient(-45deg,#3a3c5e 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#3a3c5e 75%),linear-gradient(-45deg,transparent 75%,#3a3c5e 75%)}
+  .stage{height:264px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .box{width:calc(var(--cfs)*1.42);height:calc(var(--cfs)*1.42);display:flex;align-items:center;justify-content:center;text-align:center;position:relative;flex:0 0 auto}
+  .stage{--cfs:150px}
+  .pv-text{font-weight:900;line-height:1.12;white-space:pre-line;display:block}
+  .pv-img{width:100%;height:100%;object-fit:contain;display:block}
+  .fxs{display:inline-block;position:relative}
+  .sparkle-star{position:absolute;pointer-events:none;animation:sparkleBlink 1.2s ease-in-out infinite;z-index:5}
+  @keyframes sparkleBlink{0%,100%{transform:scale(.2) rotate(0deg);opacity:0}50%{transform:scale(1) rotate(45deg);opacity:1}}
+  @keyframes kf-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes kf-spinX{from{transform:rotateX(0deg)}to{transform:rotateX(360deg)}}
+  @keyframes kf-spinY{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+  @keyframes kf-bounce{0%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-16%) scale(1,1)}50%{transform:translateY(0) scale(1.18,.8)}65%{transform:translateY(-7%) scale(1,1)}80%{transform:translateY(0) scale(1.08,.92)}100%{transform:translateY(0) scale(1,1)}}
+  @keyframes kf-jump{0%,100%{transform:translateY(0)}50%{transform:translateY(-26%)}}
+  @keyframes kf-shake{0%,100%{transform:translate(0,0) rotate(0deg)}20%{transform:translate(-3%,1%) rotate(-2deg)}40%{transform:translate(3%,-1%) rotate(2deg)}60%{transform:translate(-3%,-1%) rotate(-2deg)}80%{transform:translate(3%,1%) rotate(2deg)}}
+  @keyframes kf-twitch{0%,100%{transform:translate(0,0) rotate(0deg)}10%{transform:translate(-5%,3%) rotate(-4deg)}20%{transform:translate(4%,-4%) rotate(3deg)}30%{transform:translate(-4%,-3%) rotate(-3deg)}40%{transform:translate(5%,4%) rotate(4deg)}50%{transform:translate(-3%,2%) rotate(-2deg)}60%{transform:translate(4%,-2%) rotate(3deg)}70%{transform:translate(-5%,-4%) rotate(-4deg)}80%{transform:translate(3%,3%) rotate(2deg)}90%{transform:translate(-2%,-2%) rotate(-1deg)}}
+  @keyframes kf-jelly{0%,100%{transform:scale(1,1)}15%{transform:scale(1.25,.75)}30%{transform:scale(.75,1.25)}45%{transform:scale(1.15,.85)}60%{transform:scale(.95,1.05)}75%{transform:scale(1.05,.95)}}
+  @keyframes kf-tada{0%{transform:scale(1) rotate(0deg)}10%,20%{transform:scale(.92) rotate(-3deg)}30%,50%,70%,90%{transform:scale(1.12) rotate(3deg)}40%,60%,80%{transform:scale(1.12) rotate(-3deg)}100%{transform:scale(1) rotate(0deg)}}
+  @keyframes kf-rainbow{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+
+  .sizes{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:14px}
+  .sizes .cell{text-align:center}
+  .sizes .cell .holder{display:flex;align-items:center;justify-content:center;margin:0 auto}
+  .sizes .cell .cap{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:5px}
+  .note-mock{margin-top:16px;border:1.5px solid var(--line2);border-radius:16px;padding:13px 14px;background:var(--soft-bg)}
+  .note-head{display:flex;gap:10px;align-items:center}
+  .avatar{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--lav),var(--pink));display:flex;align-items:center;justify-content:center;font-size:21px;flex:0 0 auto}
+  .note-name{font-weight:900;font-size:14px}
+  .note-acct{font-size:12px;color:var(--ink-soft)}
+  .note-body{margin-top:9px;font-size:14.5px;line-height:1.9}
+  .note-body{--cfs:30px}
+  .reactions{margin-top:9px;display:flex;gap:8px}
+  .reaction{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line2);background:var(--card);border-radius:999px;padding:3px 11px 3px 6px;font-size:13px;font-weight:800}
+  .reaction{--cfs:15px}
+
+  .btn{border:0;border-radius:14px;padding:12px 18px;font-family:inherit;font-size:14.5px;font-weight:900;cursor:pointer;color:#fff;background:var(--grad);box-shadow:var(--btn-shadow);transition:transform .13s ease, opacity .13s ease}
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn.sub{background:var(--card);color:var(--accent-deep);border:2px solid var(--line2);box-shadow:none}
+  .btn.small{padding:9px 14px;font-size:13px;border-radius:11px}
+  .btnrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .chip.on{background:var(--grad);color:#fff;border-color:transparent}
+  .chiprow{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 2px}
+  .mfm-preview{border:1.5px solid var(--line2);border-radius:16px;background:var(--soft-bg);padding:20px 14px;min-height:86px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:20px;line-height:1.9;--cfs:30px;overflow:hidden}
+  .mfm-deco{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:4px}
+  .mfm-deco label,.mfm-colorrow label{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;cursor:pointer}
+  .mfm-deco input[type=checkbox],.mfm-colorrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--pink-deep)}
+  .mfm-colorrow{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:10px}
+  .hidden{display:none !important}
+  .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-90px);background:var(--toast-bg);color:var(--toast-fg);padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:800;z-index:99;transition:transform .3s ease;box-shadow:0 10px 26px rgba(0,0,0,.25);max-width:88vw;text-align:center}
+  .toast.show{transform:translate(-50%,0)}
+  .foot{margin-top:20px;text-align:center;color:var(--ink-soft);font-size:12px;line-height:1.9}
+  .foot a{color:var(--accent-deep)}
+  progress{width:100%;height:10px;accent-color:var(--pink-deep)}
+
+  /* 日本語の改行・フォント調整（テーマメーカーと共通） */
+  html{-webkit-text-size-adjust:100%}
+  body{line-break:strict;word-break:normal;overflow-wrap:break-word;letter-spacing:.02em}
+  h1,h2.sec{text-wrap:balance}
+  h2.sec{flex-wrap:wrap;row-gap:4px}
+  h2.sec .hint{flex:1 1 240px;line-height:1.5}
+  .sub{max-width:660px;margin-left:auto;margin-right:auto;text-wrap:balance}
+  .btn,.seg button,.chip{white-space:nowrap}
+
+  /* スマホ用ミニプレビューバー（テーマメーカーのミニ配色バーと同じ仕組み） */
+  #miniBar{display:none}
+  @media (max-width:920px){
+    #miniBar{display:flex;align-items:center;gap:10px;position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));z-index:55;padding:8px 14px 8px 9px;border-radius:999px;background:var(--card);color:var(--ink);border:1.5px solid var(--line2);box-shadow:0 10px 26px rgba(0,0,0,.25);cursor:pointer;font-size:12.5px;font-weight:800;transition:opacity .25s ease,transform .25s ease}
+    #miniBar.hide{opacity:0;pointer-events:none;transform:translateY(12px)}
+    #miniBar .mb-pv{width:44px;height:44px;border-radius:13px;overflow:hidden;display:flex;align-items:center;justify-content:center;flex:none;--cfs:29px}
+    #miniBar .mb-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:38vw}
+    #miniBar .mb-go{margin-left:auto;flex:none}
+    .wrap{padding-bottom:110px}
+  }
+
+  /* スマホではプリセットを2列でコンパクトに、ステップと効果も詰める（プレビューまで短く） */
+  @media (max-width:640px){
+    .presets{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .preset{padding:8px 10px;font-size:12.5px}
+    .howto{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+    .howto .step{min-width:0;padding:8px 9px;font-size:11px;line-height:1.5}
+    .howto .step b{font-size:11.5px}
+    .howto .step .n{width:18px;height:18px;font-size:10.5px;margin-right:4px;vertical-align:-4px}
+    .fxgrid{grid-template-columns:1fr;gap:8px}
+    .fx{padding:9px 11px}
+    .stage{height:224px;--cfs:126px}
+    .card{padding:14px}
+    header.top{margin-bottom:16px}
+    .palette{gap:5px}
+    .palette button{font-size:19px;padding:6px 0}
+  }
+
+  .narrow{max-width:880px;margin:18px auto 0;display:flex;flex-direction:column;gap:18px}
+  .mfm-stage{position:relative;height:300px;border:1.5px solid var(--line2);border-radius:16px;background-color:var(--soft-bg);background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:26px 26px;background-position:center;overflow:hidden;touch-action:none;--cfs:30px}
+  .mfm-stage::before,.mfm-stage::after{content:"";position:absolute;background:var(--accent-deep);opacity:.35;pointer-events:none;z-index:0}
+  .mfm-stage::before{left:50%;top:0;width:1.5px;height:100%}
+  .mfm-stage::after{top:50%;left:0;height:1.5px;width:100%}
+  .dragbox{position:absolute;left:50%;top:50%;cursor:grab;user-select:none;-webkit-user-select:none;font-size:20px;line-height:1.9;text-align:center;max-width:94%;z-index:1}
+  .dragbox:active{cursor:grabbing}
+  .posrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .posrow .unit{font-size:12.5px;font-weight:800;color:var(--ink-soft)}
+  .posrow input[type=number]{width:104px;border:1.5px solid var(--line2);border-radius:10px;background:var(--input-bg);color:var(--ink);font-family:inherit;font-size:14px;padding:8px 10px}
+</style>
+</head>
+<body>
+<div class="site-theme-row"><button type="button" id="siteThemeBtn" class="theme-icon-btn" aria-label="サイトの表示テーマ切り替え" title="表示テーマ：黒（タップで切替）">🌙</button></div>
+<div class="wrap">
+  <header class="top">
+    <span class="badge">Y.U.K.A SYSTEM</span>
+    <h1>🪄 Misskey MFMメーカー</h1>
+    <p class="sub">Misskeyの<b>文字装飾（MFM）</b>を、選んで・ドラッグして・コピーするだけのツールだよ。<br>アニメーションや色を重ねて、文字を<b>ドラッグで好きな位置</b>に置くと、その位置が <b>$[position]</b> として数値化されるよ。</p>
+  </header>
+
+  <div class="howto">
+    <div class="step"><span class="n">1</span><span class="st">文字と装飾をえらぶ</span><br><span class="sd">飾りたい文字を入れて、アニメーションや色を重ねよう</span></div>
+    <div class="step"><span class="n">2</span><span class="st">ドラッグで位置を決める</span><br><span class="sd">ステージ上の文字を掴んで動かすと、位置が数値（em）になるよ</span></div>
+    <div class="step"><span class="n">3</span><span class="st">コードをコピー</span><br><span class="sd">出てきたMFMコードをノートに貼るだけ！</span></div>
+  </div>
+
+  <div class="narrow">
+    <section class="card card-deco">
+      <h2 class="sec">✏️ 文字と装飾</h2>
+      <label class="f">飾りたい文字</label>
+      <textarea id="mfmText" rows="2" placeholder="例：おはよー！今日もがんばろ🌸"></textarea>
+      <label class="f">アニメーション（何個でも重ねられるよ）</label>
+      <div class="chiprow" id="mfmFxChips"></div>
+      <label class="f">大きさ</label>
+      <div class="seg" id="mfmSizeSeg">
+        <button type="button" data-v="none" class="active">そのまま</button><button type="button" data-v="x2">x2</button><button type="button" data-v="x3">x3</button><button type="button" data-v="x4">x4</button>
+      </div>
+      <label class="f">反転</label>
+      <div class="seg" id="mfmFlipSeg">
+        <button type="button" data-v="none" class="active">なし</button><button type="button" data-v="h">左右</button><button type="button" data-v="v">上下</button><button type="button" data-v="hv">両方</button>
+      </div>
+      <label class="f">フォント</label>
+      <div class="seg" id="mfmFontSeg">
+        <button type="button" data-v="none" class="active">そのまま</button><button type="button" data-v="serif">明朝 serif</button><button type="button" data-v="monospace">等幅 mono</button>
+      </div>
+      <div class="mfm-colorrow">
+        <label><input type="checkbox" id="mfmFgOn"> 文字色</label><input type="color" id="mfmFg" value="#e6492d">
+        <label><input type="checkbox" id="mfmBgOn"> 背景色</label><input type="color" id="mfmBg" value="#fff3a1">
+      </div>
+      <label class="f">そのほかの装飾</label>
+      <div class="mfm-deco">
+        <label><input type="checkbox" id="mfmBold"> 太字</label>
+        <label><input type="checkbox" id="mfmItalic"> 斜体</label>
+        <label><input type="checkbox" id="mfmStrike"> 打ち消し</label>
+        <label><input type="checkbox" id="mfmSmall"> 小さく</label>
+        <label><input type="checkbox" id="mfmBlur"> ぼかし</label>
+        <label><input type="checkbox" id="mfmCenter"> 中央寄せ</label>
+      </div>
+      <label class="f">プリセット</label>
+      <div class="btnrow" style="margin-top:2px">
+        <button type="button" class="btn small sub" data-mfm-preset="party">🎉 わーい</button>
+        <button type="button" class="btn small sub" data-mfm-preset="rainbow">🌈 虹色ゆらゆら</button>
+        <button type="button" class="btn small sub" data-mfm-preset="news">📣 お知らせ</button>
+      </div>
+    </section>
+
+    <section class="card card-stage">
+      <h2 class="sec">🎯 プレビューと位置 <span class="hint">文字をドラッグして好きな位置へ</span></h2>
+      <div class="mfm-stage" id="mfmStage"><div class="dragbox" id="dragBox"></div></div>
+      <div class="posrow">
+        <span class="unit">位置（em）</span>
+        <label class="unit">X <input type="number" id="mfmPosX" step="0.25" value="0"></label>
+        <label class="unit">Y <input type="number" id="mfmPosY" step="0.25" value="0"></label>
+        <button type="button" class="btn small sub" id="btnPosReset">↺ 位置リセット</button>
+      </div>
+      <div class="note">ステージ上の文字をドラッグすると、そのずれがMFMの <code>$[position.x=…,y=…]</code> として数値化されるよ。単位は em（だいたい文字1個分の高さ）で、Xは右が＋、Yは下が＋。数字を直接変えてもいいよ。位置が 0,0 のときはコードに入らないよ。プレビューは近似表示だよ。</div>
+    </section>
+
+    <section class="card card-out2">
+      <h2 class="sec">📤 MFMコード</h2>
+      <textarea class="code" id="mfmCodeOut" rows="3" readonly placeholder="文字を入れると、ここにコードが出るよ"></textarea>
+      <div class="btnrow">
+        <button type="button" class="btn small" id="btnCopyMfmCode">📋 MFMコードをコピー</button>
+        <span class="note" id="mfmCount"></span>
+      </div>
+      <div class="note">絵文字そのものを作りたいときは ✨ <a href="misskey-emoji-maker.html">Misskey絵文字メーカー</a> へどうぞ。</div>
+    </section>
+  </div>
+
+  <p class="foot">
+    MFMの公式ドキュメント：<a href="https://misskey-hub.net/ja/docs/for-users/features/mfm/" target="_blank" rel="noopener">Misskey Hub ― MFM</a><br>
+    <a href="index.html">← 優花のツール置き場に戻る</a>
+  </p>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+let toastTimer=null;
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2400); }
+
+/* ---------- サイトテーマ ---------- */
+const THEMES=[["yuka","🌸","優花"],["white","☀️","白"],["black","🌙","黒"]];
+let siteTheme="black";
+function applySiteTheme(t,save=true){ siteTheme=t; document.documentElement.dataset.theme=t;
+  const meta=THEMES.find(x=>x[0]===t)||THEMES[0]; const btn=$("siteThemeBtn");
+  btn.textContent=meta[1]; btn.title=`表示テーマ：${meta[2]}（タップで切替）`;
+  if(save){ try{ localStorage.setItem("misskey-mfm-maker-sitetheme",t); }catch(e){} } }
+$("siteThemeBtn").addEventListener("click",()=>{ const i=THEMES.findIndex(x=>x[0]===siteTheme); applySiteTheme(THEMES[(i+1)%THEMES.length][0]); });
+
+/* ---------- アニメーションCSS（プレビュー用） ---------- */
+function fxCssAnim(e){
+  const s=e.speed||1;
+  switch(e.type){
+    case "spin": { const name=e.axis==="x"?"kf-spinX":e.axis==="y"?"kf-spinY":"kf-spin";
+      const dir=e.dir==="left"?"reverse":e.dir==="alternate"?"alternate":"normal";
+      return `animation:${name} ${s}s linear infinite;animation-direction:${dir}`; }
+    case "bounce": return `animation:kf-bounce ${s}s linear infinite;transform-origin:center bottom`;
+    case "jump": return `animation:kf-jump ${s}s linear infinite`;
+    case "shake": return `animation:kf-shake ${s}s ease infinite`;
+    case "twitch": return `animation:kf-twitch ${s}s ease infinite`;
+    case "jelly": return `animation:kf-jelly ${s}s linear infinite`;
+    case "tada": return `animation:kf-tada ${s}s linear infinite`;
+    case "rainbow": return `animation:kf-rainbow ${s}s linear infinite`;
+    default: return "";
+  }
+}
+function segWire(id,attr,cb){ $(id).querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+  $(id).querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); cb(b.dataset[attr]); })); }
+function segSet(id,attr,val){ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("active",x.dataset[attr]===String(val))); }
+
+/* ---------- MFMメーカー ---------- */
+const MFM_FX=[["spin","🌀 回転"],["bounce","🏀 バウンド"],["jump","⬆️ ジャンプ"],["shake","📳 シェイク"],["twitch","⚡ ビクッ"],["jelly","🍮 ゼリー"],["tada","🎉 タダー"],["rainbow","🌈 虹色"],["sparkle","✨ キラキラ"]];
+const EM=20; /* ステージの1em = 20px */
+const mfm={text:"",fx:[],size:"none",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0};
+try{ let rawM=localStorage.getItem("misskey-mfm-maker-v1");
+  if(!rawM) rawM=localStorage.getItem("misskey-emoji-maker-mfm-v1"); /* 絵文字メーカー時代の設定を引き継ぐ */
+  if(rawM) Object.assign(mfm,JSON.parse(rawM)); }catch(e){}
+function saveMfm(){ try{ localStorage.setItem("misskey-mfm-maker-v1",JSON.stringify(mfm)); }catch(e){} }
+function fmtEm(px){ const v=Math.round(px/EM*100)/100; return String(v); }
+function mfmCode(){
+  let s=mfm.text; if(!s) return "";
+  if(mfm.strike) s=`~~${s}~~`;
+  if(mfm.italic) s=`*${s}*`;
+  if(mfm.bold) s=`**${s}**`;
+  if(mfm.small) s=`<small>${s}</small>`;
+  if(mfm.font!=="none") s=`$[font.${mfm.font} ${s}]`;
+  if(mfm.fgOn) s=`$[fg.color=${mfm.fg.replace("#","").toUpperCase()} ${s}]`;
+  if(mfm.bgOn) s=`$[bg.color=${mfm.bg.replace("#","").toUpperCase()} ${s}]`;
+  if(mfm.blur) s=`$[blur ${s}]`;
+  MFM_FX.forEach(([t])=>{ if(mfm.fx.includes(t)) s=`$[${t} ${s}]`; });
+  if(mfm.flip==="h") s=`$[flip ${s}]`; else if(mfm.flip==="v") s=`$[flip.v ${s}]`; else if(mfm.flip==="hv") s=`$[flip.h,v ${s}]`;
+  if(mfm.size!=="none") s=`$[${mfm.size} ${s}]`;
+  if(mfm.posX||mfm.posY){
+    const parts=[];
+    if(mfm.posX) parts.push(`x=${fmtEm(mfm.posX)}`);
+    if(mfm.posY) parts.push(`y=${fmtEm(mfm.posY)}`);
+    s=`$[position.${parts.join(",")} ${s}]`;
+  }
+  if(mfm.center) s=`<center>\n${s}\n</center>`;
+  return s;
+}
+function renderMfm(){
+  const box=$("dragBox"); box.innerHTML="";
+  let node=document.createElement("span"); node.textContent=mfm.text||"プレビュー"; node.style.whiteSpace="pre-wrap";
+  if(mfm.fgOn) node.style.color=mfm.fg;
+  if(mfm.bgOn){ node.style.background=mfm.bg; node.style.borderRadius="6px"; node.style.padding="0 7px"; }
+  if(mfm.bold) node.style.fontWeight="900";
+  if(mfm.italic) node.style.fontStyle="italic";
+  if(mfm.strike) node.style.textDecoration="line-through";
+  if(mfm.small) node.style.fontSize="0.72em";
+  if(mfm.font==="serif") node.style.fontFamily="serif";
+  if(mfm.font==="monospace") node.style.fontFamily="monospace";
+  if(mfm.blur && !mfm.fx.includes("rainbow")) node.style.filter="blur(2px)";
+  const list=MFM_FX.map(x=>x[0]).filter(t=>mfm.fx.includes(t));
+  for(let i=list.length-1;i>=0;i--){
+    const t2=list[i], wrap=document.createElement("span"); wrap.className="fxs";
+    if(t2==="sparkle"){
+      wrap.appendChild(node);
+      for(let k=0;k<6;k++){ const st=document.createElement("span"); st.className="sparkle-star"; st.textContent="✦";
+        const pos=[[6,2],[82,8],[10,78],[84,80],[45,-6],[48,88]][k];
+        st.style.left=pos[0]+"%"; st.style.top=pos[1]+"%"; st.style.fontSize="calc(var(--cfs)*0.3)"; st.style.color="#f5b921"; st.style.animationDelay=(k*0.2)+"s";
+        wrap.appendChild(st); }
+    } else { wrap.style.cssText=fxCssAnim({type:t2,speed:1}); wrap.appendChild(node); }
+    node=wrap;
+  }
+  if(mfm.flip!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.transform=`scale(${mfm.flip==="h"||mfm.flip==="hv"?-1:1}, ${mfm.flip==="v"||mfm.flip==="hv"?-1:1})`; w.appendChild(node); node=w; }
+  if(mfm.size!=="none"){ const w=document.createElement("span"); w.className="fxs"; w.style.fontSize={x2:"1.35em",x3:"1.7em",x4:"2.05em"}[mfm.size]; w.appendChild(node); node=w; }
+  box.appendChild(node);
+  box.style.transform=`translate(calc(-50% + ${mfm.posX}px), calc(-50% + ${mfm.posY}px))`;
+  if(document.activeElement!==$("mfmPosX")) $("mfmPosX").value=fmtEm(mfm.posX);
+  if(document.activeElement!==$("mfmPosY")) $("mfmPosY").value=fmtEm(mfm.posY);
+  const code=mfmCode();
+  $("mfmCodeOut").value=code;
+  $("mfmCount").textContent=code?`コード ${[...code].length} 文字`:"";
+  saveMfm();
+}
+function syncMfmUI(){
+  $("mfmText").value=mfm.text;
+  document.querySelectorAll("#mfmFxChips .chip").forEach(c=>c.classList.toggle("on",mfm.fx.includes(c.dataset.fx)));
+  segSet("mfmSizeSeg","v",mfm.size); segSet("mfmFlipSeg","v",mfm.flip); segSet("mfmFontSeg","v",mfm.font);
+  $("mfmFgOn").checked=mfm.fgOn; $("mfmFg").value=mfm.fg;
+  $("mfmBgOn").checked=mfm.bgOn; $("mfmBg").value=mfm.bg;
+  $("mfmBold").checked=mfm.bold; $("mfmItalic").checked=mfm.italic; $("mfmStrike").checked=mfm.strike;
+  $("mfmSmall").checked=mfm.small; $("mfmBlur").checked=mfm.blur; $("mfmCenter").checked=mfm.center;
+}
+MFM_FX.forEach(([t,label])=>{ const c=document.createElement("button"); c.type="button"; c.className="chip"; c.dataset.fx=t; c.textContent=label;
+  c.addEventListener("click",()=>{ const i=mfm.fx.indexOf(t); if(i>=0)mfm.fx.splice(i,1); else mfm.fx.push(t); syncMfmUI(); renderMfm(); });
+  $("mfmFxChips").appendChild(c); });
+$("mfmText").addEventListener("input",e=>{ mfm.text=e.target.value; renderMfm(); });
+segWire("mfmSizeSeg","v",v=>{ mfm.size=v; renderMfm(); });
+segWire("mfmFlipSeg","v",v=>{ mfm.flip=v; renderMfm(); });
+segWire("mfmFontSeg","v",v=>{ mfm.font=v; renderMfm(); });
+[["mfmFgOn","fgOn"],["mfmBgOn","bgOn"],["mfmBold","bold"],["mfmItalic","italic"],["mfmStrike","strike"],["mfmSmall","small"],["mfmBlur","blur"],["mfmCenter","center"]].forEach(([id,key])=>{
+  $(id).addEventListener("change",e=>{ mfm[key]=e.target.checked; renderMfm(); });
+});
+$("mfmFg").addEventListener("input",e=>{ mfm.fg=e.target.value; if(!mfm.fgOn){ mfm.fgOn=true; $("mfmFgOn").checked=true; } renderMfm(); });
+$("mfmBg").addEventListener("input",e=>{ mfm.bg=e.target.value; if(!mfm.bgOn){ mfm.bgOn=true; $("mfmBgOn").checked=true; } renderMfm(); });
+const MFM_PRESETS={
+  party:{text:"わーい！",fx:["tada","sparkle"],size:"x2",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0},
+  rainbow:{text:"ゆらゆら〜",fx:["rainbow","jelly"],size:"none",flip:"none",font:"none",fgOn:false,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:false,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0},
+  news:{text:"お知らせ！",fx:["spin"],size:"x2",flip:"none",font:"none",fgOn:true,fg:"#e6492d",bgOn:false,bg:"#fff3a1",bold:true,italic:false,strike:false,small:false,blur:false,center:false,posX:0,posY:0}
+};
+document.querySelectorAll("[data-mfm-preset]").forEach(b=>b.addEventListener("click",()=>{
+  Object.assign(mfm, JSON.parse(JSON.stringify(MFM_PRESETS[b.dataset.mfmPreset])));
+  syncMfmUI(); renderMfm(); toast("プリセットを適用したよ✨");
+}));
+$("btnCopyMfmCode").addEventListener("click",async()=>{
+  const code=mfmCode(); if(!code){ toast("まず文字を入れてね"); return; }
+  try{ await navigator.clipboard.writeText(code); toast("MFMコードをコピーしたよ📋"); }
+  catch(e){ $("mfmCodeOut").select(); toast("コードを選んだよ、そのままコピーしてね"); }
+});
+/* ドラッグで位置決め */
+const stage=$("mfmStage");
+let drag=null;
+stage.addEventListener("pointerdown",e=>{
+  drag={sx:e.clientX, sy:e.clientY, ox:mfm.posX, oy:mfm.posY};
+  try{ stage.setPointerCapture(e.pointerId); }catch(err){}
+  e.preventDefault();
+});
+stage.addEventListener("pointermove",e=>{
+  if(!drag) return;
+  const r=stage.getBoundingClientRect();
+  mfm.posX=Math.round(Math.max(-r.width/2, Math.min(r.width/2, drag.ox+(e.clientX-drag.sx))));
+  mfm.posY=Math.round(Math.max(-r.height/2, Math.min(r.height/2, drag.oy+(e.clientY-drag.sy))));
+  renderMfm();
+});
+["pointerup","pointercancel"].forEach(ev=>stage.addEventListener(ev,()=>{ drag=null; }));
+$("mfmPosX").addEventListener("input",e=>{ const v=parseFloat(e.target.value); mfm.posX=isNaN(v)?0:Math.round(v*EM); renderMfm(); });
+$("mfmPosY").addEventListener("input",e=>{ const v=parseFloat(e.target.value); mfm.posY=isNaN(v)?0:Math.round(v*EM); renderMfm(); });
+$("btnPosReset").addEventListener("click",()=>{ mfm.posX=0; mfm.posY=0; renderMfm(); toast("位置を真ん中に戻したよ"); });
+
+/* ---------- 初期化 ---------- */
+try{ const st=localStorage.getItem("misskey-mfm-maker-sitetheme")||"black"; applySiteTheme(THEMES.some(x=>x[0]===st)?st:"black",false); }catch(e){ applySiteTheme("black",false); }
+syncMfmUI(); renderMfm();
+</script>
+</body>
+</html>
