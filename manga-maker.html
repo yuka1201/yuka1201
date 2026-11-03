@@ -510,6 +510,8 @@ function renderTabs(){
 }
 function syncControls(){
   const s=state.settings,p=curPage(),pn=p.panels[selPanel]||newPanel();
+  $("#selPanelLabel").textContent="コマ"+(selPanel+1);
+  $("#panelCountLabel").textContent=curRects(p).length+"コマ";
   $("#borderW").value=s.borderW;$("#borderWV").textContent=s.borderW+"px";
   $("#gutter").value=s.gutter;$("#gutterV").textContent=s.gutter+"px";
   $("#margin").value=s.margin;$("#marginV").textContent=s.margin+"px";
