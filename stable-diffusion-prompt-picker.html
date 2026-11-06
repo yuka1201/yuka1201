@@ -217,6 +217,10 @@ header #tplSel{width:150px;flex:none}
 <textarea id="pos" rows="4" readonly></textarea>
 <div class="oh"><span data-i18n="negHead">ネガティブ（Negative）</span><button class="btn s" onclick="negAll(true)" data-i18n="selAll">全選択</button><button class="btn s" onclick="negAll(false)" data-i18n="clearAll">全解除</button><button class="btn s" data-copy="neg" data-i18n="copyBtn">コピー</button></div>
 <textarea id="neg" rows="3" readonly></textarea>
+<div class="oh"><span>🌸 YUKA AI ILLUST STUDIO 連携</span></div>
+<div class="fr"><label>Studio URL</label><input type="text" id="studioUrl" placeholder="https://（PC名）.ts.net ／ http://100.x.x.x:8765"></div>
+<button class="btn p" type="button" onclick="sendToStudio()" style="width:100%;margin:4px 0">🌸 Studioへ送って開く</button>
+<p class="hint">選んでいるタグをStudioのプロンプト欄へ自動で渡します（手コピペ不要）。Studio URLはこの端末にだけ保存されます。</p>
 <p class="hint" data-i18n="drawerHint">使い方：左でカテゴリ → 中央のカードを押す → 下のプロンプトをコピーして Stable Diffusion / PixAI などへ貼る。チップの ＋／− で重み（0.1〜2.0）を変えられます。「共有」ボタンで今の選択をURLにして渡せます（開くと選択が復元されます）。</p>
 </div>
 </div>
@@ -529,5 +533,17 @@ function pickAddAll(){if(!pickList.length){toast(tr("toastNoCandidates"));return
 </script>
 <script>function scrollToSub(g){requestAnimationFrame(()=>{const el=document.querySelector('.subhead[data-sub="'+g+'"]');if(el&&typeof el.scrollIntoView==="function"){try{el.scrollIntoView({block:"start"})}catch(e){}}})}function closePickPanel(){const pn=document.getElementById("pickPanel");if(pn)pn.hidden=true}const _pt=document.getElementById("pickTxt");if(_pt)_pt.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();runPick()}});</script>
 <script>applyLang(LANG,false);</script>
+<script>
+(function(){try{var u=localStorage.getItem("sdpb.studioUrl");if(u)document.getElementById("studioUrl").value=u;}catch(e){}})();
+function sendToStudio(){
+  var inp=document.getElementById("studioUrl");
+  var base=(inp.value||"").trim().replace(/\/+$/,"");
+  if(!base){inp.focus();inp.style.borderColor="#e88bb5";try{toast("先にStudioのURLを入力してね")}catch(e){}return;}
+  try{localStorage.setItem("sdpb.studioUrl",base)}catch(e){}
+  var pos=(document.getElementById("pos")||{}).value||"";
+  var neg=(document.getElementById("neg")||{}).value||"";
+  window.open(base+"/?tags="+encodeURIComponent(pos)+"&neg="+encodeURIComponent(neg),"_blank");
+}
+</script>
 </body>
 </html>
