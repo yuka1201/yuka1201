@@ -141,7 +141,7 @@
   const SIZE = 46;
   const GRAV = 2700, JUMP_V = 980;
   let state = 'title'; // title | play | dead
-  let player, obstacles, distPx, speed, spawnX, attempts = 0, deadTimer = 0, shake = 0;
+  let player, obstacles, dust = [], distPx, speed, spawnX, attempts = 0, deadTimer = 0, shake = 0;
   let best = Number(localStorage.getItem('yuka-dash-best') || 0);
   bestEl.textContent = Math.floor(best);
 
@@ -153,8 +153,9 @@
   function groundY() { return H - GROUND_H; }
 
   function reset() {
-    player = { y: groundY() - SIZE, vy: 0, angle: 0, grounded: true };
+    player = { y: groundY() - SIZE, vy: 0, grounded: true, wasGrounded: true, sx: 1, sy: 1, tilt: 0, runPhase: 0, strideIdx: 0, landT: 0 };
     obstacles = [];
+    dust = [];
     distPx = 0; speed = 335; spawnX = W + 260;
     deadTimer = 0;
   }
@@ -181,7 +182,9 @@
   // ---------- input ----------
   function jump() {
     if (state === 'play' && player.grounded) {
-      player.vy = -JUMP_V; player.grounded = false; sfxJump();
+      player.vy = -JUMP_V; player.grounded = false;
+      player.sx = 0.88; player.sy = 1.15; // 跳び上がりの伸び
+      sfxJump();
     }
   }
   function press() {
@@ -218,6 +221,9 @@
       if (p.y > H + 12) { p.y = -12; p.x = Math.random() * (W + 200); }
       if (p.x < -20) p.x = W + 20;
     }
+    // dust drifts in every state
+    for (const d of dust) { d.x += (d.vx - speed * 0.22) * dt; d.y += d.vy * dt; d.vy -= 26 * dt; d.life -= dt; }
+    dust = dust.filter(d => d.life > 0);
     if (state !== 'play') return;
     speed = Math.min(640, speed + 7.5 * dt);
     distPx += speed * dt;
@@ -243,10 +249,33 @@
       if (overlapX && player.y >= top - 2 && player.y < top + 30 && player.vy >= 0) floorY = Math.min(floorY, top);
     }
     if (player.y >= floorY) {
+      if (!player.wasGrounded && player.vy > 240) {
+        // 着地モーション：つぶれて土煙
+        player.landT = 0.16; player.sx = 1.24; player.sy = 0.70;
+        for (let i = 0; i < 7; i++) dust.push({ x: 30 + 4 + Math.random() * SIZE, y: floorY + SIZE - 2, vx: -40 - Math.random() * 90, vy: -14 - Math.random() * 42, life: 0.34, max: 0.34, s: 3 + Math.random() * 4 });
+        shake = Math.max(shake, 1.6);
+      }
       player.y = floorY; player.vy = 0; player.grounded = true;
-      player.angle = Math.round(player.angle / 90) * 90;
+    }
+    player.wasGrounded = player.grounded;
+
+    // ---------- animation ----------
+    if (player.landT > 0) player.landT -= dt;
+    const k = 1 - Math.exp(-dt * 15);
+    if (player.landT <= 0) { player.sx += (1 - player.sx) * k; player.sy += (1 - player.sy) * k; }
+    if (player.grounded) {
+      // 走る動作：歩幅に合わせた上下動と小さな傾き、足元に土煙
+      player.runPhase += dt * (7 + speed / 52);
+      player.tilt += (Math.sin(player.runPhase * 2) * 2.2 - player.tilt) * Math.min(1, dt * 18);
+      const sIdx = Math.floor(player.runPhase / Math.PI);
+      if (sIdx !== player.strideIdx) {
+        player.strideIdx = sIdx;
+        dust.push({ x: 30 + 4, y: player.y + SIZE - 2, vx: -50 - Math.random() * 60, vy: -8 - Math.random() * 22, life: 0.3, max: 0.3, s: 2.5 + Math.random() * 3 });
+      }
     } else {
-      player.angle += 330 * dt;
+      // ジャンプ動作：上昇で後ろへ、落下で前へ傾く
+      const target = Math.max(-16, Math.min(22, player.vy * 0.021));
+      player.tilt += (target - player.tilt) * Math.min(1, dt * 10);
     }
 
     // collisions
@@ -320,15 +349,23 @@
       }
     }
 
-    // player
+    // dust puffs
+    for (const d of dust) {
+      ctx.fillStyle = 'rgba(255,214,232,' + (0.55 * d.life / d.max).toFixed(3) + ')';
+      ctx.beginPath(); ctx.ellipse(d.x, d.y, d.s * 1.5, d.s, 0, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // player（足元基準で描画：走りの上下動・傾き・伸縮）
     if (state !== 'dead') {
+      const bobY = player.grounded ? Math.abs(Math.sin(player.runPhase)) * 3.2 : 0;
       ctx.save();
-      ctx.translate(30 + SIZE / 2, player.y + SIZE / 2);
-      ctx.rotate(player.angle * Math.PI / 180);
+      ctx.translate(30 + SIZE / 2, player.y + SIZE - bobY);
+      ctx.rotate(player.tilt * Math.PI / 180);
+      ctx.scale(player.sx, player.sy);
       if (sprite.complete && sprite.naturalWidth) {
-        ctx.drawImage(sprite, -SIZE / 2 - 3, -SIZE / 2 - 3, SIZE + 6, SIZE + 6);
+        ctx.drawImage(sprite, -SIZE / 2 - 3, -SIZE - 6, SIZE + 6, SIZE + 6);
       } else {
-        ctx.fillStyle = '#ffd7ea'; ctx.fillRect(-SIZE / 2, -SIZE / 2, SIZE, SIZE);
+        ctx.fillStyle = '#ffd7ea'; ctx.fillRect(-SIZE / 2, -SIZE, SIZE, SIZE);
       }
       ctx.restore();
     } else if (deadTimer < 0.25) {
