@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>光の糸でつながる「注目」トイ | 図解ラボ・ゼロヨン</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --surface: #151e2e;
+      --surface-hover: #1c283d;
+      --border: #25344d;
+      --text: #e8eef7;
+      --text-dim: #8ea1bd;
+      --accent: #0074e2;
+      --accent-bright: #4da3ff;
+      --accent-glow: rgba(77, 163, 255, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+      line-height: 1.6;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ヘッダー */
+    header {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent-bright);
+      background: rgba(0, 116, 226, 0.14);
+      border: 1px solid rgba(77, 163, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* 例文切り替えタブ */
+    .preset-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tab-btn {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: rgba(0, 116, 226, 0.2);
+      color: var(--text);
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 14px rgba(0, 116, 226, 0.25);
+    }
+
+    /* メインステージ */
+    .stage-card {
+      position: relative;
+      background: radial-gradient(circle at 50% 0%, #162238 0%, var(--surface) 70%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px 18px 24px;
+      overflow: hidden;
+    }
+
+    .stage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .instruction {
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .instruction strong {
+      color: var(--accent-bright);
+    }
+
+    /* 文脈スイッチボタン */
+    .context-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 116, 226, 0.4);
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .context-switch:hover {
+      background: var(--accent-bright);
+    }
+
+    .context-switch:active {
+      transform: scale(0.96);
+    }
+
+    .switch-icon {
+      display: inline-block;
+      transition: transform 0.35s ease;
+    }
+
+    .context-switch.flipped .switch-icon {
+      transform: rotate(180deg);
+    }
+
+    /* 光の糸＋単語エリア */
+    .canvas-wrap {
+      position: relative;
+      padding-top: 96px; /* 光のアーチを描くスペース */
+      padding-bottom: 12px;
+    }
+
+    .arc-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .tokens-area {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px 8px;
+    }
+
+    .token {
+      position: relative;
+      background: rgba(14, 20, 32, 0.85);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 13px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .token:hover {
+      border-color: var(--accent-bright);
+      transform: translateY(-2px);
+    }
+
+    .token.is-selected {
+      background: var(--accent);
+      border-color: var(--accent-bright);
+      color: #ffffff;
+      box-shadow: 0 0 18px var(--accent-glow);
+      transform: translateY(-3px);
+    }
+
+    .token.is-target {
+      border-color: var(--accent-bright);
+      background: rgba(77, 163, 255, 0.16);
+      box-shadow: 0 0 14px rgba(77, 163, 255, 0.28);
+    }
+
+    .token.is-changed {
+      animation: popChange 0.45s ease;
+    }
+
+    @keyframes popChange {
+      0% { transform: scale(0.9); background: rgba(77, 163, 255, 0.45); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    .token-score {
+      position: absolute;
+      top: -10px;
+      right: -6px;
+      background: var(--accent-bright);
+      color: #08101c;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 999px;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+
+    .token.is-target .token-score {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* SVGの光アニメーション */
+    .arc-line {
+      fill: none;
+      stroke-linecap: round;
+      transition: opacity 0.25s ease;
+    }
+
+    .arc-flow {
+      fill: none;
+      stroke-linecap: round;
+      stroke-dasharray: 6 14;
+      animation: flowDash 1.4s linear infinite;
+    }
+
+    @keyframes flowDash {
+      to {
+        stroke-dashoffset: -40;
+      }
+    }
+
+    /* 解説＆注目度メーター */
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .info-summary {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .info-summary .hl {
+      color: var(--accent-bright);
+      font-weight: 800;
+    }
+
+    .meter-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .meter-row {
+      display: grid;
+      grid-template-columns: 92px 1fr 44px;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .meter-label {
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meter-track {
+      height: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .meter-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+      border-radius: 999px;
+      width: 0%;
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .meter-val {
+      text-align: right;
+      color: var(--accent-bright);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ミニコラム */
+    .tip-box {
+      background: rgba(0, 116, 226, 0.08);
+      border-left: 3px solid var(--accent-bright);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .tip-box strong {
+      color: var(--text);
+    }
+
+    /* フッター */
+    footer {
+      margin-top: auto;
+      padding-top: 28px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+
+    footer span {
+      color: var(--accent-bright);
+      font-weight: 700;
+    }
+
+    @media (max-width: 520px) {
+      .canvas-wrap {
+        padding-top: 80px;
+      }
+      .token {
+        font-size: 15px;
+        padding: 7px 11px;
+      }
+      .tab-btn {
+        font-size: 12px;
+        padding: 8px 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">図解ラボ・ゼロヨン（04） Webトイ #03</div>
+      <h1>光の糸でつながる「注目」トイ</h1>
+      <p class="subtitle">AIが文章を読むとき、どの言葉どうしを結びつけているか触ってみよう</p>
+    </header>
+
+    <!-- 例文タブ -->
+    <div class="preset-tabs" role="tablist">
+      <button class="tab-btn active" data-preset="0">①「それ」はどれ？</button>
+      <button class="tab-btn" data-preset="1">②「かける」の意味</button>
+      <button class="tab-btn" data-preset="2">③「彼女」はどっち？</button>
+    </div>
+
+    <!-- メインステージ -->
+    <section class="stage-card">
+      <div class="stage-header">
+        <div class="instruction">単語を<strong>タップ</strong>すると光の糸が伸びるよ</div>
+        <button id="contextSwitchBtn" class="context-switch" type="button">
+          <span class="switch-icon">↻</span>
+          <span id="switchLabel">文脈を切り替える</span>
+        </button>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <svg class="arc-svg" id="arcSvg" aria-hidden="true">
+          <defs>
+            <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+          <g id="arcGroup"></g>
+        </svg>
+
+        <div class="tokens-area" id="tokensArea"></div>
+      </div>
+    </section>
+
+    <!-- 注目度メーターとやさしい解説 -->
+    <section class="info-card">
+      <div class="info-summary" id="infoSummary"></div>
+      <div class="meter-list" id="meterList"></div>
+      <div class="tip-box">
+        <strong>ミニコラム：</strong>AIは単語の意味を、辞書ではなく「周りのどの単語と強く結びついているか」で決めています。文脈が変わると結びつきが張り替わり、意味も変わる——これが<strong>Attention（注目機構）</strong>の入り口です。
+      </div>
+    </section>
+
+    <footer>
+      図解ラボ・ゼロヨン（04） <span>仕組みを、図解でやさしく</span>
+    </footer>
+  </div>
+
+  <script>
+    // 例文データ（各プリセットにA/Bの2つの文脈を用意）
+    const PRESETS = [
+      {
+        defaultIndex: 5, // 「それ」
+        variants: [
+          {
+            switchText: "文末を「転がった」に変える",
+            changedIndices: [6, 7],
+            tokens: ["犬", "が", "ボール", "を", "追いかけた。", "それ", "は楽しそうに", "吠えた。"],
+            // 各単語インデックス -> [[相手インデックス, 強さ(0.0〜1.0)], ...]
+            weights: {
+              0: [[4, 0.72], [5, 0.85], [7, 0.82]],
+              2: [[4, 0.78], [0, 0.32], [5, 0.14]],
+              4: [[0, 0.76], [2, 0.72]],
+              5: [[0, 0.86], [7, 0.78], [2, 0.12]],
+              6: [[0, 0.65], [7, 0.84], [5, 0.52]],
+              7: [[0, 0.84], [5, 0.74], [6, 0.62]]
+            },
+            notes: {
+              5: "「吠えた」という手がかりから、「それ」は『犬』のことだと強く結びついています。"
+            }
+          },
+          {
+            switchText: "文末を「吠えた」に戻す",
+            changedIndices: [6, 7],
+            tokens: ["犬", "が", "ボール", "を", "追いかけた。", "それ", "は遠くへ", "転がった。"],
+            weights: {
+              0: [[4, 0.76], [2, 0.35], [5, 0.15]],
+              2: [[5, 0.88], [7, 0.84], [4, 0.70]],
+              4: [[0, 0.74], [2, 0.74]],
+              5: [[2, 0.88], [7, 0.80], [0, 0.12]],
+              6: [[2, 0.58], [7, 0.82], [5, 0.48]],
+              7: [[2, 0.86], [5, 0.78], [6, 0.60]]
+            },
+            notes: {
+              5: "「転がった」に変わった瞬間、「それ」の注目先が『ボール』へ一気に張り替わりました！"
+            }
+          }
+        ]
+      },
+      {
+        defaultIndex: 2, // 「かける」
+        variants: [
+          {
+            switchText: "文脈を「シチュー」に変える",
+            changedIndices: [0, 4],
+            tokens: ["電話", "を", "かける", "ために", "スマホ", "を", "取り出した。"],
+            weights: {
+              0: [[2, 0.88], [4, 0.76]],
+              2: [[0, 0.89], [4, 0.72], [6, 0.25]],
+              4: [[0, 0.74], [6, 0.82], [2, 0.55]],
+              6: [[4, 0.86], [2, 0.38]]
+            },
+            notes: {
+              2: "「電話」と「スマホ」に注目することで、ここでの「かける」は『通話する』意味だと見抜きます。"
+            }
+          },
+          {
+            switchText: "文脈を「電話」に戻す",
+            changedIndices: [0, 4],
+            tokens: ["シチュー", "を", "かける", "ために", "おたま", "を", "取り出した。"],
+            weights: {
+              0: [[2, 0.86], [4, 0.78]],
+              2: [[0, 0.87], [4, 0.74], [6, 0.28]],
+              4: [[0, 0.76], [6, 0.84], [2, 0.58]],
+              6: [[4, 0.88], [2, 0.40]]
+            },
+            notes: {
+              2: "同じ「かける」でも、「シチュー」と「おたま」に光がつながり、『上からそそぐ』意味に変化！"
+            }
+          }
+        ]
+      },
+      {
+        defaultIndex: 5, // 「彼女」
+        variants: [
+          {
+            switchText: "反応を「得意げに笑った」に変える",
+            changedIndices: [6, 7],
+            tokens: ["妹", "が", "姉", "に", "ケーキを渡した。", "彼女", "はうれしそうに", "受け取った。"],
+            weights: {
+              0: [[4, 0.74], [2, 0.45], [5, 0.16]],
+              2: [[5, 0.86], [7, 0.82], [4, 0.65]],
+              4: [[0, 0.72], [2, 0.72], [7, 0.64]],
+              5: [[2, 0.86], [7, 0.78], [0, 0.16]],
+              6: [[2, 0.60], [7, 0.82], [5, 0.55]],
+              7: [[2, 0.84], [4, 0.74], [5, 0.72]]
+            },
+            notes: {
+              5: "「受け取った」という動きから、「彼女」はもらった側の『姉』に注目しています。"
+            }
+          },
+          {
+            switchText: "反応を「受け取った」に戻す",
+            changedIndices: [6, 7],
+            tokens: ["妹", "が", "姉", "に", "ケーキを渡した。", "彼女", "は得意げに", "笑った。"],
+            weights: {
+              0: [[5, 0.84], [7, 0.78], [4, 0.72]],
+              2: [[4, 0.68], [0, 0.40], [5, 0.18]],
+              4: [[0, 0.74], [2, 0.68]],
+              5: [[0, 0.84], [6, 0.76], [7, 0.72], [2, 0.18]],
+              6: [[0, 0.72], [5, 0.68], [7, 0.80]],
+              7: [[0, 0.80], [5, 0.74], [6, 0.72]]
+            },
+            notes: {
+              5: "「得意げに笑った」に変わると、「彼女」の注目先が渡した側の『妹』へ切り替わりました！"
+            }
+          }
+        ]
+      }
+    ];
+
+    let currentPresetIdx = 0;
+    let currentVariantIdx = 0;
+    let selectedTokenIdx = PRESETS[0].defaultIndex;
+
+    const tokensArea = document.getElementById("tokensArea");
+    const arcGroup = document.getElementById("arcGroup");
+    const canvasWrap = document.getElementById("canvasWrap");
+    const contextSwitchBtn = document.getElementById("contextSwitchBtn");
+    const switchLabel = document.getElementById("switchLabel");
+    const infoSummary = document.getElementById("infoSummary");
+    const meterList = document.getElementById("meterList");
+    const tabButtons = document.querySelectorAll(".tab-btn");
+
+    // 指定した単語の関連リストを取得（未定義の助詞などは前後の単語に弱く繋ぐ）
+    function getConnections(variant, idx) {
+      if (variant.weights[idx]) {
+        return [...variant.weights[idx]].sort((a, b) => b[1] - a[1]);
+      }
+      const fallback = [];
+      if (idx > 0) fallback.push([idx - 1, 0.48]);
+      if (idx < variant.tokens.length - 1) fallback.push([idx + 1, 0.48]);
+      return fallback;
+    }
+
+    function renderTokens(animateChanges = false) {
+      const preset = PRESETS[currentPresetIdx];
+      const variant = preset.variants[currentVariantIdx];
+      switchLabel.textContent = variant.switchText;
+      contextSwitchBtn.classList.toggle("flipped", currentVariantIdx === 1);
+
+      tokensArea.innerHTML = "";
+      variant.tokens.forEach((word, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "token";
+        if (animateChanges && variant.changedIndices.includes(idx)) {
+          btn.classList.add("is-changed");
+        }
+        btn.dataset.index = idx;
+        btn.innerHTML = `${word}<span class="token-score"></span>`;
+        btn.addEventListener("click", () => {
+          selectedTokenIdx = idx;
+          updateAttentionView();
+        });
+        tokensArea.appendChild(btn);
+      });
+
+      // レイアウト確定後に光の糸を描画
+      requestAnimationFrame(() => updateAttentionView());
+    }
+
+    function updateAttentionView() {
+      const preset = PRESETS[currentPresetIdx];
+      const variant = preset.variants[currentVariantIdx];
+      const connections = getConnections(variant, selectedTokenIdx);
+      const connMap = new Map(connections);
+
+      const tokenEls = Array.from(tokensArea.querySelectorAll(".token"));
+      tokenEls.forEach((el, idx) => {
+        el.classList.remove("is-selected", "is-target");
+        const scoreBadge = el.querySelector(".token-score");
+        scoreBadge.textContent = "";
+
+        if (idx === selectedTokenIdx) {
+          el.classList.add("is-selected");
+        } else if (connMap.has(idx)) {
+          const score = connMap.get(idx);
+          el.classList.add("is-target");
+          scoreBadge.textContent = `${Math.round(score * 100)}%`;
+        }
+      });
+
+      drawArcs(tokenEls, selectedTokenIdx, connections);
+      renderInfo(variant, selectedTokenIdx, connections);
+    }
+
+    function drawArcs(tokenEls, fromIdx, connections) {
+      arcGroup.innerHTML = "";
+      const wrapRect = canvasWrap.getBoundingClientRect();
+      const fromEl = tokenEls[fromIdx];
+      if (!fromEl) return;
+
+      const fromRect = fromEl.getBoundingClientRect();
+      const x1 = fromRect.left - wrapRect.left + fromRect.width / 2;
+      const y1 = fromRect.top - wrapRect.top;
+
+      connections.forEach(([toIdx, weight]) => {
+        const toEl = tokenEls[toIdx];
+        if (!toEl) return;
+
+        const toRect = toEl.getBoundingClientRect();
+        const x2 = toRect.left - wrapRect.left + toRect.width / 2;
+        const y2 = toRect.top - wrapRect.top;
+
+        // 距離に応じてアーチの高さを自然に調整
+        const dist = Math.hypot(x2 - x1, y2 - y1);
+        const arcHeight = Math.min(86, Math.max(28, dist * 0.28));
+        const midX = (x1 + x2) / 2;
+        const midY = Math.min(y1, y2) - arcHeight;
+
+        const d = `M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}`;
+
+        // ベースの光の糸
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", d);
+        path.setAttribute("class", "arc-line");
+        path.setAttribute("stroke", weight > 0.55 ? "#4da3ff" : "#0074e2");
+        path.setAttribute("stroke-width", (1.2 + weight * 4.2).toFixed(2));
+        path.setAttribute("stroke-opacity", (0.22 + weight * 0.78).toFixed(2));
+        if (weight > 0.5) {
+          path.setAttribute("filter", "url(#glow)");
+        }
+        arcGroup.appendChild(path);
+
+        // 強い結びつきには光の粒が流れる演出を重ねる
+        if (weight >= 0.5) {
+          const flow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          flow.setAttribute("d", d);
+          flow.setAttribute("class", "arc-flow");
+          flow.setAttribute("stroke", "#e8eef7");
+          flow.setAttribute("stroke-width", (1.2 + weight * 1.4).toFixed(2));
+          flow.setAttribute("stroke-opacity", (0.35 + weight * 0.55).toFixed(2));
+          arcGroup.appendChild(flow);
+        }
+      });
+    }
+
+    function renderInfo(variant, fromIdx, connections) {
+      const selectedWord = variant.tokens[fromIdx];
+      const customNote = variant.notes && variant.notes[fromIdx];
+
+      if (customNote) {
+        infoSummary.innerHTML = `「<span class="hl">${selectedWord}</span>」の注目：${customNote}`;
+      } else if (connections.length > 0) {
+        const topWord = variant.tokens[connections[0][0]];
+        infoSummary.innerHTML = `「<span class="hl">${selectedWord}</span>」は、いま「<span class="hl">${topWord}</span>」と一番強く結びついています。`;
+      } else {
+        infoSummary.innerHTML = `「<span class="hl">${selectedWord}</span>」を選択中`;
+      }
+
+      meterList.innerHTML = "";
+      connections.forEach(([toIdx, weight]) => {
+        const pct = Math.round(weight * 100);
+        const row = document.createElement("div");
+        row.className = "meter-row";
+        row.innerHTML = `
+          <div class="meter-label">${variant.tokens[toIdx]}</div>
+          <div class="meter-track"><div class="meter-fill" style="width: ${pct}%"></div></div>
+          <div class="meter-val">${pct}%</div>
+        `;
+        meterList.appendChild(row);
+      });
+    }
+
+    // タブ切り替え
+    tabButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.preset);
+        if (idx === currentPresetIdx) return;
+        currentPresetIdx = idx;
+        currentVariantIdx = 0;
+        selectedTokenIdx = PRESETS[idx].defaultIndex;
+
+        tabButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderTokens(false);
+      });
+    });
+
+    // 文脈スイッチ
+    contextSwitchBtn.addEventListener("click", () => {
+      currentVariantIdx = currentVariantIdx === 0 ? 1 : 0;
+      renderTokens(true);
+    });
+
+    // 初期表示
+    renderTokens(false);
+
+    // 画面サイズが変わったら光の糸を引き直す
+    window.addEventListener("resize", () => updateAttentionView());
+  </script>
+</body>
+</html>
