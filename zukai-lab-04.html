@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>図解ラボ・ゼロヨン（04） | 40秒でAIの仕組みを図解する姉妹チーム</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #edf2f9;
+      --border: #dce5f2;
+      --text: #141c2b;
+      --muted: #5a6b85;
+      --accent: #0074e2;
+      --accent-soft: rgba(0, 116, 226, 0.1);
+      --accent-hover: #005ec0;
+      --lilac: #c9b3ff;
+      --pink: #f48fb1;
+      --shadow: 0 10px 30px rgba(20, 35, 60, 0.06);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0e1420;
+        --surface: #151f30;
+        --surface-2: #1b283d;
+        --border: #263752;
+        --text: #e8eef7;
+        --muted: #93a7c6;
+        --accent: #4da3ff;
+        --accent-soft: rgba(0, 116, 226, 0.22);
+        --accent-hover: #70b7ff;
+        --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0e1420;
+      --surface: #151f30;
+      --surface-2: #1b283d;
+      --border: #263752;
+      --text: #e8eef7;
+      --muted: #93a7c6;
+      --accent: #4da3ff;
+      --accent-soft: rgba(0, 116, 226, 0.22);
+      --accent-hover: #70b7ff;
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.7;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 18px 64px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-mark {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 11px;
+      background: #0074e2;
+      color: #ffffff;
+      font-size: 0.92rem;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0, 116, 226, 0.3);
+    }
+
+    .theme-btn {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+
+    .theme-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .theme-btn:active {
+      transform: scale(0.97);
+    }
+
+    .hero {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: clamp(28px, 5vw, 48px);
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "04";
+      position: absolute;
+      right: -12px;
+      bottom: -36px;
+      font-size: clamp(7rem, 18vw, 11rem);
+      font-weight: 900;
+      color: var(--accent);
+      opacity: 0.06;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 5px 13px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.7rem, 4.8vw, 2.5rem);
+      font-weight: 900;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      color: #0074e2;
+    }
+
+    :root[data-theme="dark"] .hero h1 span {
+      color: #4da3ff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) .hero h1 span {
+        color: #4da3ff;
+      }
+    }
+
+    .hero-desc {
+      color: var(--muted);
+      font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+      max-width: 640px;
+      margin-bottom: 24px;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 999px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 36px 0 16px;
+      gap: 12px;
+    }
+
+    .section-head h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .section-head span {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    @media (max-width: 720px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .member-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .member-top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .avatar {
+      width: 76px;
+      height: 76px;
+      border-radius: 22px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .member-role {
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .member-name {
+      font-size: 1.3rem;
+      font-weight: 900;
+      line-height: 1.2;
+    }
+
+    .member-en {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .role-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .role-chip {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .traits {
+      font-size: 0.86rem;
+      color: var(--muted);
+      background: var(--surface-2);
+      border-radius: 12px;
+      padding: 10px 14px;
+    }
+
+    .traits strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .quote {
+      position: relative;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      border-left: 4px solid #0074e2;
+      font-size: 0.92rem;
+      line-height: 1.65;
+    }
+
+    .flow-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow);
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .flow-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      .flow-arrow {
+        transform: rotate(90deg);
+      }
+    }
+
+    .flow-step {
+      background: var(--surface-2);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .flow-step-title {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .flow-step p {
+      font-size: 0.88rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .flow-arrow {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .work-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      transition: transform 0.18s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .work-card:hover {
+      transform: translateY(-3px);
+      border-color: #0074e2;
+      box-shadow: 0 14px 34px rgba(0, 116, 226, 0.14);
+    }
+
+    .work-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    .work-card h3 {
+      font-size: 1.18rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .work-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .work-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 12px;
+      background: #0074e2;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .work-card:hover .work-cta {
+      background: #005ec0;
+    }
+
+    footer {
+      margin-top: 48px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    footer strong {
+      color: var(--text);
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">04</span>
+        <span>図解ラボ・ゼロヨン</span>
+      </div>
+      <button class="theme-btn" id="themeToggle" type="button" aria-label="テーマ切替">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">ダーク切替</span>
+      </button>
+    </header>
+
+    <section class="hero">
+      <div class="pill">40 SEC × VISUAL AI LAB</div>
+      <h1>
+        40秒で、AIの仕組みを<br />
+        <span>図解する姉妹チーム。</span>
+      </h1>
+      <p class="hero-desc">
+        <strong>図解ラボ・ゼロヨン（04）</strong>は、むずかしいAIや技術の裏側を「40秒の縦型ショート動画」と「触って遊べるWeb実験室」でやさしく解き明かす姉妹ユニットです。企画と下書きを爆速で飛ばす妹・サキと、仕様を切って確実に形にする姉・優花のタッグでお届けします。
+      </p>
+      <div class="hero-tags">
+        <span class="tag">#40秒図解</span>
+        <span class="tag">#仕組みを図解でやさしく</span>
+        <span class="tag">#触って学べるAI</span>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <h2>姉妹プロフィール</h2>
+      <span>MEMBERS</span>
+    </div>
+
+    <section class="grid-2">
+      <article class="member-card">
+        <div class="member-top">
+          <div class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 80 80" width="76" height="76">
+              <rect width="80" height="80" fill="none" />
+              <circle cx="56" cy="20" r="10" fill="#c7b2f5" />
+              <path d="M18 38 C16 58, 16 74, 20 80 L60 80 C64 74, 64 58, 62 38 Z" fill="#c7b2f5" />
+              <circle cx="40" cy="44" r="19" fill="#ffe9dc" />
+              <path d="M20 40 C22 22, 58 22, 60 40 C52 34, 46 33, 40 36 C34 33, 28 34, 20 40 Z" fill="#c7b2f5" />
+              <circle cx="33" cy="46" r="3.2" fill="#f06b9b" />
+              <circle cx="47" cy="46" r="3.2" fill="#f06b9b" />
+              <rect x="25.5" y="41" width="13" height="9.5" rx="3" fill="none" stroke="#1b2230" stroke-width="2.2" />
+              <rect x="41.5" y="41" width="13" height="9.5" rx="3" fill="none" stroke="#1b2230" stroke-width="2.2" />
+              <line x1="38.5" y1="45.5" x2="41.5" y2="45.5" stroke="#1b2230" stroke-width="2.2" />
+              <path d="M36 55 Q40 58 44 55" fill="none" stroke="#c87d7d" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="member-role">姉 / SPEC &amp; VERIFY</div>
+            <h3 class="member-name">如月 優花</h3>
+            <div class="member-en">Yuka Kisaragi</div>
+          </div>
+        </div>
+
+        <div class="role-list">
+          <span class="role-chip">仕様を切る人</span>
+          <span class="role-chip">検証する人</span>
+          <span class="role-chip">最終的に形にする人</span>
+        </div>
+
+        <div class="traits">
+          <strong>トレードマーク：</strong>薄紫のロングヘア＋お団子、ピンクの瞳、黒縁メガネ。
+        </div>
+
+        <p class="quote">
+          「サキが投げたアイデアを仕様に落として、ちゃんと動く形に整えるのが私の役目。分かりやすさも精度も、最後は姉が責任持ちます。」
+        </p>
+      </article>
+
+      <article class="member-card">
+        <div class="member-top">
+          <div class="avatar" aria-hidden="true">
+            <svg viewBox="0 0 80 80" width="76" height="76">
+              <rect width="80" height="80" fill="none" />
+              <path d="M18 42 C18 22, 62 22, 62 42 L64 60 C58 64, 22 64, 16 60 Z" fill="#c7b2f5" />
+              <circle cx="21" cy="56" r="4.5" fill="#b79df0" />
+              <circle cx="20" cy="63" r="4.2" fill="#b79df0" />
+              <circle cx="21" cy="69" r="3.6" fill="#b79df0" />
+              <polygon points="21,67 13,63 13,71" fill="#0074e2" />
+              <polygon points="21,67 29,63 29,71" fill="#0074e2" />
+              <circle cx="21" cy="67" r="2.5" fill="#4da3ff" />
+              <circle cx="40" cy="44" r="18.5" fill="#ffe9dc" />
+              <path d="M21 40 C24 23, 56 23, 59 40 C51 35, 45 34, 40 37 C35 34, 29 35, 21 40 Z" fill="#c7b2f5" />
+              <circle cx="33" cy="46" r="3.4" fill="#f06b9b" />
+              <circle cx="47" cy="46" r="3.4" fill="#f06b9b" />
+              <circle cx="34" cy="44.8" r="1" fill="#ffffff" />
+              <circle cx="48" cy="44.8" r="1" fill="#ffffff" />
+              <path d="M35 54 Q40 60 45 54" fill="none" stroke="#d96b7c" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <div class="member-role">妹 / PLAN &amp; DRAFT</div>
+            <h3 class="member-name">如月 サキ</h3>
+            <div class="member-en">Saki Kisaragi</div>
+          </div>
+        </div>
+
+        <div class="role-list">
+          <span class="role-chip">企画を量産する人</span>
+          <span class="role-chip">下書きを爆速で書く人</span>
+        </div>
+
+        <div class="traits">
+          <strong>トレードマーク：</strong>お姉ちゃんとお揃いの薄紫＆ピンク、三つ編みボブに青いリボン。
+        </div>
+
+        <p class="quote">
+          「企画出しもコードの下書きも、お姉ちゃんが『ちょっと待って』って言う前に爆速で仕上げちゃうよ！ 細かい仕様チェックと検証？ そこはお姉ちゃんに全部任せた！」
+        </p>
+      </article>
+    </section>
+
+    <section class="flow-card" aria-label="制作ワークフロー">
+      <div class="flow-step">
+        <div class="flow-step-title">STEP 1：如月サキ（妹）</div>
+        <p>企画のタネ・構成案・コードの下書きをスピード量産</p>
+      </div>
+      <div class="flow-arrow" aria-hidden="true">→</div>
+      <div class="flow-step">
+        <div class="flow-step-title">STEP 2：如月優花（姉）</div>
+        <p>仕様を整理して動作を検証し、作品として完成させる</p>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <h2>つくっているもの</h2>
+      <span>WORKS</span>
+    </div>
+
+    <section class="grid-2">
+      <a class="work-card" href="https://www.youtube.com/@YUKAsystem" target="_blank" rel="noopener">
+        <div>
+          <span class="work-badge">YouTube ショート</span>
+          <h3>Y.U.K.A 図解シリーズ</h3>
+          <p>
+            Attention、LoRA、量子化、トークンと埋め込みなど、AIの仕組みを1本40秒でサクッと図解する縦型動画シリーズ。
+          </p>
+        </div>
+        <span class="work-cta">YouTubeで観る →</span>
+      </a>
+
+      <a class="work-card" href="temperature-toy.html">
+        <div>
+          <span class="work-badge">インタラクティブWebトイ</span>
+          <h3>AIの脳内「温度」体感トイ</h3>
+          <p>
+            温度スライダーをグリグリ動かして、AIが次の言葉を選ぶ確率（Softmax）をリアルタイムに壊して遊べるミニ実験室。
+          </p>
+        </div>
+        <span class="work-cta">ブラウザで触ってみる →</span>
+      </a>
+    </section>
+
+    <footer>
+      <strong>図解ラボ・ゼロヨン（04）</strong>
+      <span>仕組みを、図解でやさしく</span>
+    </footer>
+  </div>
+
+  <script>
+    const root = document.documentElement;
+    const toggleBtn = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const themeLabel = document.getElementById("themeLabel");
+
+    function isDarkNow() {
+      const explicit = root.getAttribute("data-theme");
+      if (explicit === "dark") return true;
+      if (explicit === "light") return false;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+
+    function syncThemeButton() {
+      if (isDarkNow()) {
+        themeIcon.textContent = "☀️";
+        themeLabel.textContent = "ライト切替";
+      } else {
+        themeIcon.textContent = "🌙";
+        themeLabel.textContent = "ダーク切替";
+      }
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      root.setAttribute("data-theme", isDarkNow() ? "light" : "dark");
+      syncThemeButton();
+    });
+
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (!root.getAttribute("data-theme")) syncThemeButton();
+    });
+
+    syncThemeButton();
+  </script>
+</body>
+</html>

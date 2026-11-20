@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AIの脳内「温度（Temperature）」体感トイ</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --surface: #151f30;
+      --surface-2: #1b283d;
+      --border: #263752;
+      --text: #e8eef7;
+      --muted: #8ea3c2;
+      --accent: #0074e2;
+      --accent-light: #4da3ff;
+      --glow: rgba(77, 163, 255, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 20px 14px 48px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .title-wrap h1 {
+      font-size: clamp(1.2rem, 3.8vw, 1.55rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .title-wrap p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .step-badge {
+      background: rgba(0, 116, 226, 0.2);
+      border: 1px solid var(--accent-light);
+      color: var(--accent-light);
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .story-label {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .story-box {
+      font-size: clamp(1rem, 3.2vw, 1.15rem);
+      line-height: 1.85;
+      min-height: 84px;
+      word-break: break-word;
+    }
+
+    .picked-word {
+      color: var(--accent-light);
+      font-weight: 800;
+      background: rgba(0, 116, 226, 0.18);
+      padding: 1px 6px;
+      border-radius: 6px;
+      margin: 0 2px;
+      display: inline-block;
+    }
+
+    .blank-slot {
+      display: inline-block;
+      min-width: 72px;
+      text-align: center;
+      border-bottom: 2px dashed var(--accent-light);
+      color: var(--accent-light);
+      font-weight: 700;
+      margin: 0 4px;
+      padding: 0 6px;
+      animation: pulse 1.6s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .temp-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+
+    .temp-value-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .temp-title {
+      font-size: 0.9rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .temp-num {
+      font-size: 1.7rem;
+      font-weight: 900;
+      color: var(--accent-light);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mood-badge {
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+    }
+
+    .mood-serious { color: #7cc4ff; border-color: #0074e2; background: rgba(0, 116, 226, 0.18); }
+    .mood-balance { color: #7ef2c8; border-color: #2fb886; background: rgba(47, 184, 134, 0.16); }
+    .mood-free    { color: #ffd166; border-color: #e0a82e; background: rgba(224, 168, 46, 0.16); }
+    .mood-chaos   { color: #ff7b9c; border-color: #e6456e; background: rgba(230, 69, 110, 0.18); }
+
+    input[type="range"] {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      border: 3px solid var(--text);
+      box-shadow: 0 0 12px var(--glow);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      border: 3px solid var(--text);
+      box-shadow: 0 0 12px var(--glow);
+      cursor: pointer;
+    }
+
+    .slider-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .candidates-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .candidates-header span {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .candidate-list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .candidate-row {
+      position: relative;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      overflow: hidden;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+
+    .candidate-row.selected {
+      border-color: var(--accent-light);
+      box-shadow: 0 0 20px var(--glow);
+      transform: scale(1.015);
+      z-index: 2;
+    }
+
+    .prob-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, rgba(0, 116, 226, 0.55), rgba(77, 163, 255, 0.32));
+      transition: width 0.16s ease-out;
+      pointer-events: none;
+    }
+
+    .candidate-row.selected .prob-bar {
+      background: linear-gradient(90deg, rgba(0, 116, 226, 0.9), rgba(77, 163, 255, 0.7));
+    }
+
+    .cand-word {
+      position: relative;
+      z-index: 1;
+      font-weight: 700;
+      font-size: 0.98rem;
+    }
+
+    .cand-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .cand-logit {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .cand-prob {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--accent-light);
+      min-width: 54px;
+      text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: inherit;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.1s, opacity 0.2s, background 0.2s;
+      border: none;
+    }
+
+    button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      flex: 1;
+      min-width: 200px;
+      padding: 15px 20px;
+      font-size: 1.05rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 116, 226, 0.35);
+    }
+
+    .btn-secondary {
+      padding: 15px 20px;
+      font-size: 0.95rem;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .complete-banner {
+      display: none;
+      text-align: center;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(0, 116, 226, 0.16);
+      border: 1px solid var(--accent-light);
+      margin-bottom: 14px;
+    }
+
+    .complete-banner.show {
+      display: block;
+    }
+
+    .complete-banner h2 {
+      font-size: 1.15rem;
+      color: var(--accent-light);
+      margin-bottom: 4px;
+    }
+
+    .complete-banner p {
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 6px;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div class="title-wrap">
+        <h1>AIの脳内「温度」体感トイ</h1>
+        <p>スライダーで温度を変えて、昔話の続きを抽選してみよう</p>
+      </div>
+      <div class="step-badge" id="stepBadge">STEP 1 / 6</div>
+    </header>
+
+    <section class="card">
+      <div class="story-label">つくっている昔話</div>
+      <div class="complete-banner" id="completeBanner">
+        <h2>昔話が完成しました！</h2>
+        <p>温度を変えてリセットすると、まったく違う物語になります。</p>
+      </div>
+      <div class="story-box" id="storyBox"></div>
+    </section>
+
+    <section class="card">
+      <div class="temp-header">
+        <div class="temp-value-wrap">
+          <span class="temp-title">温度 (Temperature)</span>
+          <span class="temp-num" id="tempValue">0.7</span>
+        </div>
+        <div class="mood-badge mood-balance" id="moodBadge">バランス</div>
+      </div>
+      <input type="range" id="tempSlider" min="0.1" max="2.5" step="0.1" value="0.7" />
+      <div class="slider-scale">
+        <span>0.1（超まじめ）</span>
+        <span>1.0（標準）</span>
+        <span>2.5（カオス）</span>
+      </div>
+    </section>
+
+    <section class="card" id="candidatesCard">
+      <div class="candidates-header">
+        <span>次の言葉の候補（Softmax確率）</span>
+        <span>左：候補 ／ 右：元のスコア・確率</span>
+      </div>
+      <div class="candidate-list" id="candidateList"></div>
+    </section>
+
+    <div class="actions">
+      <button class="btn-primary" id="pickBtn">次の言葉を選ぶ</button>
+      <button class="btn-secondary" id="resetBtn">リセット</button>
+    </div>
+
+    <footer>仕組みを、図解でやさしく</footer>
+  </main>
+
+  <script>
+    const STORY_STEPS = [
+      {
+        prefix: "昔々、あるところに",
+        suffix: "が住んでいました。",
+        candidates: [
+          { word: "おじいさんとおばあさん", logit: 6.2 },
+          { word: "やさしいきこり", logit: 4.1 },
+          { word: "小さな村の少年", logit: 3.4 },
+          { word: "おしゃべりなタヌキ", logit: 2.1 },
+          { word: "迷子の宇宙人", logit: 1.4 },
+          { word: "喋る冷蔵庫", logit: 1.0 },
+          { word: "筋肉質なカブトムシ", logit: 0.7 },
+          { word: "Wi-Fiルーター", logit: 0.4 },
+          { word: "伝説の課長", logit: 0.2 }
+        ]
+      },
+      {
+        prefix: "ある日、",
+        suffix: "出かけると、",
+        candidates: [
+          { word: "山へ柴刈りに", logit: 6.0 },
+          { word: "川へ洗濯に", logit: 5.0 },
+          { word: "森へきのこ狩りに", logit: 3.3 },
+          { word: "コンビニへ夜食を買いに", logit: 1.8 },
+          { word: "宇宙船の修理に", logit: 1.4 },
+          { word: "推しのライブに", logit: 1.1 },
+          { word: "サウナで整いに", logit: 0.8 },
+          { word: "確定申告の会場に", logit: 0.5 },
+          { word: "異次元のすき間に", logit: 0.3 }
+        ]
+      },
+      {
+        prefix: "目の前に大きな",
+        suffix: "がドンブラコと流れてきました。",
+        candidates: [
+          { word: "桃", logit: 6.3 },
+          { word: "宝箱", logit: 4.2 },
+          { word: "おむすび", logit: 3.5 },
+          { word: "冷蔵庫", logit: 1.8 },
+          { word: "UFO", logit: 1.5 },
+          { word: "タピオカ", logit: 1.1 },
+          { word: "ゲーミングPC", logit: 0.8 },
+          { word: "請求書", logit: 0.5 },
+          { word: "ブラックホール", logit: 0.3 }
+        ]
+      },
+      {
+        prefix: "おそるおそる開けてみると、中から",
+        suffix: "が飛び出しました！",
+        candidates: [
+          { word: "元気な赤ちゃん", logit: 6.2 },
+          { word: "まばゆい金銀財宝", logit: 4.3 },
+          { word: "かわいい子犬", logit: 3.4 },
+          { word: "サングラスの宇宙人", logit: 1.7 },
+          { word: "冷え切ったプリン", logit: 1.3 },
+          { word: "大量のレシート", logit: 0.9 },
+          { word: "小さなロボット", logit: 0.7 },
+          { word: "昨日の自分", logit: 0.4 },
+          { word: "謎のQRコード", logit: 0.2 }
+        ]
+      },
+      {
+        prefix: "びっくりした一同は、さっそく",
+        suffix: "ことにしました。",
+        candidates: [
+          { word: "鬼退治の旅に出る", logit: 6.0 },
+          { word: "村のみんなでお祝いする", logit: 4.5 },
+          { word: "きびだんごを作る", logit: 3.8 },
+          { word: "SNSに動画を投稿する", logit: 1.8 },
+          { word: "冷蔵庫にしまう", logit: 1.3 },
+          { word: "一緒にダンスを踊る", logit: 1.0 },
+          { word: "とりあえず会議を開く", logit: 0.7 },
+          { word: "タイムマシンに乗る", logit: 0.5 },
+          { word: "フリマアプリに出品する", logit: 0.2 }
+        ]
+      },
+      {
+        prefix: "こうして最後は、",
+        suffix: "",
+        candidates: [
+          { word: "みんな末永く幸せに暮らしましたとさ。", logit: 6.3 },
+          { word: "めでたし、めでたし。", logit: 5.1 },
+          { word: "村に平和が戻りましたとさ。", logit: 3.8 },
+          { word: "宇宙までバズって伝説になりましたとさ。", logit: 1.7 },
+          { word: "電気代が少し高くなりましたとさ。", logit: 1.3 },
+          { word: "誰も意味が分からないまま終わりましたとさ。", logit: 1.0 },
+          { word: "続編の制作が決定しましたとさ。", logit: 0.8 },
+          { word: "AIの温度が下がって静かになりましたとさ。", logit: 0.5 },
+          { word: "冷蔵庫の中で静かに眠りましたとさ。", logit: 0.3 }
+        ]
+      }
+    ];
+
+    let currentStep = 0;
+    let temperature = 0.7;
+    let chosenWords = [];
+    let isPicking = false;
+
+    const stepBadge = document.getElementById("stepBadge");
+    const storyBox = document.getElementById("storyBox");
+    const completeBanner = document.getElementById("completeBanner");
+    const tempSlider = document.getElementById("tempSlider");
+    const tempValue = document.getElementById("tempValue");
+    const moodBadge = document.getElementById("moodBadge");
+    const candidatesCard = document.getElementById("candidatesCard");
+    const candidateList = document.getElementById("candidateList");
+    const pickBtn = document.getElementById("pickBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    function calcSoftmax(candidates, temp) {
+      const scaled = candidates.map((c) => c.logit / temp);
+      const maxVal = Math.max(...scaled);
+      const exps = scaled.map((v) => Math.exp(v - maxVal));
+      const sum = exps.reduce((a, b) => a + b, 0);
+      return exps.map((e) => e / sum);
+    }
+
+    function getMood(temp) {
+      if (temp <= 0.4) return { label: "真面目（王道しか選ばない）", cls: "mood-serious" };
+      if (temp <= 1.0) return { label: "バランス（ほどよく自然）", cls: "mood-balance" };
+      if (temp <= 1.7) return { label: "自由（ちょっとボケ始める）", cls: "mood-free" };
+      return { label: "カオス（何でもあり）", cls: "mood-chaos" };
+    }
+
+    function renderStory() {
+      let html = "";
+      for (let i = 0; i < chosenWords.length; i++) {
+        const step = STORY_STEPS[i];
+        html += `${step.prefix}<span class="picked-word">${chosenWords[i]}</span>${step.suffix}`;
+      }
+
+      if (currentStep < STORY_STEPS.length) {
+        const step = STORY_STEPS[currentStep];
+        html += `${step.prefix}<span class="blank-slot">？？？</span>${step.suffix}`;
+        stepBadge.textContent = `STEP ${currentStep + 1} / ${STORY_STEPS.length}`;
+        completeBanner.classList.remove("show");
+        candidatesCard.style.display = "block";
+        pickBtn.disabled = isPicking;
+        pickBtn.textContent = "次の言葉を選ぶ";
+      } else {
+        stepBadge.textContent = "COMPLETE!";
+        completeBanner.classList.add("show");
+        candidatesCard.style.display = "none";
+        pickBtn.disabled = true;
+        pickBtn.textContent = "物語が完成しました";
+      }
+
+      storyBox.innerHTML = html;
+    }
+
+    function renderCandidates(selectedIndex = -1) {
+      if (currentStep >= STORY_STEPS.length) return;
+
+      const step = STORY_STEPS[currentStep];
+      const probs = calcSoftmax(step.candidates, temperature);
+
+      candidateList.innerHTML = "";
+      step.candidates.forEach((cand, idx) => {
+        const pct = probs[idx] * 100;
+        const row = document.createElement("div");
+        row.className = "candidate-row" + (idx === selectedIndex ? " selected" : "");
+
+        const bar = document.createElement("div");
+        bar.className = "prob-bar";
+        bar.style.width = `${Math.max(pct, 0.4)}%`;
+
+        const word = document.createElement("div");
+        word.className = "cand-word";
+        word.textContent = cand.word;
+
+        const meta = document.createElement("div");
+        meta.className = "cand-meta";
+        meta.innerHTML = `<span class="cand-logit">score ${cand.logit.toFixed(1)}</span><span class="cand-prob">${pct.toFixed(1)}%</span>`;
+
+        row.appendChild(bar);
+        row.appendChild(word);
+        row.appendChild(meta);
+        candidateList.appendChild(row);
+      });
+    }
+
+    function updateTempUI() {
+      tempValue.textContent = temperature.toFixed(1);
+      const mood = getMood(temperature);
+      moodBadge.textContent = mood.label;
+      moodBadge.className = `mood-badge ${mood.cls}`;
+      renderCandidates();
+    }
+
+    function sampleIndex(probs) {
+      const r = Math.random();
+      let acc = 0;
+      for (let i = 0; i < probs.length; i++) {
+        acc += probs[i];
+        if (r <= acc) return i;
+      }
+      return probs.length - 1;
+    }
+
+    pickBtn.addEventListener("click", () => {
+      if (isPicking || currentStep >= STORY_STEPS.length) return;
+      isPicking = true;
+      pickBtn.disabled = true;
+
+      const step = STORY_STEPS[currentStep];
+      const probs = calcSoftmax(step.candidates, temperature);
+      const pickedIdx = sampleIndex(probs);
+
+      renderCandidates(pickedIdx);
+
+      setTimeout(() => {
+        chosenWords.push(step.candidates[pickedIdx].word);
+        currentStep += 1;
+        isPicking = false;
+        renderStory();
+        renderCandidates();
+      }, 550);
+    });
+
+    tempSlider.addEventListener("input", (e) => {
+      temperature = parseFloat(e.target.value);
+      updateTempUI();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      currentStep = 0;
+      chosenWords = [];
+      isPicking = false;
+      renderStory();
+      renderCandidates();
+    });
+
+    renderStory();
+    updateTempUI();
+  </script>
+</body>
+</html>
