@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+    <html lang="ja">
+    <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>ボールが吹っ飛ぶ「勾配降下」体感トイ | 図解ラボ・ゼロヨン</title>
+      <style>
+        :root {
+          --bg: #0e1420;
+          --surface: #151f30;
+          --surface-2: #1b283d;
+          --border: #263752;
+          --text: #e8eef7;
+          --muted: #8ea3c2;
+          --accent: #0074e2;
+          --accent-light: #4da3ff;
+          --glow: rgba(77, 163, 255, 0.45);
+          --ok: #38d39f;
+          --warn: #ffd166;
+          --danger: #ff5c7c;
+        }
+    
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+    
+        body {
+          background: var(--bg);
+          color: var(--text);
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+          line-height: 1.5;
+          min-height: 100vh;
+          display: flex;
+          justify-content: center;
+          padding: 18px 14px 44px;
+        }
+    
+        .app {
+          width: 100%;
+          max-width: 780px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+    
+        header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+    
+        .title-wrap h1 {
+          font-size: clamp(1.2rem, 4vw, 1.55rem);
+          font-weight: 800;
+          letter-spacing: -0.02em;
+        }
+    
+        .title-wrap p {
+          font-size: 0.84rem;
+          color: var(--muted);
+        }
+    
+        .status-badge {
+          padding: 6px 14px;
+          border-radius: 999px;
+          font-size: 0.86rem;
+          font-weight: 800;
+          border: 1px solid var(--border);
+          background: var(--surface);
+          color: var(--accent-light);
+          white-space: nowrap;
+          transition: all 0.2s ease;
+        }
+    
+        .status-idle    { color: var(--accent-light); border-color: var(--accent); background: rgba(0, 116, 226, 0.16); }
+        .status-turtle  { color: #7cc4ff; border-color: #3a86ff; background: rgba(58, 134, 255, 0.16); }
+        .status-good    { color: var(--ok); border-color: var(--ok); background: rgba(56, 211, 159, 0.16); }
+        .status-wild    { color: var(--warn); border-color: var(--warn); background: rgba(255, 209, 102, 0.16); }
+        .status-goal    { color: #ffffff; border-color: var(--ok); background: rgba(56, 211, 159, 0.35); box-shadow: 0 0 16px rgba(56, 211, 159, 0.35); }
+        .status-local   { color: var(--warn); border-color: var(--warn); background: rgba(255, 209, 102, 0.22); }
+        .status-diverge { color: #ffffff; border-color: var(--danger); background: rgba(255, 92, 124, 0.35); box-shadow: 0 0 18px rgba(255, 92, 124, 0.4); }
+    
+        .card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          padding: 16px;
+        }
+    
+        /* 地形切替タブ */
+        .terrain-tabs {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+    
+        .tab-btn {
+          padding: 12px 10px;
+          border-radius: 12px;
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          color: var(--muted);
+          font-family: inherit;
+          font-size: 0.92rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: all 0.18s ease;
+        }
+    
+        .tab-btn.active {
+          background: rgba(0, 116, 226, 0.22);
+          border-color: var(--accent-light);
+          color: var(--text);
+          box-shadow: 0 0 14px rgba(0, 116, 226, 0.25);
+        }
+    
+        /* グラフエリア */
+        .canvas-wrap {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16 / 10;
+          min-height: 240px;
+          background: #0b101a;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          overflow: hidden;
+        }
+    
+        canvas {
+          display: block;
+          width: 100%;
+          height: 100%;
+        }
+    
+        .overlay-msg {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity 0.25s ease;
+          text-align: center;
+          padding: 16px;
+        }
+    
+        .overlay-msg.show {
+          opacity: 1;
+        }
+    
+        .overlay-pill {
+          padding: 10px 22px;
+          border-radius: 999px;
+          font-size: clamp(1.05rem, 3.6vw, 1.35rem);
+          font-weight: 900;
+          backdrop-filter: blur(6px);
+          background: rgba(14, 20, 32, 0.85);
+          border: 2px solid var(--accent-light);
+          color: var(--text);
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+    
+        .overlay-pill.danger { border-color: var(--danger); color: #ff9bb0; }
+        .overlay-pill.ok     { border-color: var(--ok); color: #8ef2cf; }
+        .overlay-pill.warn   { border-color: var(--warn); color: #ffe399; }
+    
+        /* 数値メトリクス */
+        .metrics {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
+          margin-top: 12px;
+        }
+    
+        .metric-box {
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          padding: 10px 12px;
+          text-align: center;
+        }
+    
+        .metric-label {
+          font-size: 0.74rem;
+          color: var(--muted);
+          font-weight: 700;
+        }
+    
+        .metric-val {
+          font-size: clamp(1.05rem, 3.4vw, 1.3rem);
+          font-weight: 900;
+          color: var(--text);
+          font-variant-numeric: tabular-nums;
+          margin-top: 2px;
+        }
+    
+        /* 学習率コントロール */
+        .lr-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          margin-bottom: 10px;
+        }
+    
+        .lr-title {
+          font-size: 0.9rem;
+          color: var(--muted);
+          font-weight: 700;
+        }
+    
+        .lr-num {
+          font-size: 1.65rem;
+          font-weight: 900;
+          color: var(--accent-light);
+          font-variant-numeric: tabular-nums;
+        }
+    
+        input[type="range"] {
+          width: 100%;
+          height: 12px;
+          border-radius: 999px;
+          background: var(--surface-2);
+          outline: none;
+          -webkit-appearance: none;
+          appearance: none;
+          cursor: pointer;
+        }
+    
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: var(--accent-light);
+          border: 3px solid var(--text);
+          box-shadow: 0 0 12px var(--glow);
+          cursor: pointer;
+        }
+    
+        input[type="range"]::-moz-range-thumb {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: var(--accent-light);
+          border: 3px solid var(--text);
+          box-shadow: 0 0 12px var(--glow);
+          cursor: pointer;
+        }
+    
+        .presets {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+          margin-top: 14px;
+        }
+    
+        .preset-btn {
+          padding: 11px 8px;
+          border-radius: 10px;
+          background: var(--surface-2);
+          border: 1px solid var(--border);
+          color: var(--text);
+          font-family: inherit;
+          font-size: 0.84rem;
+          font-weight: 800;
+          cursor: pointer;
+          transition: border-color 0.15s, background 0.15s, transform 0.1s;
+        }
+    
+        .preset-btn:hover {
+          border-color: var(--accent-light);
+          background: rgba(0, 116, 226, 0.16);
+        }
+    
+        .preset-btn:active {
+          transform: scale(0.97);
+        }
+    
+        /* 操作ボタン */
+        .actions {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr 0.8fr;
+          gap: 10px;
+        }
+    
+        @media (max-width: 520px) {
+          .actions {
+            grid-template-columns: 1fr 1fr;
+          }
+          #resetBtn {
+            grid-column: span 2;
+          }
+        }
+    
+        .btn {
+          padding: 15px 12px;
+          border-radius: 12px;
+          font-family: inherit;
+          font-size: 0.98rem;
+          font-weight: 800;
+          cursor: pointer;
+          border: none;
+          transition: transform 0.1s, opacity 0.2s, background 0.2s;
+        }
+    
+        .btn:active:not(:disabled) {
+          transform: scale(0.97);
+        }
+    
+        .btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
+        }
+    
+        .btn-primary {
+          background: linear-gradient(135deg, var(--accent), var(--accent-light));
+          color: #ffffff;
+          box-shadow: 0 8px 22px rgba(0, 116, 226, 0.35);
+        }
+    
+        .btn-primary.running {
+          background: linear-gradient(135deg, #d94668, #ff6b8b);
+          box-shadow: 0 8px 22px rgba(255, 92, 124, 0.35);
+        }
+    
+        .btn-secondary {
+          background: var(--surface-2);
+          color: var(--text);
+          border: 1px solid var(--border);
+        }
+    
+        footer {
+          text-align: center;
+          font-size: 0.78rem;
+          color: var(--muted);
+          margin-top: 4px;
+          letter-spacing: 0.06em;
+        }
+      </style>
+    </head>
+    <body>
+      <main class="app">
+        <header>
+          <div class="title-wrap">
+            <h1>ボールが吹っ飛ぶ「勾配降下」トイ</h1>
+            <p>学習率（歩幅）を変えて、谷底の正解を目指そう</p>
+          </div>
+          <div class="status-badge status-idle" id="statusBadge">スタート待機</div>
+        </header>
+    
+        <!-- グラフ＆地形 -->
+        <section class="card">
+          <div class="terrain-tabs">
+            <button class="tab-btn active" id="tabA" type="button">A：きれいな谷</button>
+            <button class="tab-btn" id="tabB" type="button">B：ワナあり（局所最適解）</button>
+          </div>
+    
+          <div class="canvas-wrap">
+            <canvas id="graphCanvas"></canvas>
+            <div class="overlay-msg" id="overlayMsg">
+              <div class="overlay-pill" id="overlayPill"></div>
+            </div>
+          </div>
+    
+          <div class="metrics">
+            <div class="metric-box">
+              <div class="metric-label">ステップ数</div>
+              <div class="metric-val" id="stepVal">0</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">現在位置 (x)</div>
+              <div class="metric-val" id="posVal">-4.00</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">損失 (Loss)</div>
+              <div class="metric-val" id="lossVal">16.00</div>
+            </div>
+          </div>
+        </section>
+    
+        <!-- 学習率スライダー -->
+        <section class="card">
+          <div class="lr-header">
+            <span class="lr-title">学習率 (Learning Rate / 歩幅)</span>
+            <span class="lr-num" id="lrValue">0.25</span>
+          </div>
+          <input type="range" id="lrSlider" min="0.01" max="1.20" step="0.01" value="0.25" />
+          <div class="presets">
+            <button class="preset-btn" data-lr="0.02" type="button">🐢 カメ 0.02</button>
+            <button class="preset-btn" data-lr="0.25" type="button">✨ ちょうどいい 0.25</button>
+            <button class="preset-btn" data-lr="1.05" type="button">🚀 ぶっ飛び 1.05</button>
+          </div>
+        </section>
+    
+        <!-- 操作ボタン -->
+        <div class="actions">
+          <button class="btn btn-secondary" id="stepBtn" type="button">1歩すすむ</button>
+          <button class="btn btn-primary" id="playBtn" type="button">スタート</button>
+          <button class="btn btn-secondary" id="resetBtn" type="button">リセット</button>
+        </div>
+    
+        <footer>仕組みを、図解でやさしく</footer>
+      </main>
+    
+      <script>
+        // 地形の損失関数
+        // A: きれいな2次関数（真の谷底 x=0）
+        // B: 左に浅い窪み（局所最適解 x=-2.0）、右に深い谷底（真の正解 x=2.0）
+        const TERRAINS = {
+          A: {
+            name: "きれいな谷",
+            startX: -4.0,
+            globalMinX: 0.0,
+            localMinX: null,
+            loss: (x) => x * x,
+          },
+          B: {
+            name: "ワナあり",
+            startX: -4.0,
+            globalMinX: 2.0,
+            localMinX: -2.0,
+            loss: (x) => 0.35 * (0.25 * x ** 4 + 0.1 * x ** 3 - 2 * x ** 2 - 1.2 * x + 5.6),
+          },
+        };
+    
+        const X_MIN = -5.2;
+        const X_MAX = 5.2;
+        const Y_MIN = -1.2;
+        const Y_MAX = 20.0;
+        const DIVERGE_LIMIT = 5.6;
+    
+        // 状態
+        let currentTerrain = "A";
+        let lr = 0.25;
+        let x = TERRAINS.A.startX;
+        let stepCount = 0;
+        let trail = [];
+        let signFlips = 0;
+        let lastDx = 0;
+        let isRunning = false;
+        let isFinished = false;
+        let isDiverged = false;
+        let timerId = null;
+        let flyAnim = null;
+    
+        // DOM
+        const canvas = document.getElementById("graphCanvas");
+        const ctx = canvas.getContext("2d");
+        const tabA = document.getElementById("tabA");
+        const tabB = document.getElementById("tabB");
+        const statusBadge = document.getElementById("statusBadge");
+        const overlayMsg = document.getElementById("overlayMsg");
+        const overlayPill = document.getElementById("overlayPill");
+        const stepVal = document.getElementById("stepVal");
+        const posVal = document.getElementById("posVal");
+        const lossVal = document.getElementById("lossVal");
+        const lrSlider = document.getElementById("lrSlider");
+        const lrValue = document.getElementById("lrValue");
+        const stepBtn = document.getElementById("stepBtn");
+        const playBtn = document.getElementById("playBtn");
+        const resetBtn = document.getElementById("resetBtn");
+        const presetBtns = document.querySelectorAll(".preset-btn");
+    
+        // 数値微分（中心差分）
+        function calcGradient(fn, val) {
+          const h = 1e-4;
+          return (fn(val + h) - fn(val - h)) / (2 * h);
+        }
+    
+        function setStatus(text, cls, overlayText = "", overlayCls = "") {
+          statusBadge.textContent = text;
+          statusBadge.className = `status-badge ${cls}`;
+          if (overlayText) {
+            overlayPill.textContent = overlayText;
+            overlayPill.className = `overlay-pill ${overlayCls}`;
+            overlayMsg.classList.add("show");
+          } else {
+            overlayMsg.classList.remove("show");
+          }
+        }
+    
+        function updateMetrics() {
+          const fn = TERRAINS[currentTerrain].loss;
+          stepVal.textContent = stepCount;
+          if (isDiverged) {
+            posVal.textContent = "∞ (宇宙へ)";
+            lossVal.textContent = "∞";
+          } else {
+            posVal.textContent = x.toFixed(2);
+            lossVal.textContent = fn(x).toFixed(2);
+          }
+        }
+    
+        function stopAuto() {
+          isRunning = false;
+          if (timerId) {
+            clearInterval(timerId);
+            timerId = null;
+          }
+          playBtn.textContent = "スタート";
+          playBtn.classList.remove("running");
+        }
+    
+        function resetState() {
+          stopAuto();
+          if (flyAnim) {
+            cancelAnimationFrame(flyAnim);
+            flyAnim = null;
+          }
+          const t = TERRAINS[currentTerrain];
+          x = t.startX;
+          stepCount = 0;
+          trail = [{ x, y: t.loss(x) }];
+          signFlips = 0;
+          lastDx = 0;
+          isFinished = false;
+          isDiverged = false;
+          stepBtn.disabled = false;
+          playBtn.disabled = false;
+          setStatus("スタート待機", "status-idle");
+          updateMetrics();
+          draw();
+        }
+    
+        // 1ステップ実行
+        function doStep() {
+          if (isFinished || isDiverged) return;
+    
+          const t = TERRAINS[currentTerrain];
+          const grad = calcGradient(t.loss, x);
+          const dx = -lr * grad;
+          const nextX = x + dx;
+    
+          if (lastDx !== 0 && Math.sign(dx) !== Math.sign(lastDx)) {
+            signFlips += 1;
+          }
+          lastDx = dx;
+    
+          x = nextX;
+          stepCount += 1;
+    
+          // 発散チェック
+          if (!Number.isFinite(x) || Math.abs(x) > DIVERGE_LIMIT || t.loss(x) > 45) {
+            isDiverged = true;
+            isFinished = true;
+            stopAuto();
+            stepBtn.disabled = true;
+            playBtn.disabled = true;
+            setStatus("発散！", "status-diverge", "🚀 発散！画面の外へ吹っ飛んだ！", "danger");
+            updateMetrics();
+            startFlyOutAnimation(Math.sign(dx) || 1);
+            return;
+          }
+    
+          trail.push({ x, y: t.loss(x) });
+          if (trail.length > 35) trail.shift();
+    
+          const newGrad = Math.abs(calcGradient(t.loss, x));
+          const distGlobal = Math.abs(x - t.globalMinX);
+          const distLocal = t.localMinX !== null ? Math.abs(x - t.localMinX) : Infinity;
+    
+          // 収束・状態判定
+          if (distGlobal < 0.08 && newGrad < 0.25) {
+            isFinished = true;
+            stopAuto();
+            setStatus("正解に到着！", "status-goal", "🎉 正解（谷底）に到着！", "ok");
+          } else if (t.localMinX !== null && distLocal < 0.08 && newGrad < 0.25) {
+            isFinished = true;
+            stopAuto();
+            setStatus("局所最適解にハマった…", "status-local", "🕳️ 局所最適解にハマった…", "warn");
+          } else if (signFlips >= 2 || Math.abs(dx) > 2.2) {
+            setStatus("暴走中", "status-wild");
+          } else if (lr <= 0.05 && Math.abs(dx) < 0.25) {
+            setStatus("カメ運転", "status-turtle");
+          } else {
+            setStatus("いい感じ", "status-good");
+          }
+    
+          updateMetrics();
+          draw();
+        }
+    
+        // 発散時の吹っ飛び演出
+        function startFlyOutAnimation(dir) {
+          let frame = 0;
+          const lastPt = trail[trail.length - 1] || { x: 0, y: 5 };
+          let fx = lastPt.x;
+          let fy = lastPt.y;
+    
+          function tick() {
+            frame += 1;
+            fx += dir * (0.35 + frame * 0.08);
+            fy += 0.7 + frame * 0.15;
+            draw({ x: fx, y: fy, flying: true });
+            if (frame < 38) {
+              flyAnim = requestAnimationFrame(tick);
+            }
+          }
+          tick();
+        }
+    
+        // 座標変換
+        function toCanvasX(val, w, padL, padR) {
+          return padL + ((val - X_MIN) / (X_MAX - X_MIN)) * (w - padL - padR);
+        }
+    
+        function toCanvasY(val, h, padT, padB) {
+          return h - padB - ((val - Y_MIN) / (Y_MAX - Y_MIN)) * (h - padT - padB);
+        }
+    
+        // Canvas描画
+        function draw(overrideBall = null) {
+          const dpr = window.devicePixelRatio || 1;
+          const rect = canvas.getBoundingClientRect();
+          const w = rect.width;
+          const h = rect.height;
+          if (canvas.width !== Math.round(w * dpr) || canvas.height !== Math.round(h * dpr)) {
+            canvas.width = Math.round(w * dpr);
+            canvas.height = Math.round(h * dpr);
+          }
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+          const padL = 24;
+          const padR = 24;
+          const padT = 22;
+          const padB = 28;
+          const t = TERRAINS[currentTerrain];
+    
+          ctx.clearRect(0, 0, w, h);
+    
+          // グリッド線
+          ctx.strokeStyle = "#1c2940";
+          ctx.lineWidth = 1;
+          for (let gx = -4; gx <= 4; gx += 2) {
+            const cx = toCanvasX(gx, w, padL, padR);
+            ctx.beginPath();
+            ctx.moveTo(cx, padT);
+            ctx.lineTo(cx, h - padB);
+            ctx.stroke();
+          }
+          for (let gy = 0; gy <= 16; gy += 4) {
+            const cy = toCanvasY(gy, h, padT, padB);
+            ctx.beginPath();
+            ctx.moveTo(padL, cy);
+            ctx.lineTo(w - padR, cy);
+            ctx.stroke();
+          }
+    
+          // 損失カーブ
+          ctx.beginPath();
+          const samples = 220;
+          for (let i = 0; i <= samples; i++) {
+            const sx = X_MIN + (i / samples) * (X_MAX - X_MIN);
+            const sy = t.loss(sx);
+            const cx = toCanvasX(sx, w, padL, padR);
+            const cy = toCanvasY(sy, h, padT, padB);
+            if (i === 0) ctx.moveTo(cx, cy);
+            else ctx.lineTo(cx, cy);
+          }
+          ctx.strokeStyle = "#4da3ff";
+          ctx.lineWidth = 3.5;
+          ctx.stroke();
+    
+          // 正解マーカー（谷底）
+          const goalX = toCanvasX(t.globalMinX, w, padL, padR);
+          const goalY = toCanvasY(t.loss(t.globalMinX), h, padT, padB);
+          ctx.fillStyle = "#38d39f";
+          ctx.beginPath();
+          ctx.arc(goalX, goalY, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.font = "bold 12px system-ui, sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("正解", goalX, goalY + 20);
+    
+          // B地形のワナマーカー
+          if (t.localMinX !== null) {
+            const locX = toCanvasX(t.localMinX, w, padL, padR);
+            const locY = toCanvasY(t.loss(t.localMinX), h, padT, padB);
+            ctx.fillStyle = "#ffd166";
+            ctx.beginPath();
+            ctx.arc(locX, locY, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillText("浅い窪み", locX, locY + 20);
+          }
+    
+          // 軌跡
+          if (trail.length > 1) {
+            ctx.beginPath();
+            trail.forEach((pt, idx) => {
+              const cx = toCanvasX(pt.x, w, padL, padR);
+              const cy = toCanvasY(pt.y, h, padT, padB);
+              if (idx === 0) ctx.moveTo(cx, cy);
+              else ctx.lineTo(cx, cy);
+            });
+            ctx.strokeStyle = "rgba(77, 163, 255, 0.45)";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+    
+          // ボール描画
+          const ball = overrideBall || { x, y: t.loss(x), flying: false };
+          const bx = toCanvasX(ball.x, w, padL, padR);
+          const by = toCanvasY(ball.y, h, padT, padB);
+    
+          // 発光リング
+          ctx.beginPath();
+          ctx.arc(bx, by, 16, 0, Math.PI * 2);
+          ctx.fillStyle = ball.flying ? "rgba(255, 92, 124, 0.35)" : "rgba(0, 116, 226, 0.32)";
+          ctx.fill();
+    
+          // ボール本体
+          ctx.beginPath();
+          ctx.arc(bx, by, 9, 0, Math.PI * 2);
+          ctx.fillStyle = ball.flying ? "#ff5c7c" : "#ffffff";
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = ball.flying ? "#ffd166" : "#0074e2";
+          ctx.stroke();
+        }
+    
+        // イベント
+        tabA.addEventListener("click", () => {
+          currentTerrain = "A";
+          tabA.classList.add("active");
+          tabB.classList.remove("active");
+          resetState();
+        });
+    
+        tabB.addEventListener("click", () => {
+          currentTerrain = "B";
+          tabB.classList.add("active");
+          tabA.classList.remove("active");
+          resetState();
+        });
+    
+        lrSlider.addEventListener("input", (e) => {
+          lr = parseFloat(e.target.value);
+          lrValue.textContent = lr.toFixed(2);
+        });
+    
+        presetBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            lr = parseFloat(btn.dataset.lr);
+            lrSlider.value = lr.toFixed(2);
+            lrValue.textContent = lr.toFixed(2);
+          });
+        });
+    
+        stepBtn.addEventListener("click", () => {
+          stopAuto();
+          doStep();
+        });
+    
+        playBtn.addEventListener("click", () => {
+          if (isFinished || isDiverged) return;
+          if (isRunning) {
+            stopAuto();
+          } else {
+            isRunning = true;
+            playBtn.textContent = "ストップ";
+            playBtn.classList.add("running");
+            doStep();
+            timerId = setInterval(() => {
+              doStep();
+            }, 280);
+          }
+        });
+    
+        resetBtn.addEventListener("click", resetState);
+        window.addEventListener("resize", () => draw());
+    
+        // 初期化
+        resetState();
+      </script>
+    </body>
+    </html>
+    
