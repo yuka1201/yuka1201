@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>パキッと分解「トークン切り分け」トイ | 図解ラボ・ゼロヨン</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --surface: #151e2e;
+      --surface-light: #1c283d;
+      --border: #25344d;
+      --text: #e8eef7;
+      --text-dim: #8ea1bd;
+      --accent: #0074e2;
+      --accent-bright: #4da3ff;
+      --accent-glow: rgba(77, 163, 255, 0.38);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", Meiryo, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 40px;
+      line-height: 1.6;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ヘッダー */
+    header {
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent-bright);
+      background: rgba(0, 116, 226, 0.14);
+      border: 1px solid rgba(77, 163, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+
+    /* プリセットボタン */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .preset-btn {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .preset-btn:hover {
+      background: var(--surface-light);
+      color: var(--text);
+      border-color: var(--accent-bright);
+    }
+
+    .preset-btn.active {
+      background: rgba(0, 116, 226, 0.22);
+      color: var(--text);
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 12px rgba(0, 116, 226, 0.28);
+    }
+
+    /* 入力カード */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 8px;
+      padding: 3px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .clear-btn:hover {
+      color: var(--text);
+      border-color: var(--accent-bright);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 84px;
+      resize: vertical;
+      background: var(--bg);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      font-family: inherit;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      border-color: var(--accent-bright);
+      box-shadow: 0 0 0 3px rgba(77, 163, 255, 0.18);
+    }
+
+    /* カウンター（文字数 vs ブロック数） */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .stat-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .stat-box.highlight {
+      border-color: rgba(77, 163, 255, 0.55);
+      background: rgba(0, 116, 226, 0.1);
+    }
+
+    .stat-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-dim);
+    }
+
+    .stat-num {
+      font-size: 28px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .stat-box.highlight .stat-num {
+      color: var(--accent-bright);
+    }
+
+    /* 分解結果エリア */
+    .tokens-stage {
+      min-height: 110px;
+      background: radial-gradient(circle at 50% 0%, #16233a 0%, var(--bg) 75%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      gap: 8px 6px;
+    }
+
+    .empty-msg {
+      color: var(--text-dim);
+      font-size: 14px;
+      margin: auto;
+    }
+
+    .token-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 11px;
+      border-radius: 9px;
+      font-size: 16px;
+      font-weight: 700;
+      border: 1.5px solid transparent;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.14s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+      animation: popIn 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.88) translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .token-chip:hover {
+      transform: translateY(-2px);
+    }
+
+    .token-chip.selected {
+      border-color: #ffffff !important;
+      box-shadow: 0 0 16px var(--accent-glow);
+      transform: translateY(-2px) scale(1.04);
+    }
+
+    /* 交互に色分け（青系ベースでパキッと見やすく） */
+    .c0 { background: rgba(0, 116, 226, 0.28); border-color: rgba(77, 163, 255, 0.55); color: #e8eef7; }
+    .c1 { background: rgba(77, 163, 255, 0.22); border-color: rgba(125, 191, 255, 0.5); color: #e8eef7; }
+    .c2 { background: rgba(45, 198, 214, 0.22); border-color: rgba(86, 224, 238, 0.45); color: #e8eef7; }
+    .c3 { background: rgba(110, 118, 255, 0.24); border-color: rgba(151, 158, 255, 0.48); color: #e8eef7; }
+    .c4 { background: rgba(164, 108, 255, 0.22); border-color: rgba(196, 156, 255, 0.45); color: #e8eef7; }
+
+    .space-mark {
+      opacity: 0.55;
+      font-size: 13px;
+    }
+
+    /* タップしたブロックの詳細バー */
+    .inspector {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 48px;
+    }
+
+    .inspector strong {
+      color: var(--accent-bright);
+    }
+
+    .id-pill {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent-bright);
+      background: rgba(0, 116, 226, 0.16);
+      border: 1px solid rgba(77, 163, 255, 0.35);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    /* 仕組みのひとこと */
+    .tip-box {
+      background: rgba(0, 116, 226, 0.08);
+      border-left: 3px solid var(--accent-bright);
+      border-radius: 0 12px 12px 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .tip-box strong {
+      color: var(--text);
+    }
+
+    /* フッター */
+    footer {
+      margin-top: auto;
+      padding-top: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-dim);
+      letter-spacing: 0.06em;
+    }
+
+    footer span {
+      color: var(--accent-bright);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">図解ラボ・ゼロヨン（04） Webトイ #04</div>
+      <h1>パキッと分解「トークン切り分け」トイ</h1>
+      <p class="subtitle">AIは文章を1文字ずつではなく、よく使う「カタマリ」で読んでいるよ</p>
+    </header>
+
+    <!-- プリセット -->
+    <div class="presets" id="presets">
+      <button class="preset-btn active" data-text="今夜はバスクチーズケーキを食べるよ！">🍰 日本語</button>
+      <button class="preset-btn" data-text="Artificial intelligence reads text in chunks.">🔤 英語</button>
+      <button class="preset-btn" data-text="AIは2026年も進化中！Hello world!">🔀 まぜこぜ</button>
+      <button class="preset-btn" data-text="🧀🍰✨ うまい！">✨ 絵文字</button>
+    </div>
+
+    <!-- 入力＆カウンター -->
+    <section class="card">
+      <div class="card-label">
+        <span>好きな言葉を入れてみよう</span>
+        <button class="clear-btn" id="clearBtn" type="button">クリア</button>
+      </div>
+      <textarea id="inputText" maxlength="160" placeholder="ここに文章を入力してね…">今夜はバスクチーズケーキを食べるよ！</textarea>
+
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-title">もとの文字数</div>
+          <div class="stat-num" id="charCount">0</div>
+        </div>
+        <div class="stat-box highlight">
+          <div class="stat-title">AIのブロック数（トークン）</div>
+          <div class="stat-num" id="tokenCount">0</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 分解ステージ -->
+    <section class="card">
+      <div class="card-label">
+        <span>AIの目線での切り分け（タップで詳細）</span>
+      </div>
+      <div class="tokens-stage" id="tokensStage"></div>
+      <div class="inspector" id="inspector">
+        <span>ブロックをタップすると、AI内部の番号と切り分け理由が見えるよ</span>
+      </div>
+    </section>
+
+    <!-- 仕組みのひとこと -->
+    <div class="tip-box">
+      <strong>なんで切り方が変わるの？</strong><br />
+      AIはよく出てくる単語を1つのブロックにまとめて覚えています。英語は単語ごとにくっつきやすく、日本語や絵文字は細かいブロックに分かれやすいのが特徴です。（※このトイでは仕組みをわかりやすく再現した簡易ルールで切り分けています）
+    </div>
+  </div>
+
+  <footer>
+    <span>図解ラボ・ゼロヨン</span> — 仕組みを、図解でやさしく
+  </footer>
+
+  <script>
+    const inputText = document.getElementById("inputText");
+    const charCount = document.getElementById("charCount");
+    const tokenCount = document.getElementById("tokenCount");
+    const tokensStage = document.getElementById("tokensStage");
+    const inspector = document.getElementById("inspector");
+    const clearBtn = document.getElementById("clearBtn");
+    const presetButtons = document.querySelectorAll(".preset-btn");
+
+    // よく使われるカタマリ（簡易辞書）
+    const COMMON_CHUNKS = [
+      "チーズケーキ", "バスク", "ベイクド", "スフレ",
+      "ありがとう", "こんにちは", "おはよう", "食べる", "食べ",
+      "今夜", "今日", "明日", "世界", "進化", "言葉", "仕組み", "図解",
+      "です", "ます", "した", "する", "いる", "ある", "ない", "って", "から", "まで", "だけ"
+    ];
+
+    // 文字列から安定した疑似ID (1000〜99999) を作る
+    function makePseudoId(str) {
+      let hash = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return 1000 + (Math.abs(hash) % 98999);
+    }
+
+    // AIのトークン分割をわかりやすく再現する簡易トークナイザー
+    function tokenize(text) {
+      const result = [];
+      let i = 0;
+
+      while (i < text.length) {
+        // 1. よく使う日本語カタマリに一致するかチェック
+        let matchedChunk = null;
+        for (const chunk of COMMON_CHUNKS) {
+          if (text.startsWith(chunk, i)) {
+            matchedChunk = chunk;
+            break;
+          }
+        }
+        if (matchedChunk) {
+          result.push({
+            text: matchedChunk,
+            reason: "よく使われる言葉なので、1つのカタマリとして認識！"
+          });
+          i += matchedChunk.length;
+          continue;
+        }
+
+        const rest = text.slice(i);
+
+        // 2. 英単語（先頭のスペース込みで1ブロックになりやすい特徴を再現）
+        const enMatch = rest.match(/^[ ]?[A-Za-z]+/);
+        if (enMatch) {
+          const word = enMatch[0];
+          // 長すぎる英単語は途中で分かれる雰囲気を出す
+          if (word.length > 8) {
+            const head = word.slice(0, 6);
+            result.push({
+              text: head,
+              reason: "長い英単語は、よく使うパーツごとに分かれることがあるよ"
+            });
+            i += head.length;
+          } else {
+            result.push({
+              text: word,
+              reason: "英語はスペース込みで1単語＝1ブロックにまとまりやすい！"
+            });
+            i += word.length;
+          }
+          continue;
+        }
+
+        // 3. 数字（2〜3桁ずつまとまりやすい）
+        const numMatch = rest.match(/^[0-9]{1,3}/);
+        if (numMatch) {
+          result.push({
+            text: numMatch[0],
+            reason: "数字は1〜3桁くらいのカタマリで区切られやすいよ"
+          });
+          i += numMatch[0].length;
+          continue;
+        }
+
+        // 4. 絵文字（サロゲートペア含む。実際のAIでは2〜3ブロックに分かれやすい）
+        const emojiMatch = rest.match(/^(\p{Extended_Pictographic}\uFE0F?)/u);
+        if (emojiMatch) {
+          const em = emojiMatch[0];
+          // 絵文字は内部的に複数ピースに分かれることを視覚的に見せる
+          result.push({
+            text: em + " (前)",
+            raw: em,
+            reason: "絵文字はデータが大きいため、AIの中では複数ブロックに分かれやすい！"
+          });
+          result.push({
+            text: em + " (後)",
+            raw: em,
+            reason: "絵文字の後半パーツ。見た目1文字でもブロックは増えるんだ"
+          });
+          i += em.length;
+          continue;
+        }
+
+        // 5. カタカナ（2〜3文字でまとまる）
+        const kataMatch = rest.match(/^[ァ-ヶー]{1,3}/);
+        if (kataMatch) {
+          result.push({
+            text: kataMatch[0],
+            reason: "カタカナは数文字ずつのカタマリで切られることが多いよ"
+          });
+          i += kataMatch[0].length;
+          continue;
+        }
+
+        // 6. ひらがな（1〜2文字）
+        const hiraMatch = rest.match(/^[ぁ-ん]{1,2}/);
+        if (hiraMatch) {
+          result.push({
+            text: hiraMatch[0],
+            reason: "ひらがなは1〜2文字くらいの細かいブロックになりやすいよ"
+          });
+          i += hiraMatch[0].length;
+          continue;
+        }
+
+        // 7. 漢字（1文字ずつ）
+        const kanjiMatch = rest.match(/^[一-龥]/);
+        if (kanjiMatch) {
+          result.push({
+            text: kanjiMatch[0],
+            reason: "漢字は1文字で1ブロック（またはそれ以上）になりやすいよ"
+          });
+          i += 1;
+          continue;
+        }
+
+        // 8. その他（記号・改行・空白）
+        const ch = text[i];
+        result.push({
+          text: ch,
+          reason: ch === "\n" ? "改行も1つのブロックとして数えられるよ" : "記号やスペースも1つのブロックになるよ"
+        });
+        i += 1;
+      }
+
+      return result;
+    }
+
+    function formatDisplay(str) {
+      if (str === "\n") return "↵";
+      if (str === " ") return "␣";
+      return str.replace(/^ /, "␣");
+    }
+
+    let selectedIdx = null;
+
+    function render() {
+      const text = inputText.value;
+      const chars = Array.from(text).length;
+      const tokens = tokenize(text);
+
+      charCount.textContent = chars;
+      tokenCount.textContent = tokens.length;
+
+      tokensStage.innerHTML = "";
+      selectedIdx = null;
+
+      if (tokens.length === 0) {
+        tokensStage.innerHTML = '<div class="empty-msg">上の欄に文字を入れると、ここにパキッと分解されるよ！</div>';
+        inspector.innerHTML = '<span>ブロックをタップすると、AI内部の番号と切り分け理由が見えるよ</span>';
+        return;
+      }
+
+      tokens.forEach((tok, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `token-chip c${idx % 5}`;
+        btn.textContent = formatDisplay(tok.text);
+
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".token-chip").forEach((el) => el.classList.remove("selected"));
+          btn.classList.add("selected");
+          selectedIdx = idx;
+
+          const pseudoId = makePseudoId(tok.text + idx);
+          inspector.innerHTML = `
+            <div><strong>「${formatDisplay(tok.text)}」</strong>：${tok.reason}</div>
+            <div class="id-pill">ID #${pseudoId}</div>
+          `;
+        });
+
+        tokensStage.appendChild(btn);
+      });
+
+      // 最初のブロックを軽く案内
+      inspector.innerHTML = `<span>全部で <strong>${tokens.length}個</strong> のブロックに分解されたよ！ 気になるブロックをタップしてみて</span>`;
+    }
+
+    // 入力イベント
+    inputText.addEventListener("input", () => {
+      presetButtons.forEach((b) => b.classList.remove("active"));
+      render();
+    });
+
+    // プリセット切り替え
+    presetButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        presetButtons.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        inputText.value = btn.dataset.text;
+        render();
+      });
+    });
+
+    // クリアボタン
+    clearBtn.addEventListener("click", () => {
+      presetButtons.forEach((b) => b.classList.remove("active"));
+      inputText.value = "";
+      inputText.focus();
+      render();
+    });
+
+    // 初期描画
+    render();
+  </script>
+</body>
+</html>
