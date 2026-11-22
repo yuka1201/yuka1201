@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>壁の向こうが見える「ソリトンレーダー」トイ | 図解ラボ・ゼロヨン</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --panel: #141d2e;
+      --panel-sub: #192438;
+      --border: #253552;
+      --text: #e8eef7;
+      --muted: #93a6c4;
+      --accent: #0074e2;
+      --accent-light: #4da3ff;
+      --safe: #4da3ff;
+      --warn: #ffb84d;
+      --alert: #ff5c6c;
+      --jam: #c084fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      line-height: 1.65;
+    }
+    .container { max-width: 1020px; margin: 0 auto; padding: 28px 18px 48px; }
+    header { margin-bottom: 22px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .badge {
+      display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--accent-light); background: rgba(0, 116, 226, 0.16);
+      border: 1px solid rgba(77, 163, 255, 0.35); border-radius: 999px;
+      padding: 3px 12px; margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3.6vw, 30px); letter-spacing: 0.02em; }
+    .lead { margin: 0; color: var(--muted); font-size: 14.5px; }
+    .fictional-tag {
+      display: inline-block; margin-top: 8px; font-size: 12px; color: var(--accent-light);
+      background: rgba(20, 29, 46, 0.9); border: 1px solid var(--border); border-radius: 8px;
+      padding: 4px 10px;
+    }
+    .main-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; align-items: start; }
+    @media (max-width: 840px) { .main-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--accent-light); }
+    .status-pill {
+      font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--panel-sub); color: var(--safe);
+    }
+    .status-pill.warn { color: var(--warn); border-color: rgba(255, 184, 77, 0.45); }
+    .status-pill.alert { color: var(--alert); border-color: rgba(255, 92, 108, 0.55); background: rgba(255, 92, 108, 0.14); }
+    .status-pill.jam { color: var(--jam); border-color: rgba(192, 132, 252, 0.45); background: rgba(192, 132, 252, 0.12); }
+    .canvas-wrap {
+      width: 100%; aspect-ratio: 4 / 3; background: #090f1a;
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+      touch-action: none; cursor: grab;
+    }
+    .canvas-wrap:active { cursor: grabbing; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .swatch { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+    .controls {
+      display: flex; flex-direction: column; gap: 12px; background: var(--panel-sub);
+      border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px;
+    }
+    .control-row { display: flex; flex-direction: column; gap: 4px; }
+    .control-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .control-val { color: var(--accent-light); font-weight: 700; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+      padding: 8px 13px; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    button:hover { background: #0b82f5; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.secondary.is-off { color: var(--muted); border-style: dashed; }
+    .meter-box { background: var(--panel-sub); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .meter-head { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .meter-track { width: 100%; height: 12px; background: #0a101a; border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .meter-fill { height: 100%; width: 0%; background: var(--safe); transition: width 0.08s linear, background 0.15s ease; }
+    .move-tip { font-size: 12px; color: var(--muted); margin: 0; }
+    .explain-card { margin-top: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+    .explain-card h2 { margin: 0 0 8px; font-size: 17px; color: var(--accent-light); }
+    .explain-card p { margin: 0 0 10px; font-size: 14px; color: var(--text); }
+    .explain-card p:last-child { margin-bottom: 0; }
+    footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      text-align: center; color: var(--muted); font-size: 13px; letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">図解ラボ・ゼロヨン ／ Webトイ #06</div>
+      <h1>壁の向こうが見える「ソリトンレーダー」トイ</h1>
+      <p class="lead">施設内を巡回する敵の動きと視界コーンを壁越しに透視！共鳴エリアのジャミングやレーダーOFFとの違いを体験しよう。</p>
+      <span class="fictional-tag">※「ソリトンレーダー」は実在しない架空の技術を題材にした「もしも」トイです</span>
+    </header>
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">施設マップ＆ソリトン透視スコープ</h2>
+          <span class="status-pill" id="alertBadge">警戒度：安全</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="mapCanvas" width="640" height="480"></canvas>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="swatch" style="background:#38e8b0;"></span>自分（プレイヤー）</span>
+          <span class="legend-item"><span class="swatch" style="background:#4da3ff;"></span>視界：通常</span>
+          <span class="legend-item"><span class="swatch" style="background:#ffb84d;"></span>視界：怪しい</span>
+          <span class="legend-item"><span class="swatch" style="background:#ff5c6c;"></span>視界：発見</span>
+          <span class="legend-item"><span class="swatch" style="background:#c084fc;"></span>共鳴エリア（妨害）</span>
+        </div>
+        <p class="move-tip">操作：矢印キー / WASD、またはマップ上でドラッグして移動（紫のエリアに入るとノイズ発生！）</p>
+      </section>
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">センサー状態＆パラメータ</h2>
+        </div>
+        <div class="meter-box">
+          <div class="meter-head">
+            <span>警戒度メーター</span>
+            <strong id="alertPct">0%</strong>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="alertBar"></div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="toggle-row">
+            <button type="button" id="radarToggleBtn">ソリトンレーダー：ON</button>
+            <button type="button" class="secondary" id="resetPosBtn">スタート位置に戻す</button>
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="enemyCountSlider">巡回する敵の数</label>
+              <span class="control-val" id="enemyCountVal">4 人</span>
+            </div>
+            <input id="enemyCountSlider" type="range" min="3" max="4" step="1" value="4" />
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="speedSlider">敵の巡回速度</label>
+              <span class="control-val" id="speedVal">標準（1.0x）</span>
+            </div>
+            <input id="speedSlider" type="range" min="0.4" max="2.0" step="0.2" value="1.0" />
+          </div>
+        </div>
+        <div class="meter-box">
+          <div class="control-top">
+            <span>現在の受信モード</span>
+            <strong class="control-val" id="modeText">ソリトン透視モード稼働中</strong>
+          </div>
+          <p class="move-tip" id="modeSubText" style="margin-top:6px;">
+            壁を越えて敵の位置・向き・視界コーンをリアルタイム表示しています。
+          </p>
+        </div>
+      </section>
+    </div>
+    <section class="explain-card">
+      <h2>「ソリトンレーダー」の仕組みと現実の話</h2>
+      <p>
+        <strong>架空の作中設定：</strong>「ソリトンレーダー」は、形を崩さず遠くまで伝わる波の性質と<strong>KdV方程式</strong>（波の振る舞いを表す非線形波動方程式）を応用し、生き物が発する微弱な電磁波を壁越しに読み取って位置や向きを描く架空の探知技術という設定です。ただし、強い「共鳴エリア」に入ると波動が干渉し、ノイズで敵影が見えなくなる弱点があります。
+      </p>
+      <p>
+        <strong>現実の科学とのつながり：</strong>現実には「ソリトンレーダー」という装置はありませんが、崩れずに伝わる<strong>ソリトン波</strong>自体は光ファイバー通信や流体・物理の世界で実在する概念です。また、電波や超短パルス・ミリ波などで障害物の向こうや反射波を捉えるセンシング技術の研究も進められています。
+      </p>
+    </section>
+    <footer>仕組みを、図解でやさしく</footer>
+  </div>
+  <script>
+    (() => {
+      const canvas = document.getElementById("mapCanvas");
+      const ctx = canvas.getContext("2d");
+      const radarToggleBtn = document.getElementById("radarToggleBtn");
+      const resetPosBtn = document.getElementById("resetPosBtn");
+      const enemyCountSlider = document.getElementById("enemyCountSlider");
+      const speedSlider = document.getElementById("speedSlider");
+      const enemyCountVal = document.getElementById("enemyCountVal");
+      const speedVal = document.getElementById("speedVal");
+      const alertBadge = document.getElementById("alertBadge");
+      const alertPct = document.getElementById("alertPct");
+      const alertBar = document.getElementById("alertBar");
+      const modeText = document.getElementById("modeText");
+      const modeSubText = document.getElementById("modeSubText");
+      const W = canvas.width;
+      const H = canvas.height;
+      const walls = [
+        { x: 0, y: 0, w: W, h: 18 },
+        { x: 0, y: H - 18, w: W, h: 18 },
+        { x: 0, y: 0, w: 18, h: H },
+        { x: W - 18, y: 0, w: 18, h: H },
+        { x: 180, y: 18, w: 18, h: 135 },
+        { x: 180, y: 225, w: 18, h: 237 },
+        { x: 310, y: 120, w: 130, h: 18 },
+        { x: 310, y: 120, w: 18, h: 110 },
+        { x: 310, y: 310, w: 18, h: 152 },
+        { x: 455, y: 18, w: 18, h: 185 },
+        { x: 455, y: 275, w: 18, h: 187 }
+      ];
+      const jamZones = [
+        { x: 205, y: 165, w: 92, h: 115 }
+      ];
+      const startPos = { x: 85, y: 405 };
+      const player = { x: startPos.x, y: startPos.y, r: 9, speed: 175 };
+      const routes = [
+        [ { x: 85, y: 85 }, { x: 255, y: 85 }, { x: 255, y: 385 }, { x: 85, y: 385 } ],
+        [ { x: 365, y: 65 }, { x: 425, y: 65 }, { x: 425, y: 265 }, { x: 365, y: 265 } ],
+        [ { x: 515, y: 75 }, { x: 590, y: 75 }, { x: 590, y: 405 }, { x: 515, y: 405 } ],
+        [ { x: 365, y: 355 }, { x: 430, y: 355 }, { x: 430, y: 430 }, { x: 220, y: 430 } ]
+      ];
+      let radarEnabled = true;
+      let enemyCount = Number(enemyCountSlider.value);
+      let patrolSpeedMult = Number(speedSlider.value);
+      let alertLevel = 0;
+      let enemies = [];
+      let keys = new Set();
+      let isDragging = false;
+      let lastTime = performance.now();
+      function buildEnemies(count) {
+        enemies = [];
+        for (let i = 0; i < count; i++) {
+          const pts = routes[i % routes.length];
+          enemies.push({
+            id: i + 1, x: pts[0].x, y: pts[0].y, r: 9, angle: 0,
+            waypoints: pts, wpIndex: 1, suspicion: 0
+          });
+        }
+      }
+      function circleHitsWall(cx, cy, r) {
+        for (const w of walls) {
+          const closestX = Math.max(w.x, Math.min(cx, w.x + w.w));
+          const closestY = Math.max(w.y, Math.min(cy, w.y + w.h));
+          const dx = cx - closestX;
+          const dy = cy - closestY;
+          if (dx * dx + dy * dy < r * r) { return true; }
+        }
+        return false;
+      }
+      function moveWithCollision(entity, dx, dy) {
+        const nextX = entity.x + dx;
+        if (!circleHitsWall(nextX, entity.y, entity.r)) { entity.x = nextX; }
+        const nextY = entity.y + dy;
+        if (!circleHitsWall(entity.x, nextY, entity.r)) { entity.y = nextY; }
+      }
+      function isInJamZone(x, y) {
+        return jamZones.some(z => x >= z.x && x <= z.x + z.w && y >= z.y && y <= z.y + z.h);
+      }
+      function segmentHitsWall(x1, y1, x2, y2) {
+        const steps = 18;
+        for (let i = 1; i < steps; i++) {
+          const t = i / steps;
+          const px = x1 + (x2 - x1) * t;
+          const py = y1 + (y2 - y1) * t;
+          if (circleHitsWall(px, py, 2)) { return true; }
+        }
+        return false;
+      }
+      function normalizeAngle(a) {
+        while (a > Math.PI) a -= Math.PI * 2;
+        while (a < -Math.PI) a += Math.PI * 2;
+        return a;
+      }
+      function isPlayerInCone(enemy) {
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        const dist = Math.hypot(dx, dy);
+        const coneRange = 135;
+        const halfFov = 0.52;
+        if (dist > coneRange) return false;
+        const angleToPlayer = Math.atan2(dy, dx);
+        const diff = Math.abs(normalizeAngle(angleToPlayer - enemy.angle));
+        if (diff > halfFov) return false;
+        return !segmentHitsWall(enemy.x, enemy.y, player.x, player.y);
+      }
+      function update(dt) {
+        let ix = 0;
+        let iy = 0;
+        if (keys.has("ArrowLeft") || keys.has("KeyA")) ix -= 1;
+        if (keys.has("ArrowRight") || keys.has("KeyD")) ix += 1;
+        if (keys.has("ArrowUp") || keys.has("KeyW")) iy -= 1;
+        if (keys.has("ArrowDown") || keys.has("KeyS")) iy += 1;
+        if (ix !== 0 || iy !== 0) {
+          const len = Math.hypot(ix, iy);
+          moveWithCollision(player, (ix / len) * player.speed * dt, (iy / len) * player.speed * dt);
+        }
+        const jammed = isInJamZone(player.x, player.y);
+        let anyDetected = false;
+        let anySuspicious = false;
+        for (const e of enemies) {
+          const target = e.waypoints[e.wpIndex];
+          const dx = target.x - e.x;
+          const dy = target.y - e.y;
+          const dist = Math.hypot(dx, dy);
+          const speed = 68 * patrolSpeedMult;
+          if (dist < 6) {
+            e.wpIndex = (e.wpIndex + 1) % e.waypoints.length;
+          } else {
+            const desiredAngle = Math.atan2(dy, dx);
+            const diff = normalizeAngle(desiredAngle - e.angle);
+            e.angle = normalizeAngle(e.angle + diff * Math.min(1, dt * 8));
+            moveWithCollision(e, (dx / dist) * speed * dt, (dy / dist) * speed * dt);
+          }
+          if (isPlayerInCone(e)) {
+            anySuspicious = true;
+            alertLevel = Math.min(100, alertLevel + dt * 46);
+            if (alertLevel >= 100) { anyDetected = true; }
+          }
+        }
+        if (!anySuspicious) {
+          alertLevel = Math.max(0, alertLevel - dt * 24);
+        }
+        for (const e of enemies) {
+          if (alertLevel >= 100 && isPlayerInCone(e)) { e.suspicion = 2; }
+          else if (alertLevel >= 35 || isPlayerInCone(e)) { e.suspicion = 1; }
+          else { e.suspicion = 0; }
+        }
+        const pct = Math.round(alertLevel);
+        alertPct.textContent = `${pct}%`;
+        alertBar.style.width = `${pct}%`;
+        alertBadge.classList.remove("warn", "alert", "jam");
+        if (alertLevel >= 100 || anyDetected) {
+          alertBadge.textContent = "発見！";
+          alertBadge.classList.add("alert");
+          alertBar.style.background = "#ff5c6c";
+        } else if (alertLevel >= 35) {
+          alertBadge.textContent = "警戒度：怪しい";
+          alertBadge.classList.add("warn");
+          alertBar.style.background = "#ffb84d";
+        } else if (jammed) {
+          alertBadge.textContent = "共鳴ジャミング中";
+          alertBadge.classList.add("jam");
+          alertBar.style.background = "#c084fc";
+        } else {
+          alertBadge.textContent = "警戒度：安全";
+          alertBar.style.background = "#4da3ff";
+        }
+        if (!radarEnabled) {
+          modeText.textContent = "レーダーOFF（直接視認のみ）";
+          modeSubText.textContent = "壁に遮られた敵は見えません。視線が通る相手だけ確認できます。";
+        } else if (jammed) {
+          modeText.textContent = "共鳴ノイズで妨害中！";
+          modeSubText.textContent = "共鳴エリアの波動干渉でソリトン解析が乱れ、敵影が消えています。";
+        } else {
+          modeText.textContent = "ソリトン透視モード稼働中";
+          modeSubText.textContent = "壁を越えて敵の位置・向き・視界コーンをリアルタイム表示しています。";
+        }
+      }
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#0a111d";
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = "rgba(77, 163, 255, 0.06)";
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= W; x += 32) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let y = 0; y <= H; y += 32) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+        for (const z of jamZones) {
+          ctx.fillStyle = "rgba(192, 132, 252, 0.14)";
+          ctx.fillRect(z.x, z.y, z.w, z.h);
+          ctx.strokeStyle = "rgba(192, 132, 252, 0.65)";
+          ctx.setLineDash([5, 4]);
+          ctx.strokeRect(z.x, z.y, z.w, z.h);
+          ctx.setLineDash([]);
+          ctx.fillStyle = "#d8b4fe";
+          ctx.font = "bold 11px sans-serif";
+          ctx.fillText("共鳴エリア", z.x + 12, z.y + 18);
+        }
+        ctx.fillStyle = "#24344f";
+        ctx.strokeStyle = "#3c547d";
+        ctx.lineWidth = 1.5;
+        for (const w of walls) {
+          ctx.fillRect(w.x, w.y, w.w, w.h);
+          ctx.strokeRect(w.x, w.y, w.w, w.h);
+        }
+        const jammed = isInJamZone(player.x, player.y);
+        for (const e of enemies) {
+          const directVisible = !segmentHitsWall(player.x, player.y, e.x, e.y);
+          const showOnRadar = radarEnabled && !jammed;
+          if (!showOnRadar && !directVisible) { continue; }
+          let coneColor = "rgba(77, 163, 255, 0.22)";
+          let strokeColor = "rgba(77, 163, 255, 0.65)";
+          let bodyColor = "#4da3ff";
+          if (e.suspicion === 1) {
+            coneColor = "rgba(255, 184, 77, 0.25)";
+            strokeColor = "rgba(255, 184, 77, 0.8)";
+            bodyColor = "#ffb84d";
+          } else if (e.suspicion === 2) {
+            coneColor = "rgba(255, 92, 108, 0.30)";
+            strokeColor = "rgba(255, 92, 108, 0.9)";
+            bodyColor = "#ff5c6c";
+          }
+          const coneRange = 135;
+          const halfFov = 0.52;
+          ctx.fillStyle = coneColor;
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(e.x, e.y);
+          ctx.arc(e.x, e.y, coneRange, e.angle - halfFov, e.angle + halfFov);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = bodyColor;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(e.x, e.y);
+          ctx.lineTo(e.x + Math.cos(e.angle) * (e.r + 6), e.y + Math.sin(e.angle) * (e.r + 6));
+          ctx.stroke();
+        }
+        if (radarEnabled && jammed) {
+          for (let i = 0; i < 26; i++) {
+            const nx = Math.random() * W;
+            const ny = Math.random() * H;
+            const nw = 18 + Math.random() * 55;
+            ctx.fillStyle = i % 2 === 0 ? "rgba(192, 132, 252, 0.16)" : "rgba(77, 163, 255, 0.12)";
+            ctx.fillRect(nx, ny, nw, 2.5);
+          }
+        }
+        ctx.fillStyle = "rgba(56, 232, 176, 0.22)";
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r + 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#38e8b0";
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#0e1420";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      function pointerToCanvas(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: ((e.clientX - rect.left) / rect.width) * W,
+          y: ((e.clientY - rect.top) / rect.height) * H
+        };
+      }
+      canvas.addEventListener("pointerdown", (e) => {
+        isDragging = true;
+        const p = pointerToCanvas(e);
+        const dx = p.x - player.x;
+        const dy = p.y - player.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 1) {
+          moveWithCollision(player, (dx / dist) * Math.min(dist, 24), (dy / dist) * Math.min(dist, 24));
+        }
+      });
+      window.addEventListener("pointermove", (e) => {
+        if (!isDragging) return;
+        const p = pointerToCanvas(e);
+        const dx = p.x - player.x;
+        const dy = p.y - player.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 2) {
+          moveWithCollision(player, (dx / dist) * Math.min(dist, 16), (dy / dist) * Math.min(dist, 16));
+        }
+      });
+      window.addEventListener("pointerup", () => { isDragging = false; });
+      window.addEventListener("keydown", (e) => {
+        if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) { e.preventDefault(); }
+        keys.add(e.code);
+      });
+      window.addEventListener("keyup", (e) => { keys.delete(e.code); });
+      radarToggleBtn.addEventListener("click", () => {
+        radarEnabled = !radarEnabled;
+        radarToggleBtn.textContent = `ソリトンレーダー：${radarEnabled ? "ON" : "OFF"}`;
+        radarToggleBtn.classList.toggle("secondary", !radarEnabled);
+        radarToggleBtn.classList.toggle("is-off", !radarEnabled);
+      });
+      resetPosBtn.addEventListener("click", () => {
+        player.x = startPos.x;
+        player.y = startPos.y;
+        alertLevel = 0;
+      });
+      enemyCountSlider.addEventListener("input", () => {
+        enemyCount = Number(enemyCountSlider.value);
+        enemyCountVal.textContent = `${enemyCount} 人`;
+        buildEnemies(enemyCount);
+      });
+      speedSlider.addEventListener("input", () => {
+        patrolSpeedMult = Number(speedSlider.value);
+        const speedTag = patrolSpeedMult <= 0.6 ? "低速" : patrolSpeedMult >= 1.6 ? "高速" : "標準";
+        speedVal.textContent = `${speedTag}（${patrolSpeedMult.toFixed(1)}x）`;
+      });
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        update(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+      buildEnemies(enemyCount);
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>

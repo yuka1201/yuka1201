@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>光を曲げて消える「ステルス迷彩」トイ | 図解ラボ・ゼロヨン</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --panel: #141d2e;
+      --panel-sub: #192438;
+      --border: #253552;
+      --text: #e8eef7;
+      --muted: #93a6c4;
+      --accent: #0074e2;
+      --accent-light: #4da3ff;
+      --safe: #38e8b0;
+      --warn: #ffb84d;
+      --danger: #ff5c6c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      line-height: 1.65;
+    }
+    .container { max-width: 1020px; margin: 0 auto; padding: 28px 18px 48px; }
+    header { margin-bottom: 22px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .badge {
+      display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--accent-light); background: rgba(0, 116, 226, 0.16);
+      border: 1px solid rgba(77, 163, 255, 0.35); border-radius: 999px;
+      padding: 3px 12px; margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3.6vw, 30px); letter-spacing: 0.02em; }
+    .lead { margin: 0; color: var(--muted); font-size: 14.5px; }
+    .fictional-tag {
+      display: inline-block; margin-top: 8px; font-size: 12px; color: var(--accent-light);
+      background: rgba(20, 29, 46, 0.9); border: 1px solid var(--border); border-radius: 8px;
+      padding: 4px 10px;
+    }
+    .main-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; align-items: start; }
+    @media (max-width: 840px) { .main-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card-title { margin: 0; font-size: 15px; font-weight: 700; color: var(--accent-light); }
+    .scene-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .canvas-wrap {
+      width: 100%; aspect-ratio: 16 / 10; background: #090f1a;
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .controls {
+      display: flex; flex-direction: column; gap: 12px; background: var(--panel-sub);
+      border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px;
+    }
+    .control-row { display: flex; flex-direction: column; gap: 4px; }
+    .control-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .control-val { color: var(--accent-light); font-weight: 700; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+      padding: 8px 13px; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    button:hover { background: #0b82f5; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.secondary.active-scene { background: rgba(0, 116, 226, 0.22); border-color: var(--accent-light); color: var(--accent-light); }
+    button.secondary.is-off { color: var(--muted); border-style: dashed; }
+    .meter-box { background: var(--panel-sub); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-bottom: 6px; }
+    .meter-track { width: 100%; height: 12px; background: #0a101a; border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .meter-fill { height: 100%; width: 0%; background: var(--safe); transition: width 0.12s ease, background 0.15s ease; }
+    .weakness-note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+    .explain-card { margin-top: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+    .explain-card h2 { margin: 0 0 8px; font-size: 17px; color: var(--accent-light); }
+    .explain-card p { margin: 0 0 10px; font-size: 14px; color: var(--text); }
+    .explain-card p:last-child { margin-bottom: 0; }
+    .research-list { margin: 8px 0 10px; padding-left: 20px; font-size: 14px; }
+    .research-list li { margin-bottom: 4px; }
+    footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      text-align: center; color: var(--muted); font-size: 13px; letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">図解ラボ・ゼロヨン ／ Webトイ #07</div>
+      <h1>光を曲げて消える「ステルス迷彩」トイ</h1>
+      <p class="lead">背景の光を屈折させて人物の姿をぼかすステルス迷彩を再現！完成度や動きの速さ、サーモグラフィ表示で弱点を確かめよう。</p>
+      <span class="fictional-tag">※「ステルス迷彩」は実在しない架空の装備を題材にした「もしも」トイです</span>
+    </header>
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">光学屈折＆サーモビュー</h2>
+          <div class="scene-tabs" role="group" aria-label="背景切替">
+            <button type="button" class="secondary active-scene" data-scene="indoor">室内</button>
+            <button type="button" class="secondary" data-scene="city">市街</button>
+            <button type="button" class="secondary" data-scene="forest">森林</button>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="camoCanvas" width="640" height="400"></canvas>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">迷彩コントロール＆検出メーター</h2>
+        </div>
+        <div class="meter-box">
+          <div class="meter-head">
+            <span>バレやすさ（検出メーター）</span>
+            <strong id="detectLabel">0%（ほぼ見えない）</strong>
+          </div>
+          <div class="meter-track">
+            <div class="meter-fill" id="detectBar"></div>
+          </div>
+          <p class="weakness-note" id="weaknessText">
+            光は曲げられても、体温（赤外線）や動く気配は消せません。
+          </p>
+        </div>
+        <div class="controls">
+          <div class="btn-row">
+            <button type="button" id="camoBtn">ステルス迷彩：ON</button>
+            <button type="button" class="secondary is-off" id="thermoBtn">サーモグラフィ：OFF</button>
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="qualitySlider">迷彩の完成度</label>
+              <span class="control-val" id="qualityVal">85%</span>
+            </div>
+            <input id="qualitySlider" type="range" min="10" max="100" step="5" value="85" />
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="speedSlider">動きの速さ</label>
+              <span class="control-val" id="speedVal">ゆっくり（0.8x）</span>
+            </div>
+            <input id="speedSlider" type="range" min="0" max="2.5" step="0.1" value="0.8" />
+          </div>
+        </div>
+      </section>
+    </div>
+    <section class="explain-card">
+      <h2>「ステルス迷彩」の仕組みと現実の関連研究</h2>
+      <p>
+        <strong>架空の作中設定と理屈：</strong>光学迷彩のアイデアは、人物の表面で背後の光を曲げ（屈折させ）、あたかも向こう側の景色がそのまま通り抜けて見えるように錯覚させるものです。ただし、光を曲げられても<strong>体温による熱</strong>や<strong>移動による揺らぎ・足音</strong>までは消せないため、速く動いたりサーモグラフィで見られたりするとバレやすくなります。
+      </p>
+      <p>
+        <strong>現実の研究例（3つ）：</strong>「ステルス迷彩」という万能装備は架空ですが、近い発想の研究はいくつもあります。
+      </p>
+      <ul class="research-list">
+        <li><strong>再帰性投影技術：</strong>背後の映像をカメラで捉え、特殊スクリーン（再帰性反射材）に投影して透けて見せる光学技術。</li>
+        <li><strong>メタマテリアル：</strong>自然界にはない光の屈折率を持つ人工微細構造で、特定の波長の電磁波を迂回させる研究。</li>
+        <li><strong>適応迷彩：</strong>周囲の色や模様に合わせて表面の表示や色味を変化させ、背景になじませるカモフラージュ技術。</li>
+      </ul>
+    </section>
+    <footer>仕組みを、図解でやさしく</footer>
+  </div>
+  <script>
+    (() => {
+      const canvas = document.getElementById("camoCanvas");
+      const ctx = canvas.getContext("2d");
+      const bgCanvas = document.createElement("canvas");
+      bgCanvas.width = canvas.width;
+      bgCanvas.height = canvas.height;
+      const bgCtx = bgCanvas.getContext("2d");
+      const sceneButtons = document.querySelectorAll("[data-scene]");
+      const camoBtn = document.getElementById("camoBtn");
+      const thermoBtn = document.getElementById("thermoBtn");
+      const qualitySlider = document.getElementById("qualitySlider");
+      const speedSlider = document.getElementById("speedSlider");
+      const qualityVal = document.getElementById("qualityVal");
+      const speedVal = document.getElementById("speedVal");
+      const detectLabel = document.getElementById("detectLabel");
+      const detectBar = document.getElementById("detectBar");
+      const weaknessText = document.getElementById("weaknessText");
+      const W = canvas.width;
+      const H = canvas.height;
+      let sceneType = "indoor";
+      let camoOn = true;
+      let thermoOn = false;
+      let quality = Number(qualitySlider.value);
+      let moveSpeed = Number(speedSlider.value);
+      let timeSec = 0;
+      let lastTime = performance.now();
+      function renderBackgroundToOffscreen() {
+        bgCtx.clearRect(0, 0, W, H);
+        if (sceneType === "indoor") {
+          bgCtx.fillStyle = "#172236";
+          bgCtx.fillRect(0, 0, W, H * 0.72);
+          bgCtx.fillStyle = "#222f47";
+          bgCtx.fillRect(0, H * 0.72, W, H * 0.28);
+          bgCtx.fillStyle = "#2b4c7e";
+          bgCtx.fillRect(70, 55, 130, 120);
+          bgCtx.strokeStyle = "#4da3ff";
+          bgCtx.lineWidth = 2;
+          bgCtx.strokeRect(70, 55, 130, 120);
+          bgCtx.beginPath();
+          bgCtx.moveTo(135, 55);
+          bgCtx.lineTo(135, 175);
+          bgCtx.moveTo(70, 115);
+          bgCtx.lineTo(200, 115);
+          bgCtx.stroke();
+          bgCtx.fillStyle = "#1d293d";
+          bgCtx.fillRect(420, 65, 165, 195);
+          const bookColors = ["#4da3ff", "#38e8b0", "#ffb84d", "#c084fc", "#ff5c6c"];
+          for (let shelf = 0; shelf < 3; shelf++) {
+            const sy = 95 + shelf * 56;
+            for (let b = 0; b < 9; b++) {
+              bgCtx.fillStyle = bookColors[(shelf * 3 + b) % bookColors.length];
+              bgCtx.fillRect(432 + b * 16, sy, 12, 26);
+            }
+          }
+        } else if (sceneType === "city") {
+          const grad = bgCtx.createLinearGradient(0, 0, 0, H * 0.72);
+          grad.addColorStop(0, "#101b30");
+          grad.addColorStop(1, "#253b61");
+          bgCtx.fillStyle = grad;
+          bgCtx.fillRect(0, 0, W, H * 0.72);
+          const buildings = [
+            { x: 35, y: 110, w: 85, h: 180, c: "#1b2840" },
+            { x: 135, y: 70, w: 105, h: 220, c: "#213250" },
+            { x: 260, y: 130, w: 95, h: 160, c: "#18243a" },
+            { x: 380, y: 60, w: 115, h: 230, c: "#233554" },
+            { x: 515, y: 105, w: 90, h: 185, c: "#1b2840" }
+          ];
+          for (const b of buildings) {
+            bgCtx.fillStyle = b.c;
+            bgCtx.fillRect(b.x, b.y, b.w, b.h);
+            bgCtx.fillStyle = "rgba(255, 184, 77, 0.55)";
+            for (let wy = b.y + 14; wy < b.y + b.h - 24; wy += 24) {
+              for (let wx = b.x + 12; wx < b.x + b.w - 18; wx += 22) {
+                if ((wx + wy) % 3 !== 0) { bgCtx.fillRect(wx, wy, 9, 12); }
+              }
+            }
+          }
+          bgCtx.fillStyle = "#161e2e";
+          bgCtx.fillRect(0, H * 0.72, W, H * 0.28);
+          bgCtx.strokeStyle = "#ffb84d";
+          bgCtx.setLineDash([22, 18]);
+          bgCtx.lineWidth = 3;
+          bgCtx.beginPath();
+          bgCtx.moveTo(0, H * 0.86);
+          bgCtx.lineTo(W, H * 0.86);
+          bgCtx.stroke();
+          bgCtx.setLineDash([]);
+        } else {
+          bgCtx.fillStyle = "#0d1b22";
+          bgCtx.fillRect(0, 0, W, H * 0.72);
+          bgCtx.fillStyle = "#132924";
+          bgCtx.fillRect(0, H * 0.72, W, H * 0.28);
+          const trees = [55, 130, 220, 315, 410, 500, 580];
+          trees.forEach((tx, idx) => {
+            bgCtx.fillStyle = "#29231d";
+            bgCtx.fillRect(tx - 8, 120, 16, 175);
+            bgCtx.fillStyle = idx % 2 === 0 ? "#1b4332" : "#235340";
+            bgCtx.beginPath();
+            bgCtx.arc(tx, 105, 44, 0, Math.PI * 2);
+            bgCtx.arc(tx - 20, 130, 32, 0, Math.PI * 2);
+            bgCtx.arc(tx + 20, 130, 32, 0, Math.PI * 2);
+            bgCtx.fill();
+          });
+        }
+      }
+      function tracePersonPath(targetCtx, cx, footY, stepPhase) {
+        const bob = Math.abs(Math.sin(stepPhase)) * 5;
+        const hipY = footY - 68 - bob;
+        const shoulderY = hipY - 46;
+        const headY = shoulderY - 22;
+        const swing = Math.sin(stepPhase) * 14;
+        targetCtx.beginPath();
+        targetCtx.arc(cx, headY, 14, 0, Math.PI * 2);
+        targetCtx.moveTo(cx - 18, shoulderY);
+        targetCtx.lineTo(cx + 18, shoulderY);
+        targetCtx.lineTo(cx + 13, hipY);
+        targetCtx.lineTo(cx - 13, hipY);
+        targetCtx.closePath();
+        targetCtx.moveTo(cx - 16, shoulderY + 4);
+        targetCtx.lineTo(cx - 22 - swing * 0.6, hipY - 4);
+        targetCtx.lineTo(cx - 14 - swing * 0.6, hipY - 2);
+        targetCtx.lineTo(cx - 10, shoulderY + 6);
+        targetCtx.moveTo(cx + 16, shoulderY + 4);
+        targetCtx.lineTo(cx + 22 + swing * 0.6, hipY - 4);
+        targetCtx.lineTo(cx + 14 + swing * 0.6, hipY - 2);
+        targetCtx.lineTo(cx + 10, shoulderY + 6);
+        targetCtx.moveTo(cx - 10, hipY);
+        targetCtx.lineTo(cx - 12 + swing, footY);
+        targetCtx.lineTo(cx - 2 + swing, footY);
+        targetCtx.lineTo(cx - 2, hipY);
+        targetCtx.moveTo(cx + 10, hipY);
+        targetCtx.lineTo(cx + 12 - swing, footY);
+        targetCtx.lineTo(cx + 2 - swing, footY);
+        targetCtx.lineTo(cx + 2, hipY);
+      }
+      function computeDetection() {
+        if (!camoOn) { return 100; }
+        const imperfection = (100 - quality) / 100;
+        const motionFactor = Math.min(1, moveSpeed / 2.5);
+        let score = imperfection * 62 + motionFactor * 38;
+        if (thermoOn) { score = Math.min(100, score + 35); }
+        return Math.round(Math.min(100, Math.max(4, score)));
+      }
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.drawImage(bgCanvas, 0, 0);
+        const swayX = Math.sin(timeSec * (1.2 + moveSpeed * 1.4)) * (moveSpeed * 42);
+        const cx = W * 0.5 + swayX;
+        const footY = H * 0.84;
+        const stepPhase = timeSec * (2.5 + moveSpeed * 5.0);
+        if (!camoOn) {
+          ctx.save();
+          tracePersonPath(ctx, cx, footY, stepPhase);
+          ctx.fillStyle = "#e8eef7";
+          ctx.fill();
+          ctx.strokeStyle = "#4da3ff";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          const imperfection = (100 - quality) / 100;
+          const motionDistort = (moveSpeed / 2.5) * 14;
+          const jitter = Math.sin(timeSec * 16) * (1.5 + imperfection * 6 + motionDistort * 0.45);
+          const refractShiftX = (12 + imperfection * 18 + motionDistort) * Math.cos(timeSec * 2.2);
+          const refractShiftY = (5 + imperfection * 10) * Math.sin(timeSec * 1.8);
+          ctx.save();
+          tracePersonPath(ctx, cx + jitter * 0.25, footY, stepPhase);
+          ctx.clip();
+          ctx.drawImage(bgCanvas, refractShiftX, refractShiftY);
+          if (imperfection > 0.15 || moveSpeed > 1.2) {
+            const shift = 2 + imperfection * 7 + (moveSpeed / 2.5) * 4;
+            ctx.globalCompositeOperation = "screen";
+            ctx.fillStyle = `rgba(255, 92, 108, ${0.12 + imperfection * 0.22})`;
+            ctx.fillRect(cx - 50 + shift, footY - 160, 100, 170);
+            ctx.fillStyle = `rgba(77, 163, 255, ${0.12 + imperfection * 0.22})`;
+            ctx.fillRect(cx - 50 - shift, footY - 160, 100, 170);
+            ctx.globalCompositeOperation = "source-over";
+          }
+          ctx.fillStyle = `rgba(77, 163, 255, ${0.05 + imperfection * 0.14})`;
+          ctx.fillRect(cx - 60, footY - 170, 120, 180);
+          ctx.restore();
+          const edgeAlpha = Math.max(0.05, imperfection * 0.65 + (moveSpeed / 2.5) * 0.22);
+          ctx.save();
+          tracePersonPath(ctx, cx + jitter * 0.25, footY, stepPhase);
+          ctx.strokeStyle = `rgba(232, 238, 247, ${edgeAlpha})`;
+          ctx.lineWidth = 1.6;
+          ctx.setLineDash(imperfection > 0.4 ? [4, 3] : []);
+          ctx.stroke();
+          ctx.restore();
+        }
+        if (thermoOn) {
+          ctx.save();
+          ctx.fillStyle = "rgba(18, 8, 42, 0.36)";
+          ctx.fillRect(0, 0, W, H);
+          const bob = Math.abs(Math.sin(stepPhase)) * 5;
+          const hipY = footY - 68 - bob;
+          const shoulderY = hipY - 46;
+          const headY = shoulderY - 22;
+          const drawHeatBlob = (hx, hy, rx, ry, intensity) => {
+            const g = ctx.createRadialGradient(hx, hy, 2, hx, hy, Math.max(rx, ry));
+            g.addColorStop(0, `rgba(255, 240, 140, ${intensity})`);
+            g.addColorStop(0.55, `rgba(255, 92, 60, ${intensity * 0.7})`);
+            g.addColorStop(1, "rgba(255, 92, 60, 0)");
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.ellipse(hx, hy, rx, ry, 0, 0, Math.PI * 2);
+            ctx.fill();
+          };
+          drawHeatBlob(cx, headY, 20, 20, 0.85);
+          drawHeatBlob(cx, (shoulderY + hipY) * 0.5, 26, 30, 0.78);
+          if (moveSpeed > 0.2) {
+            drawHeatBlob(cx, footY - 12, 24, 14, 0.45 + (moveSpeed / 2.5) * 0.35);
+          }
+          ctx.fillStyle = "#ff9e7d";
+          ctx.font = "bold 12px sans-serif";
+          ctx.fillText("THERMO ACTIVE（赤外線検知）", 16, 26);
+          ctx.restore();
+        }
+        const pct = computeDetection();
+        detectBar.style.width = `${pct}%`;
+        if (pct >= 75) {
+          detectBar.style.background = "#ff5c6c";
+          detectLabel.textContent = `${pct}%（丸見え・バレやすい！）`;
+        } else if (pct >= 40) {
+          detectBar.style.background = "#ffb84d";
+          detectLabel.textContent = `${pct}%（揺らぎ・気配あり）`;
+        } else {
+          detectBar.style.background = "#38e8b0";
+          detectLabel.textContent = `${pct}%（背景に溶け込み中）`;
+        }
+        if (thermoOn) {
+          weaknessText.textContent = "サーモグラフィON：光を曲げても体温の熱までは隠せません！";
+        } else if (moveSpeed >= 1.6) {
+          weaknessText.textContent = "動きが速く、屈折の歪みと気配が大きくなっています。";
+        } else {
+          weaknessText.textContent = "光は曲げられても、体温（赤外線）や動く気配は消せません。";
+        }
+      }
+      sceneButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          sceneButtons.forEach(b => b.classList.remove("active-scene"));
+          btn.classList.add("active-scene");
+          sceneType = btn.dataset.scene;
+          renderBackgroundToOffscreen();
+        });
+      });
+      camoBtn.addEventListener("click", () => {
+        camoOn = !camoOn;
+        camoBtn.textContent = `ステルス迷彩：${camoOn ? "ON" : "OFF"}`;
+        camoBtn.classList.toggle("secondary", !camoOn);
+        camoBtn.classList.toggle("is-off", !camoOn);
+      });
+      thermoBtn.addEventListener("click", () => {
+        thermoOn = !thermoOn;
+        thermoBtn.textContent = `サーモグラフィ：${thermoOn ? "ON" : "OFF"}`;
+        thermoBtn.classList.toggle("secondary", !thermoOn);
+        thermoBtn.classList.toggle("is-off", !thermoOn);
+      });
+      qualitySlider.addEventListener("input", () => {
+        quality = Number(qualitySlider.value);
+        qualityVal.textContent = `${quality}%`;
+      });
+      speedSlider.addEventListener("input", () => {
+        moveSpeed = Number(speedSlider.value);
+        const label = moveSpeed === 0 ? "静止" : moveSpeed < 1.0 ? "ゆっくり" : moveSpeed < 1.8 ? "普通" : "高速";
+        speedVal.textContent = `${label}（${moveSpeed.toFixed(1)}x）`;
+      });
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        timeSec += dt;
+        draw();
+        requestAnimationFrame(loop);
+      }
+      renderBackgroundToOffscreen();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
