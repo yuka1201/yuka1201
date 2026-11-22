@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>電波で距離を測る「パルスレーダー」トイ | 図解ラボ・ゼロヨン</title>
+  <style>
+    :root {
+      --bg: #0e1420;
+      --panel: #141d2e;
+      --panel-sub: #192438;
+      --border: #253552;
+      --text: #e8eef7;
+      --muted: #93a6c4;
+      --accent: #0074e2;
+      --accent-light: #4da3ff;
+      --echo: #38e8b0;
+      --pulse: #ffb84d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      line-height: 1.65;
+    }
+    .container { max-width: 980px; margin: 0 auto; padding: 28px 18px 48px; }
+    header { margin-bottom: 22px; border-bottom: 1px solid var(--border); padding-bottom: 16px; }
+    .badge {
+      display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      color: var(--accent-light); background: rgba(0, 116, 226, 0.16);
+      border: 1px solid rgba(77, 163, 255, 0.35); border-radius: 999px;
+      padding: 3px 12px; margin-bottom: 8px;
+    }
+    h1 { margin: 0 0 6px; font-size: clamp(22px, 3.6vw, 30px); letter-spacing: 0.02em; }
+    .lead { margin: 0; color: var(--muted); font-size: 14.5px; }
+    .main-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; align-items: stretch; }
+    @media (max-width: 820px) { .main-grid { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .card-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .card-title { font-size: 15px; font-weight: 700; color: var(--accent-light); margin: 0; }
+    .hint-pill {
+      font-size: 11.5px; color: var(--muted); background: var(--panel-sub);
+      border: 1px solid var(--border); padding: 2px 9px; border-radius: 999px;
+    }
+    .canvas-wrap {
+      position: relative; width: 100%; aspect-ratio: 1 / 1; background: #0a101a;
+      border-radius: 12px; border: 1px solid var(--border); overflow: hidden;
+    }
+    canvas { display: block; width: 100%; height: 100%; }
+    .wave-wrap { width: 100%; height: 210px; background: #0a101a; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+    .telemetry { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-box { background: var(--panel-sub); border: 1px solid var(--border); border-radius: 10px; padding: 9px 10px; }
+    .stat-label { font-size: 11px; color: var(--muted); display: block; }
+    .stat-value { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .stat-value.echo { color: var(--echo); }
+    .stat-value.pulse { color: var(--pulse); }
+    .controls {
+      display: flex; flex-direction: column; gap: 12px; background: var(--panel-sub);
+      border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    }
+    .control-row { display: flex; flex-direction: column; gap: 4px; }
+    .control-top { display: flex; justify-content: space-between; font-size: 13px; }
+    .control-val { color: var(--accent-light); font-weight: 700; font-variant-numeric: tabular-nums; }
+    input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    button {
+      background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+      padding: 8px 13px; font-size: 13px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    button:hover { background: #0b82f5; }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    button.secondary:hover { border-color: var(--accent-light); color: var(--accent-light); }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .explain-card { margin-top: 18px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+    .explain-card h2 { margin: 0 0 8px; font-size: 17px; color: var(--accent-light); }
+    .explain-card p { margin: 0 0 10px; font-size: 14px; color: var(--text); }
+    .explain-card p:last-child { margin-bottom: 0; }
+    .formula-bar {
+      background: var(--panel-sub);
+      padding: 10px 14px; border-radius: 10px; font-size: 13.5px; margin: 10px 0; color: var(--text);
+    }
+    footer {
+      margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border);
+      text-align: center; color: var(--muted); font-size: 13px; letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">図解ラボ・ゼロヨン ／ Webトイ #05</div>
+      <h1>電波の往復で距離を測る「パルスレーダー」トイ</h1>
+      <p class="lead">回転するスイープ線と、パルスの発射→反射→受信波形を見比べて、見えない遠くの物体を捉える仕組みを体感しよう。</p>
+    </header>
+    <div class="main-grid">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">1. レーダースコープ（PPI表示）</h2>
+          <span class="hint-pill">点をクリックで選択</span>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="radarCanvas" width="500" height="500"></canvas>
+        </div>
+        <div class="legend">
+          <span class="legend-item"><span class="dot" style="background:#ffb84d;"></span>送信パルス波</span>
+          <span class="legend-item"><span class="dot" style="background:#38e8b0;"></span>検出エコー（残光）</span>
+          <span class="legend-item"><span class="dot" style="background:#4da3ff;"></span>選択中の注目ターゲット</span>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">2. パルス往復タイムライン（Aスコープ）</h2>
+          <span class="hint-pill" id="selectedLabel">ターゲット #1 を追跡中</span>
+        </div>
+        <div class="wave-wrap">
+          <canvas id="waveCanvas" width="460" height="210"></canvas>
+        </div>
+        <div class="telemetry">
+          <div class="stat-box">
+            <span class="stat-label">注目ターゲット距離</span>
+            <span class="stat-value echo" id="statDistance">-- km</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">電波の往復時間</span>
+            <span class="stat-value pulse" id="statTime">-- μs</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">発射から反射まで</span>
+            <span class="stat-value" id="statPhase">待機中</span>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <div class="control-top">
+              <label for="priSlider">パルス繰り返し間隔（発射の間隔）</label>
+              <span class="control-val" id="priVal">標準（1.1秒）</span>
+            </div>
+            <input id="priSlider" type="range" min="400" max="2200" step="100" value="1100" />
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="rangeSlider">探知距離レンジ（最大表示距離）</label>
+              <span class="control-val" id="rangeVal">100 km</span>
+            </div>
+            <input id="rangeSlider" type="range" min="50" max="200" step="25" value="100" />
+          </div>
+          <div class="control-row">
+            <div class="control-top">
+              <label for="countSlider">ターゲットの数</label>
+              <span class="control-val" id="countVal">4 機</span>
+            </div>
+            <input id="countSlider" type="range" min="1" max="8" step="1" value="4" />
+          </div>
+          <div class="btn-row">
+            <button type="button" id="fireNowBtn">今すぐパルス発射</button>
+            <button type="button" class="secondary" id="shuffleBtn">ターゲット配置をシャッフル</button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <section class="explain-card">
+      <h2>パルスレーダーはどうやって距離を測っているの？</h2>
+      <p>
+        パルスレーダーは、アンテナから<strong>ごく短い電波の塊（パルス）</strong>をパッと発射し、船や飛行機・雨雲にぶつかって跳ね返ってくる<strong>反射波（エコー）</strong>が戻るまでの時間を測る装置です。
+      </p>
+      <div class="formula-bar">
+        <strong>距離 ＝ 光の速さ（約30万 km/秒） × 往復時間 ÷ 2</strong><br />
+        電波は行きと帰りで同じ距離を2回走るため、往復時間の半分から正確な距離がわかります（100 km先なら往復で約 667 マイクロ秒）。
+      </div>
+      <p>
+        <strong>身近な活躍シーン：</strong>
+        霧や夜間でも周囲の船や岩礁を把握する<strong>船舶レーダー</strong>、空の安全を守る<strong>航空管制・気象レーダー</strong>（雨雲の位置や強さの観測）、さらには車の自動ブレーキ用ミリ波レーダーなど、見えない先を「電波のやまびこ」で見る技術として幅広く使われています。
+      </p>
+    </section>
+    <footer>仕組みを、図解でやさしく</footer>
+  </div>
+  <script>
+    (() => {
+      const radarCanvas = document.getElementById("radarCanvas");
+      const rCtx = radarCanvas.getContext("2d");
+      const waveCanvas = document.getElementById("waveCanvas");
+      const wCtx = waveCanvas.getContext("2d");
+      const priSlider = document.getElementById("priSlider");
+      const rangeSlider = document.getElementById("rangeSlider");
+      const countSlider = document.getElementById("countSlider");
+      const priVal = document.getElementById("priVal");
+      const rangeVal = document.getElementById("rangeVal");
+      const countVal = document.getElementById("countVal");
+      const selectedLabel = document.getElementById("selectedLabel");
+      const statDistance = document.getElementById("statDistance");
+      const statTime = document.getElementById("statTime");
+      const statPhase = document.getElementById("statPhase");
+      const fireNowBtn = document.getElementById("fireNowBtn");
+      const shuffleBtn = document.getElementById("shuffleBtn");
+      let sweepAngle = -Math.PI / 2;
+      const sweepSpeed = (Math.PI * 2) / 5.5;
+      let maxRangeKm = Number(rangeSlider.value);
+      let pulseIntervalMs = Number(priSlider.value);
+      let targetCount = Number(countSlider.value);
+      let targets = [];
+      let selectedTargetId = 1;
+      let pulses = [];
+      let timeSinceLastPulse = 0;
+      let pulseSeq = 0;
+      let lastTime = performance.now();
+      function createTarget(id) {
+        const angle = Math.random() * Math.PI * 2;
+        const distKm = 18 + Math.random() * 145;
+        const speedKmPerSec = (Math.random() - 0.5) * 1.4;
+        const angularVel = (Math.random() - 0.5) * 0.08;
+        return { id, angle, distKm, speedKmPerSec, angularVel, glow: 0, echoFlash: 0, lastDetectedDistKm: distKm };
+      }
+      function syncTargetCount(count) {
+        while (targets.length < count) { targets.push(createTarget(targets.length + 1)); }
+        if (targets.length > count) { targets = targets.slice(0, count); }
+        if (!targets.some(t => t.id === selectedTargetId) && targets.length > 0) { selectedTargetId = targets[0].id; }
+      }
+      function shuffleTargets() {
+        targets = [];
+        for (let i = 1; i <= targetCount; i++) { targets.push(createTarget(i)); }
+        selectedTargetId = 1;
+        pulses = [];
+        emitPulse();
+      }
+      function emitPulse() {
+        const roundTripAnimSec = 1.15;
+        pulses.push({ id: ++pulseSeq, elapsed: 0, duration: roundTripAnimSec, hitIds: new Set() });
+      }
+      function normalizeAngle(a) {
+        const twoPi = Math.PI * 2;
+        return ((a % twoPi) + twoPi) % twoPi;
+      }
+      function angleDiff(a, b) {
+        let d = normalizeAngle(a) - normalizeAngle(b);
+        if (d > Math.PI) d -= Math.PI * 2;
+        if (d < -Math.PI) d += Math.PI * 2;
+        return Math.abs(d);
+      }
+      function update(dt) {
+        sweepAngle = normalizeAngle(sweepAngle + sweepSpeed * dt);
+        for (const t of targets) {
+          t.angle = normalizeAngle(t.angle + t.angularVel * dt);
+          t.distKm += t.speedKmPerSec * dt;
+          if (t.distKm < 14) { t.distKm = 14; t.speedKmPerSec = Math.abs(t.speedKmPerSec); }
+          else if (t.distKm > 185) { t.distKm = 185; t.speedKmPerSec = -Math.abs(t.speedKmPerSec); }
+          if (angleDiff(sweepAngle, t.angle) < 0.08 && t.distKm <= maxRangeKm) {
+            t.glow = 1.0;
+            t.lastDetectedDistKm = t.distKm;
+          } else {
+            t.glow = Math.max(0, t.glow - dt * 0.24);
+          }
+          t.echoFlash = Math.max(0, t.echoFlash - dt * 1.6);
+        }
+        timeSinceLastPulse += dt * 1000;
+        if (timeSinceLastPulse >= pulseIntervalMs) { timeSinceLastPulse = 0; emitPulse(); }
+        for (const p of pulses) {
+          p.elapsed += dt;
+          const progress = p.elapsed / p.duration;
+          const outboundRatio = progress <= 0.5 ? progress * 2 : (1 - progress) * 2;
+          const waveDistKm = outboundRatio * maxRangeKm;
+          if (progress <= 0.55) {
+            for (const t of targets) {
+              if (!p.hitIds.has(t.id) && t.distKm <= maxRangeKm && Math.abs(waveDistKm - t.distKm) < maxRangeKm * 0.045) {
+                p.hitIds.add(t.id);
+                t.echoFlash = 1.0;
+                t.glow = Math.max(t.glow, 0.85);
+                t.lastDetectedDistKm = t.distKm;
+              }
+            }
+          }
+        }
+        pulses = pulses.filter(p => p.elapsed < p.duration);
+      }
+      function drawRadar() {
+        const w = radarCanvas.width;
+        const h = radarCanvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const radius = w * 0.43;
+        rCtx.clearRect(0, 0, w, h);
+        const bgGrad = rCtx.createRadialGradient(cx, cy, 10, cx, cy, radius);
+        bgGrad.addColorStop(0, "#10223b");
+        bgGrad.addColorStop(1, "#09101b");
+        rCtx.fillStyle = bgGrad;
+        rCtx.beginPath();
+        rCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+        rCtx.fill();
+        rCtx.strokeStyle = "rgba(77, 163, 255, 0.24)";
+        rCtx.lineWidth = 1;
+        rCtx.font = "11px sans-serif";
+        rCtx.fillStyle = "rgba(147, 166, 196, 0.8)";
+        for (let i = 1; i <= 4; i++) {
+          const r = (radius * i) / 4;
+          rCtx.beginPath();
+          rCtx.arc(cx, cy, r, 0, Math.PI * 2);
+          rCtx.stroke();
+          const ringKm = Math.round((maxRangeKm * i) / 4);
+          rCtx.fillText(`${ringKm}km`, cx + 5, cy - r + 13);
+        }
+        rCtx.strokeStyle = "rgba(77, 163, 255, 0.16)";
+        rCtx.beginPath();
+        rCtx.moveTo(cx - radius, cy);
+        rCtx.lineTo(cx + radius, cy);
+        rCtx.moveTo(cx, cy - radius);
+        rCtx.lineTo(cx, cy + radius);
+        rCtx.stroke();
+        const trailSpan = 0.65;
+        const steps = 22;
+        for (let i = 0; i < steps; i++) {
+          const t0 = i / steps;
+          const t1 = (i + 1) / steps;
+          const a0 = sweepAngle - trailSpan * (1 - t0);
+          const a1 = sweepAngle - trailSpan * (1 - t1);
+          rCtx.fillStyle = `rgba(0, 116, 226, ${t0 * 0.22})`;
+          rCtx.beginPath();
+          rCtx.moveTo(cx, cy);
+          rCtx.arc(cx, cy, radius, a0, a1);
+          rCtx.closePath();
+          rCtx.fill();
+        }
+        rCtx.strokeStyle = "#4da3ff";
+        rCtx.lineWidth = 2.4;
+        rCtx.beginPath();
+        rCtx.moveTo(cx, cy);
+        rCtx.lineTo(cx + Math.cos(sweepAngle) * radius, cy + Math.sin(sweepAngle) * radius);
+        rCtx.stroke();
+        const selectedTarget = targets.find(t => t.id === selectedTargetId);
+        for (const p of pulses) {
+          const prog = p.elapsed / p.duration;
+          if (prog <= 0.5) {
+            const r = (prog * 2) * radius;
+            rCtx.strokeStyle = `rgba(255, 184, 77, ${0.65 * (1 - prog * 1.4)})`;
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.arc(cx, cy, r, 0, Math.PI * 2);
+            rCtx.stroke();
+          } else if (selectedTarget && selectedTarget.distKm <= maxRangeKm) {
+            const tRatio = selectedTarget.distKm / maxRangeKm;
+            const tx = cx + Math.cos(selectedTarget.angle) * radius * tRatio;
+            const ty = cy + Math.sin(selectedTarget.angle) * radius * tRatio;
+            const returnProg = (prog - 0.5) * 2;
+            const echoR = returnProg * radius * tRatio;
+            rCtx.strokeStyle = `rgba(56, 232, 176, ${0.75 * (1 - returnProg)})`;
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.arc(tx, ty, echoR, 0, Math.PI * 2);
+            rCtx.stroke();
+          }
+        }
+        for (const t of targets) {
+          if (t.distKm > maxRangeKm) continue;
+          const ratio = t.distKm / maxRangeKm;
+          const tx = cx + Math.cos(t.angle) * radius * ratio;
+          const ty = cy + Math.sin(t.angle) * radius * ratio;
+          const isSelected = t.id === selectedTargetId;
+          const alpha = Math.max(0.18, t.glow);
+          rCtx.fillStyle = `rgba(56, 232, 176, ${alpha * 0.35})`;
+          rCtx.beginPath();
+          rCtx.arc(tx, ty, 12 + t.echoFlash * 8, 0, Math.PI * 2);
+          rCtx.fill();
+          if (isSelected) {
+            rCtx.strokeStyle = "#4da3ff";
+            rCtx.lineWidth = 2;
+            rCtx.beginPath();
+            rCtx.arc(tx, ty, 14, 0, Math.PI * 2);
+            rCtx.stroke();
+          }
+          rCtx.fillStyle = `rgba(56, 232, 176, ${Math.max(0.32, t.glow)})`;
+          rCtx.beginPath();
+          rCtx.arc(tx, ty, 5.2, 0, Math.PI * 2);
+          rCtx.fill();
+          rCtx.fillStyle = isSelected ? "#e8eef7" : "rgba(232, 238, 247, 0.72)";
+          rCtx.font = isSelected ? "bold 12px sans-serif" : "11px sans-serif";
+          rCtx.fillText(`#${t.id}`, tx + 9, ty - 7);
+        }
+        rCtx.fillStyle = "#e8eef7";
+        rCtx.beginPath();
+        rCtx.arc(cx, cy, 4, 0, Math.PI * 2);
+        rCtx.fill();
+      }
+      function drawWaveform() {
+        const w = waveCanvas.width;
+        const h = waveCanvas.height;
+        const padL = 38;
+        const padR = 18;
+        const baseY = h - 42;
+        const plotW = w - padL - padR;
+        wCtx.clearRect(0, 0, w, h);
+        wCtx.strokeStyle = "rgba(77, 163, 255, 0.14)";
+        wCtx.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+          const x = padL + (plotW * i) / 4;
+          wCtx.beginPath();
+          wCtx.moveTo(x, 20);
+          wCtx.lineTo(x, baseY);
+          wCtx.stroke();
+        }
+        wCtx.strokeStyle = "rgba(147, 166, 196, 0.5)";
+        wCtx.lineWidth = 1.5;
+        wCtx.beginPath();
+        wCtx.moveTo(padL, baseY);
+        wCtx.lineTo(padL + plotW, baseY);
+        wCtx.stroke();
+        wCtx.fillStyle = "#93a6c4";
+        wCtx.font = "11px sans-serif";
+        wCtx.fillText("0 μs (発射)", padL - 12, baseY + 18);
+        const maxUs = Math.round((maxRangeKm * 2) / 0.3);
+        wCtx.fillText(`${maxUs} μs (${maxRangeKm}km)`, padL + plotW - 86, baseY + 18);
+        drawSpike(padL + 10, baseY, 95, "#ffb84d", "送信パルス");
+        const selected = targets.find(t => t.id === selectedTargetId);
+        if (!selected) return;
+        selectedLabel.textContent = `ターゲット #${selected.id} を追跡中`;
+        if (selected.distKm > maxRangeKm) {
+          statDistance.textContent = `${selected.distKm.toFixed(1)} km (範囲外)`;
+          statTime.textContent = `${Math.round((selected.distKm * 2) / 0.3)} μs`;
+          statPhase.textContent = "レンジ外";
+          wCtx.fillStyle = "#93a6c4";
+          wCtx.font = "12px sans-serif";
+          wCtx.fillText("※ 探知距離レンジを広げると受信エコーが表示されます", padL + 58, baseY - 48);
+          return;
+        }
+        const ratio = selected.distKm / maxRangeKm;
+        const echoX = padL + 10 + (plotW - 20) * ratio;
+        const echoHeight = 42 + selected.echoFlash * 32;
+        wCtx.strokeStyle = "rgba(77, 163, 255, 0.65)";
+        wCtx.setLineDash([4, 4]);
+        wCtx.beginPath();
+        wCtx.moveTo(padL + 10, 32);
+        wCtx.lineTo(echoX, 32);
+        wCtx.stroke();
+        wCtx.setLineDash([]);
+        const roundTripUs = Math.round((selected.distKm * 2) / 0.3);
+        wCtx.fillStyle = "#4da3ff";
+        wCtx.font = "bold 12px sans-serif";
+        wCtx.fillText(`往復時間: ${roundTripUs} μs → 距離 ${selected.distKm.toFixed(1)} km`, Math.min(echoX - 20, padL + plotW - 185), 25);
+        drawSpike(echoX, baseY, echoHeight, "#38e8b0", `反射エコー (#${selected.id})`);
+        const latest = pulses[pulses.length - 1];
+        if (latest) {
+          const prog = latest.elapsed / latest.duration;
+          const markerRatio = prog <= 0.5 ? prog * 2 * ratio : ratio;
+          const mx = padL + 10 + (plotW - 20) * markerRatio;
+          wCtx.fillStyle = prog <= 0.5 ? "#ffb84d" : "#38e8b0";
+          wCtx.beginPath();
+          wCtx.arc(mx, baseY, 4.5, 0, Math.PI * 2);
+          wCtx.fill();
+          statPhase.textContent = prog <= 0.5 ? "往路（発信中）" : "復路（反射受信）";
+        } else {
+          statPhase.textContent = "次のパルス待機";
+        }
+        statDistance.textContent = `${selected.distKm.toFixed(1)} km`;
+        statTime.textContent = `${roundTripUs} μs`;
+      }
+      function drawSpike(x, baseY, height, color, label) {
+        wCtx.strokeStyle = color;
+        wCtx.fillStyle = color;
+        wCtx.lineWidth = 2.5;
+        wCtx.beginPath();
+        wCtx.moveTo(x - 14, baseY);
+        wCtx.lineTo(x - 4, baseY - height * 0.35);
+        wCtx.lineTo(x, baseY - height);
+        wCtx.lineTo(x + 4, baseY - height * 0.35);
+        wCtx.lineTo(x + 14, baseY);
+        wCtx.stroke();
+        wCtx.font = "bold 11px sans-serif";
+        wCtx.fillText(label, x - 24, baseY - height - 8);
+      }
+      radarCanvas.addEventListener("click", (e) => {
+        const rect = radarCanvas.getBoundingClientRect();
+        const scaleX = radarCanvas.width / rect.width;
+        const scaleY = radarCanvas.height / rect.height;
+        const mx = (e.clientX - rect.left) * scaleX;
+        const my = (e.clientY - rect.top) * scaleY;
+        const cx = radarCanvas.width / 2;
+        const cy = radarCanvas.height / 2;
+        const radius = radarCanvas.width * 0.43;
+        let closest = null;
+        let minDist = 28;
+        for (const t of targets) {
+          if (t.distKm > maxRangeKm) continue;
+          const ratio = t.distKm / maxRangeKm;
+          const tx = cx + Math.cos(t.angle) * radius * ratio;
+          const ty = cy + Math.sin(t.angle) * radius * ratio;
+          const d = Math.hypot(mx - tx, my - ty);
+          if (d < minDist) { minDist = d; closest = t; }
+        }
+        if (closest) { selectedTargetId = closest.id; }
+      });
+      priSlider.addEventListener("input", () => {
+        pulseIntervalMs = Number(priSlider.value);
+        const sec = (pulseIntervalMs / 1000).toFixed(1);
+        const tag = pulseIntervalMs <= 600 ? "高頻度" : pulseIntervalMs >= 1700 ? "ゆっくり" : "標準";
+        priVal.textContent = `${tag}（${sec}秒）`;
+      });
+      rangeSlider.addEventListener("input", () => {
+        maxRangeKm = Number(rangeSlider.value);
+        rangeVal.textContent = `${maxRangeKm} km`;
+      });
+      countSlider.addEventListener("input", () => {
+        targetCount = Number(countSlider.value);
+        countVal.textContent = `${targetCount} 機`;
+        syncTargetCount(targetCount);
+      });
+      fireNowBtn.addEventListener("click", () => { timeSinceLastPulse = 0; emitPulse(); });
+      shuffleBtn.addEventListener("click", shuffleTargets);
+      function loop(now) {
+        const dt = Math.min(0.05, (now - lastTime) / 1000);
+        lastTime = now;
+        update(dt);
+        drawRadar();
+        drawWaveform();
+        requestAnimationFrame(loop);
+      }
+      syncTargetCount(targetCount);
+      emitPulse();
+      requestAnimationFrame(loop);
+    })();
+  </script>
+</body>
+</html>
