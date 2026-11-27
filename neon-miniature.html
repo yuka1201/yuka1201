@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ネオン街ミニチュア — NEON ALLEY 1/64</title>
+<style>
+  *{box-sizing:border-box} html,body{margin:0;height:100%;overflow:hidden;background:#07080d;color:#eef0ff;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif}
+  #app{position:fixed;inset:0} canvas{display:block}
+  .hud{position:fixed;left:18px;top:16px;z-index:5;pointer-events:none;max-width:min(430px,calc(100vw - 36px))}
+  .hud h1{margin:0;font-size:clamp(22px,4vw,38px);letter-spacing:.08em;line-height:1.05;font-weight:900}
+  .hud h1 span{color:#ff4fd8;text-shadow:0 0 18px #ff4fd8,0 0 42px #ff4fd866}
+  .hud h1 i{font-style:normal;color:#39e6ff;text-shadow:0 0 18px #39e6ff}
+  .hud p{margin:8px 0 0;font-size:12.5px;line-height:1.7;color:#c9cdea;text-shadow:0 1px 8px #000}
+  .badge{display:inline-block;margin-top:9px;padding:4px 9px;border:1px solid #ffffff33;border-radius:999px;background:#0b0d18cc;font-size:11px;letter-spacing:.12em}
+  .panel{position:fixed;right:16px;bottom:16px;z-index:6;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;max-width:min(560px,calc(100vw - 32px))}
+  button{appearance:none;border:1px solid #ffffff2e;background:#101322e8;color:#eef0ff;border-radius:999px;padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px)}
+  button:hover{border-color:#ff4fd8;color:#fff} button.on{background:#ff4fd8;border-color:#ff4fd8;color:#160612}
+  button.cyan.on{background:#39e6ff;border-color:#39e6ff;color:#04141a}
+  .hint{position:fixed;left:18px;bottom:16px;z-index:5;font-size:11px;color:#9aa3c7;pointer-events:none;text-shadow:0 1px 6px #000}
+  .spec{position:fixed;right:16px;top:16px;z-index:5;text-align:right;font-size:11px;line-height:1.8;color:#aeb6d8;pointer-events:none;text-shadow:0 1px 8px #000}
+  .spec b{color:#fff}
+  #loading{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:#07080d;transition:opacity .7s;font-size:13px;letter-spacing:.25em;color:#ff8ae6}
+  @media(max-width:640px){.spec{display:none}.hint{display:none}}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">NEON ALLEY を組み立て中…</div>
+<div class="hud">
+  <h1>ネオン街<span>ミニチュア</span><br><i>NEON ALLEY</i> 1/64</h1>
+  <p>雨上がりの路地を、ジオラマ台座ごと切り取った本気のミニチュア。看板の文字、濡れたアスファルト、自販機の中の缶まで全部プロシージャルで作ってあります。</p>
+  <span class="badge">PROCEDURAL TEXTURE · BLOOM · WET STREET</span>
+</div>
+<div class="spec"><b>収録物件</b><br>ラーメン屋 / カラオケ / BAR / ゲーム店<br>自販機2台・軽自動車・電柱と垂れ電線<br>屋上タンク・室外機・配管・ゴミ箱・提灯</div>
+<div class="hint">ドラッグ：回転　ホイール：ズーム　右ドラッグ：移動</div>
+<div class="panel">
+  <button id="btnRotate" class="on">⟳ 自動回転</button>
+  <button id="btnRain" class="cyan on">☂ 雨</button>
+  <button id="btnFlicker" class="cyan on">⚡ 看板のチラつき</button>
+  <button data-view="front">正面</button><button data-view="top">俯瞰</button><button data-view="alley">路地に入る</button><button data-view="roof">屋上</button>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+/* ============ renderer / scene / camera ============ */
+const app=document.getElementById('app');
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.12;
+app.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x07080d);
+scene.fog=new THREE.FogExp2(0x0a0c18,0.028);
+
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,0.1,200);
+camera.position.set(13,9,15);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.target.set(0,1.6,0); controls.enableDamping=true; controls.dampingFactor=.06;
+controls.maxPolarAngle=Math.PI*0.495; controls.minDistance=3.5; controls.maxDistance=34; controls.autoRotate=true; controls.autoRotateSpeed=.55;
+
+const composer=new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),0.85,0.55,0.72);
+composer.addPass(bloom); composer.addPass(new OutputPass());
+
+/* ============ canvas texture helpers ============ */
+function cnv(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t;}
+function rnd(a,b){return a+Math.random()*(b-a)}
+function noise(ctx,w,h,n,a){for(let i=0;i<n;i++){ctx.fillStyle=`rgba(${Math.random()*255|0},${Math.random()*255|0},${Math.random()*255|0},${Math.random()*a})`;ctx.fillRect(Math.random()*w,Math.random()*h,rnd(1,3),rnd(1,3));}}
+
+const texAsphalt=cnv(512,512,(x,w,h)=>{x.fillStyle='#23242a';x.fillRect(0,0,w,h);noise(x,w,h,9000,.16);
+  x.strokeStyle='rgba(255,255,255,.05)';for(let i=0;i<26;i++){x.beginPath();x.moveTo(Math.random()*w,Math.random()*h);x.lineTo(Math.random()*w,Math.random()*h);x.stroke();}
+  x.fillStyle='rgba(0,0,0,.28)';for(let i=0;i<40;i++){x.beginPath();x.ellipse(Math.random()*w,Math.random()*h,rnd(8,44),rnd(4,18),Math.random()*3,0,7);x.fill();}});
+texAsphalt.wrapS=texAsphalt.wrapT=THREE.RepeatWrapping; texAsphalt.repeat.set(3,5);
+
+const texSidewalk=cnv(512,512,(x,w,h)=>{x.fillStyle='#3a3b42';x.fillRect(0,0,w,h);noise(x,w,h,6000,.12);
+  x.strokeStyle='rgba(0,0,0,.55)';x.lineWidth=5;for(let i=0;i<=4;i++){x.beginPath();x.moveTo(i*128,0);x.lineTo(i*128,h);x.stroke();x.beginPath();x.moveTo(0,i*128);x.lineTo(w,i*128);x.stroke();}
+  x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;for(let i=0;i<=4;i++){x.beginPath();x.moveTo(i*128+3,0);x.lineTo(i*128+3,h);x.stroke();}});
+texSidewalk.wrapS=texSidewalk.wrapT=THREE.RepeatWrapping; texSidewalk.repeat.set(4,2);
+
+function brickTex(base,seam){return cnv(512,512,(x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);noise(x,w,h,5000,.10);
+  x.fillStyle=seam;const bh=32,bw=84;for(let r=0;r<h/bh;r++){for(let cix=-1;cix<w/bw+1;cix++){const ox=(r%2)*bw/2;x.fillRect(cix*bw+ox+2,r*bh+2,bw-4,bh-4);}}
+  x.fillStyle='rgba(255,255,255,.05)';for(let r=0;r<h/bh;r++){for(let cix=0;cix<w/bw;cix++){x.fillRect(cix*bw+(r%2)*42, r*bh, 80,3);}}});}
+function concreteTex(tone){return cnv(512,512,(x,w,h)=>{x.fillStyle=tone;x.fillRect(0,0,w,h);noise(x,w,h,8000,.13);
+  x.fillStyle='rgba(0,0,0,.16)';for(let i=0;i<22;i++){x.fillRect(Math.random()*w,0,rnd(2,9),h);} x.fillStyle='rgba(0,0,0,.20)';for(let i=0;i<10;i++){x.fillRect(0,Math.random()*h,w,rnd(2,6));}});}
+function tileTex(c1,c2){return cnv(256,256,(x,w,h)=>{for(let r=0;r<8;r++)for(let c=0;c<8;c++){x.fillStyle=(r+c)%2?c1:c2;x.fillRect(c*32,r*32,30,30);}noise(x,w,h,1200,.08);});}
+
+function signTex({bg='#0a0a12',text='',sub='',color='#ff4fd8',vertical=false,font=92}){
+  return cnv(vertical?192:512,vertical?512:192,(x,w,h)=>{x.fillStyle=bg;x.fillRect(0,0,w,h);
+    x.strokeStyle=color;x.lineWidth=6;x.strokeRect(8,8,w-16,h-16);x.strokeStyle='rgba(255,255,255,.35)';x.lineWidth=2;x.strokeRect(16,16,w-32,h-32);
+    x.fillStyle=color;x.shadowColor=color;x.shadowBlur=26;x.textAlign='center';x.textBaseline='middle';
+    if(vertical){x.font=`900 74px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;[...text].forEach((ch,i)=>x.fillText(ch,w/2,58+i*((h-90)/Math.max(1,text.length-1||1))));}
+    else{x.font=`900 ${font}px "Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif`;x.fillText(text,w/2,sub?h/2-16:h/2);
+      if(sub){x.shadowBlur=10;x.font='700 30px sans-serif';x.fillStyle='#eaf7ff';x.fillText(sub,w/2,h-38);}}});
+}
+function windowTex(litRatio=.55,curtain='#2b3550'){return cnv(128,160,(x,w,h)=>{x.fillStyle='#11131c';x.fillRect(0,0,w,h);
+  const lit=Math.random()<litRatio; x.fillStyle=lit?(Math.random()<.5?'#ffd98a':'#bfe6ff'):curtain; x.fillRect(10,10,w-20,h-20);
+  if(lit){x.fillStyle='rgba(60,40,10,.35)';x.fillRect(10,h*.62,w-20,4);x.fillStyle='rgba(0,0,0,.28)';x.fillRect(w*.48,10,5,h-20);}
+  x.strokeStyle='#05060a';x.lineWidth=8;x.strokeRect(4,4,w-8,h-8);x.beginPath();x.moveTo(w/2,4);x.lineTo(w/2,h-4);x.stroke();});}
+
+/* ============ materials ============ */
+const M={
+  asphalt:new THREE.MeshStandardMaterial({map:texAsphalt,roughness:.38,metalness:.08}),
+  sidewalk:new THREE.MeshStandardMaterial({map:texSidewalk,roughness:.55}),
+  curb:new THREE.MeshStandardMaterial({color:0x55565e,roughness:.7}),
+  white:new THREE.MeshStandardMaterial({color:0xf2f2ee,roughness:.6}),
+  darkMetal:new THREE.MeshStandardMaterial({color:0x232630,roughness:.42,metalness:.75}),
+  rust:new THREE.MeshStandardMaterial({color:0x6e4630,roughness:.85,metalness:.25}),
+  wood:new THREE.MeshStandardMaterial({color:0x5a3d24,roughness:.82}),
+  woodDark:new THREE.MeshStandardMaterial({color:0x2e2015,roughness:.9}),
+  plasticRed:new THREE.MeshStandardMaterial({color:0xc8232e,roughness:.35}),
+  glass:new THREE.MeshPhysicalMaterial({color:0x9fd8ff,roughness:.06,metalness:0,transparent:true,opacity:.38}),
+};
+function box(w,h,d,mat,x=0,y=0,z=0,parent=scene,shadow=true){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.castShadow=shadow;m.receiveShadow=true;parent.add(m);return m;}
+function cyl(rt,rb,h,mat,x=0,y=0,z=0,parent=scene,seg=20){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
+function glowPlane(w,h,tex,x,y,z,ry=0,parent=scene){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex,transparent:false,side:THREE.DoubleSide}));m.position.set(x,y,z);m.rotation.y=ry;parent.add(m);return m;}
+function neonLight(color,x,y,z,i=14,d=9){const L=new THREE.PointLight(color,i,d,1.8);L.position.set(x,y,z);scene.add(L);return L;}
+
+/* ============ diorama base ============ */
+const base=new THREE.Group(); scene.add(base);
+box(19,0.7,14,new THREE.MeshStandardMaterial({color:0x17100c,roughness:.55}),0,-0.36,0,base);
+box(19.5,0.22,14.5,M.woodDark,0,-0.78,0,base);
+box(18.4,0.1,13.4,new THREE.MeshStandardMaterial({color:0x0c0d13,roughness:.9}),0,0.03,0,base);
+// brass name plate
+glowPlane(3.4,.55,cnv(512,84,(x,w,h)=>{x.fillStyle='#8a6b25';x.fillRect(0,0,w,h);x.fillStyle='#ffe9a8';x.font='700 34px serif';x.textAlign='center';x.fillText('NEON ALLEY — 2026 · 1/64',w/2,h/2+12);}),0,-0.18,7.26,0,base);
+
+/* street + sidewalks */
+const street=box(5.6,0.08,13.2,M.asphalt,0,0.12,0); street.receiveShadow=true;
+box(3.4,0.16,13.2,M.sidewalk,-4.9,0.16,0); box(3.4,0.16,13.2,M.sidewalk,4.9,0.16,0);
+box(.28,0.2,13.2,M.curb,-3.05,0.16,0); box(.28,0.2,13.2,M.curb,3.05,0.16,0);
+// centre line + crosswalk + manhole
+for(let z=-6;z<6.4;z+=1.55){ if(Math.abs(z)<1.2) continue; const p=box(.14,0.012,.82,new THREE.MeshBasicMaterial({color:0xd8d25a}),0,0.175,z,scene,false); p.receiveShadow=true; }
+for(let i=-2;i<=2;i++) box(.62,0.012,2.5,new THREE.MeshBasicMaterial({color:0xe8e8e2}),i*1.05,0.175,0,scene,false);
+const manhole=cyl(.42,.42,.03,M.darkMetal,1.3,0.18,-3.4); manhole.scale.z=1;
+cyl(.42,.42,.03,M.darkMetal,-1.1,0.18,3.9);
+// wet puddles (fake reflection: glossy dark discs with neon tint handled by lights)
+[[1.6,2.2,.9,0x243],[-1.7,-1.8,.7,0], [0.4,-4.8,1.1,0],[-0.8,5.2,.8,0]].forEach(([px,pz,s])=>{
+  const p=new THREE.Mesh(new THREE.CircleGeometry(s,28),new THREE.MeshStandardMaterial({color:0x11182a,roughness:.05,metalness:.65,transparent:true,opacity:.88}));
+  p.rotation.x=-Math.PI/2;p.position.set(px,0.182,pz);p.scale.y=.62;p.receiveShadow=true;scene.add(p);});
+
+/* ============ buildings ============ */
+const flickerSigns=[];
+function building({x,z,w,d,h,tex,sign,signColor=0xff4fd8,vertical,shopTex,shopName}) {
+  const g=new THREE.Group(); g.position.set(x,0.24,z); scene.add(g);
+  const body=box(w,h,d,new THREE.MeshStandardMaterial({map:tex,roughness:.82}),0,h/2,0,g);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  // parapet + roof slab
+  box(w+.22,.28,d+.22,M.darkMetal,0,h+.12,0,g);
+  // windows grid on street face — street runs along Z, so the facade is the X face
+  const face = x<0 ? 1 : -1; // +1: facade looks +X (left buildings), -1: looks -X (right buildings)
+  const faceRy = face>0 ? Math.PI/2 : -Math.PI/2;
+  const cols=Math.max(2,Math.floor(d/1.15)), rows=Math.max(2,Math.floor((h-2.2)/1.45));
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const wz=-d/2+0.75+c*(d-1.5)/Math.max(1,cols-1), wy=2.6+r*1.45;
+    if(wy>h-.7) continue;
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(.62,.82),new THREE.MeshBasicMaterial({map:windowTex(),side:THREE.DoubleSide}));
+    win.position.set(face*(w/2+.012),wy,wz); win.rotation.y=faceRy; g.add(win);
+    box(.06,.06,.7,M.darkMetal,face*(w/2+.05),wy-.48,wz,g,false); // sill
+  }
+  // shop front at ground floor, on the X facade
+  if(shopTex){
+    glowPlane(d*.86,1.55,shopTex,face*(w/2+.015),1.05,0,faceRy,g);
+    box(.18,.14,d*.92,M.darkMetal,face*(w/2+.08),1.92,0,g);
+    // awning sticking out toward the street (+/-X), tilted down
+    const aw=box(0.85,.06,d*.9,new THREE.MeshStandardMaterial({color:signColor,roughness:.6}),face*(w/2+.45),2.02,0,g); aw.rotation.z=-face*0.18;
+  }
+  // main neon sign (vertical hanging sign faces along the street / Z; horizontal sign sits on the X facade)
+  if(sign){
+    if(vertical){
+      const sh=Math.min(3.6,3*.82+.6);
+      box(.5,sh+.2,.12,M.darkMetal,face*(w/2+.28),h*.58,0,g);
+      const s=glowPlane(.78,sh,sign,face*(w/2+.28),h*.58,0,0,g); // plane faces +/-Z, readable from up/down the street
+      const L=neonLight(signColor, x+face*(w/2+1), 0.24+h*.58, z, 16, 10);
+      if(Math.random()<.4) flickerSigns.push({mats:[s.material],lights:[L],base:L.intensity});
+    } else {
+      const s=glowPlane(Math.min(d*.95,4*.72+1),.82,sign,face*(w/2+.09),h-0.85,0,faceRy,g);
+      const L=neonLight(signColor, x+face*(w/2+1.1), 0.24+h-0.85, z, 15, 10);
+      if(shopName==='bar') flickerSigns.push({mats:[s.material],lights:[L],base:L.intensity});
+    }
+  }
+  // rooftop props: AC units, pipes, water tank, antenna
+  const nAC=1+(Math.random()*2|0);
+  for(let i=0;i<nAC;i++){ const ax=rnd(-w/2+.7,w/2-.7), az=rnd(-d/2+.7,d/2-.7);
+    box(.8,.55,.65,new THREE.MeshStandardMaterial({color:0x9aa0a8,roughness:.5,metalness:.6}),ax,h+.55,az,g);
+    cyl(.2,.2,.06,M.darkMetal,ax,h+.86,az,g); }
+  if(Math.random()<.75){ const tx=rnd(-w/3,w/3),tz=rnd(-d/3,d/3);
+    cyl(.55,.55,1.0,M.rust,tx,h+.75,tz,g); cyl(.62,.62,.12,M.rust,tx,h+1.3,tz,g);
+    box(.09,1.1,.09,M.darkMetal,tx-.45,h+.3,tz,g); box(.09,1.1,.09,M.darkMetal,tx+.45,h+.3,tz,g); }
+  const ant=cyl(.025,.025,1.7,M.darkMetal,rnd(-w/3,w/3),h+.95,rnd(-d/3,d/3),g);
+  box(.8,.04,.04,M.darkMetal,ant.position.x,h+1.55,ant.position.z,g,false);
+  // pipes running down the street facade
+  for(let i=0;i<2;i++){ const pz=-d/2+.25+i*.32; cyl(.055,.055,h-.4,M.rust,face*(w/2+.07),(h-.4)/2, pz,g); }
+  return g;
+}
+
+const texBrickPink=brickTex('#4a3436','#5d4245'), texBrickBlue=brickTex('#2e3542','#3d4658'), texConc=concreteTex('#4b4a4c'), texConc2=concreteTex('#3d3a44'), texTile=tileTex('#28424a','#1d3038');
+
+building({x:-6.6,z:-4.4,w:3.4,d:3.6,h:7.6,tex:texBrickPink,vertical:true,
+  sign:signTex({text:'ラーメン',vertical:true,color:'#ff3b30',bg:'#140607'}),
+  signColor:0xff3b30,
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#1c0f08';x.fillRect(0,0,w,h);x.fillStyle='#ffb35c';x.font='900 74px sans-serif';x.textAlign='center';x.fillText('麺屋 ゆか',w/2,92);x.font='700 34px sans-serif';x.fillStyle='#fff3d6';x.fillText('手打ち麺 · 夜 2時まで',w/2,152);x.fillStyle='#ff7847';x.fillRect(36,h-52,w-72,10);}),
+  shopName:'ramen'});
+building({x:-6.7,z:-0.6,w:3.2,d:3.4,h:5.6,tex:texTile,vertical:false,
+  sign:signTex({text:'カラオケ',sub:'KARAOKE 24H',color:'#39e6ff',bg:'#04141a'}),signColor:0x39e6ff,
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#08131c';x.fillRect(0,0,w,h);x.fillStyle='#8be9ff';x.font='900 58px sans-serif';x.textAlign='center';x.fillText('♪ うた広場',w/2,100);x.font='700 30px sans-serif';x.fillStyle='#eaf7ff';x.fillText('全室 禁煙 · ドリンクバー',w/2,158);})});
+building({x:-6.6,z:3.2,w:3.4,d:3.8,h:9.2,tex:texConc2,vertical:true,
+  sign:signTex({text:'ホテル月',vertical:true,color:'#c77dff',bg:'#12081f'}),signColor:0xc77dff,
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#120a1c';x.fillRect(0,0,w,h);x.fillStyle='#d9b8ff';x.font='900 62px sans-serif';x.textAlign='center';x.fillText('HOTEL 月',w/2,104);x.font='700 28px sans-serif';x.fillStyle='#fff';x.fillText('空室あり · REST ¥3,900〜',w/2,160);})});
+building({x:6.6,z:-4.2,w:3.4,d:3.8,h:6.6,tex:texBrickBlue,vertical:false,
+  sign:signTex({text:'ゲーム',sub:'GAME CENTER',color:'#ffe93b',bg:'#171204'}),signColor:0xffe93b,
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#151000';x.fillRect(0,0,w,h);x.fillStyle='#ffe93b';x.font='900 60px sans-serif';x.textAlign='center';x.fillText('遊び場 MAX',w/2,100);x.font='700 29px sans-serif';x.fillStyle='#fffbe0';x.fillText('クレーンゲーム · 新台入荷',w/2,158);})});
+building({x:6.7,z:-0.4,w:3.2,d:3.4,h:8.4,tex:texConc,vertical:true,
+  sign:signTex({text:'BAR優花',vertical:true,color:'#ff4fd8',bg:'#170512'}),signColor:0xff4fd8,shopName:'bar',
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#170512';x.fillRect(0,0,w,h);x.fillStyle='#ff8ae6';x.font='900 66px sans-serif';x.textAlign='center';x.fillText('Bar 優花',w/2,102);x.font='700 29px sans-serif';x.fillStyle='#ffe9fa';x.fillText('カクテル · ウイスキー',w/2,160);})});
+building({x:6.6,z:3.4,w:3.4,d:3.6,h:5.4,tex:texBrickPink,vertical:false,
+  sign:signTex({text:'コンビニ',sub:'OPEN 24H',color:'#4dff88',bg:'#04150a',font:74}),signColor:0x4dff88,
+  shopTex:cnv(512,256,(x,w,h)=>{x.fillStyle='#eafff0';x.fillRect(0,0,w,h);x.fillStyle='#11883a';x.font='900 62px sans-serif';x.textAlign='center';x.fillText('ミニマート',w/2,100);x.font='700 30px sans-serif';x.fillStyle='#173';x.fillText('ATM · お弁当 · アイス',w/2,158);})});
+// back silhouettes
+for(let i=0;i<7;i++){ const bx=-14+ i*4.6, bz=-13-Math.random()*4, bh=rnd(7,15);
+  box(3.6,bh,3.6,new THREE.MeshStandardMaterial({color:0x0d0f18,roughness:1}),bx,bh/2,bz,scene,false); }
+for(let i=0;i<5;i++){ const bz=11+i*1.2, bx=-12+i*6; box(4,rnd(6,12),3,new THREE.MeshStandardMaterial({color:0x0b0d16,roughness:1}),bx,4,bz,scene,false); }
+
+/* ============ props ============ */
+// vending machines with visible cans
+function vending(x,z,ry,color,label){
+  const g=new THREE.Group(); g.position.set(x,0.24,z); g.rotation.y=ry; scene.add(g);
+  box(1.05,1.85,.62,new THREE.MeshStandardMaterial({color,roughness:.32,metalness:.25}),0,.93,0,g);
+  const front=glowPlane(.86,1.05,cnv(256,320,(c,w,h)=>{c.fillStyle='#eef6ff';c.fillRect(0,0,w,h);
+    c.fillStyle='#102';c.font='900 34px sans-serif';c.textAlign='center';c.fillText(label,w/2,44);
+    const cols=['#ff4040','#ffb020','#35c759','#2496ff','#ff5fd2','#7ee0ff'];
+    for(let r=0;r<3;r++)for(let i=0;i<5;i++){c.fillStyle=cols[(r*5+i)%6];c.fillRect(16+i*45,66+r*72,34,54);c.fillStyle='rgba(255,255,255,.55)';c.fillRect(20+i*45,70+r*72,8,46);}
+  }),0,1.18,.315,0,g);
+  box(.34,.42,.05,M.darkMetal,.22,.38,.32,g); box(.2,.06,.03,new THREE.MeshBasicMaterial({color:0x54ff9a}),.22,.56,.34,g);
+  neonLight(color==0xc8232e?0xff5040:0x54b9ff, x+Math.sin(ry)*1.1, 1.3, z+Math.cos(ry)*1.1, 7, 5.5);
+  return g;
+}
+vending(-3.85,-2.7,Math.PI/2,0xc8232e,'つめた〜い');
+vending(3.85,1.8,-Math.PI/2,0x1450c8,'あったか〜い');
+// lantern string in front of ramen shop
+const lanternMat=new THREE.MeshBasicMaterial({color:0xffa63b});
+for(let i=0;i<6;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(.14,14,10),lanternMat); s.scale.y=.82; s.position.set(-4.95,2.25,-5.55+i*.42); scene.add(s); }
+neonLight(0xff9a3b,-4.7,2.1,-4.5,9,6);
+// power poles + sagging wires
+function pole(x,z){ const g=new THREE.Group(); g.position.set(x,0.24,z); scene.add(g);
+  cyl(.09,.11,6.4,M.wood,0,3.2,0,g); box(1.7,.09,.09,M.wood,0,5.85,0,g); box(1.3,.09,.09,M.wood,0,5.35,0,g);
+  for(let i=-2;i<=2;i++){ cyl(.07,.07,.34,M.darkMetal,i*.36,5.62,0,g); }
+  cyl(.16,.16,.7,M.darkMetal,.42,4.6,0,g); return g; }
+pole(-3.9,-5.6); pole(3.9,5.4); pole(-3.9,5.6);
+function wire(a,b,sag=.55){ const pts=[]; for(let i=0;i<=24;i++){const t=i/24; pts.push(new THREE.Vector3().lerpVectors(a,b,t).add(new THREE.Vector3(0,-Math.sin(t*Math.PI)*sag,0)));}
+  const geo=new THREE.BufferGeometry().setFromPoints(pts); scene.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0x05060a}))); }
+wire(new THREE.Vector3(-3.9,6.05,-5.6),new THREE.Vector3(-4.9,7.4,-4.4));
+wire(new THREE.Vector3(-3.9,6.05,-5.6),new THREE.Vector3(3.9,6.05,5.4),.9);
+wire(new THREE.Vector3(3.9,6.05,5.4),new THREE.Vector3(4.9,6.2,3.4));
+wire(new THREE.Vector3(-3.9,6.05,5.6),new THREE.Vector3(-3.9,6.05,-5.6),.8);
+// traffic light
+{ const g=new THREE.Group(); g.position.set(2.95,0.24,1.9); scene.add(g);
+  cyl(.05,.05,3.4,M.darkMetal,0,1.7,0,g); box(.34,1.0,.3,M.darkMetal,0,3.65,0,g);
+  [[0xff2222,4.0],[0xffc222,3.65],[0x2bff66,3.3]].forEach(([c,y],i)=>{ const s=new THREE.Mesh(new THREE.SphereGeometry(.105,14,12),new THREE.MeshBasicMaterial({color:i==2?c:0x1a1a1a})); s.position.set(0,y,.17); g.add(s); });
+  neonLight(0x2bff66,2.95,3.4,2.4,5,4); }
+// street lamps
+[[-2.9,-1.5],[2.9,-4.6]].forEach(([x,z])=>{ const g=new THREE.Group(); g.position.set(x,0.24,z); scene.add(g);
+  cyl(.045,.045,3.1,M.darkMetal,0,1.55,0,g); const arm=box(.8,.05,.05,M.darkMetal,x>0?-.35:.35,3.08,0,g);
+  const bulb=new THREE.Mesh(new THREE.SphereGeometry(.09,12,10),new THREE.MeshBasicMaterial({color:0xffe6b0})); bulb.position.set(x>0?-.68:.68,3.0,0); g.add(bulb);
+  neonLight(0xffd9a0,x+(x>0?-.68:.68),3.2,z,10,7); });
+// mini kei car, modelled in parts
+{ const car=new THREE.Group(); car.position.set(1.15,0.18,4.9); car.rotation.y=Math.PI; scene.add(car);
+  const paint=new THREE.MeshStandardMaterial({color:0x2e7fd9,roughness:.22,metalness:.55});
+  box(1.45,.52,2.7,paint,0,.52,0,car); box(1.32,.5,1.55,M.glass,0,1.0,-.12,car);
+  box(1.34,.08,1.6,paint,0,1.28,-.12,car);
+  [[-.68,-.95],[.68,-.95],[-.68,.95],[.68,.95]].forEach(([wx,wz])=>{ const w=cyl(.27,.27,.14,M.darkMetal,wx,.27,wz,car); w.rotation.z=Math.PI/2; const hub=cyl(.11,.11,.15,new THREE.MeshStandardMaterial({color:0xd8dde6,metalness:.8,roughness:.3}),wx,.27,wz,car); hub.rotation.z=Math.PI/2; });
+  box(1.2,.16,.06,new THREE.MeshBasicMaterial({color:0xfff2b0}),0,.62,1.36,car); box(1.2,.14,.06,new THREE.MeshBasicMaterial({color:0xff4030}),0,.62,-1.36,car);
+  box(.72,.2,.03,M.white,0,.34,1.37,car); neonLight(0xffe9a8,1.15,0.8,3.4,6,5); }
+// crates, bins, bicycle-ish clutter, traffic cones
+for(let i=0;i<4;i++) box(.52,.52,.52, i%2?M.plasticRed:new THREE.MeshStandardMaterial({color:0x2266bb,roughness:.5}), -4.55+(i%2)*.58, .5+Math.floor(i/2)*.53, -1.9);
+[[4.55,-2.2],[4.55,-1.45],[-4.6,4.6]].forEach(([x,z])=>{ cyl(.3,.26,.78,new THREE.MeshStandardMaterial({color:0x2f7a4a,roughness:.55,metalness:.3}),x,.63,z); cyl(.32,.32,.06,M.darkMetal,x,1.04,z); });
+for(let i=0;i<3;i++){ const cone=new THREE.Mesh(new THREE.ConeGeometry(.19,.52,18),new THREE.MeshStandardMaterial({color:0xff6a1f,roughness:.5})); cone.position.set(-.9+i*.85,.44,-.2+(i%2)*.3); cone.castShadow=true; scene.add(cone); box(.44,.04,.44,new THREE.MeshStandardMaterial({color:0xff6a1f}),cone.position.x,.2,cone.position.z); }
+// A-frame sign + menu board
+{ const b=glowPlane(.62,.85,cnv(256,352,(x,w,h)=>{x.fillStyle='#fff7e6';x.fillRect(0,0,w,h);x.fillStyle='#b3231b';x.font='900 44px sans-serif';x.textAlign='center';x.fillText('本日の',w/2,70);x.fillText('おすすめ',w/2,122);x.fillStyle='#222';x.font='700 32px sans-serif';x.fillText('味玉ラーメン',w/2,190);x.fillText('¥ 950',w/2,240);x.strokeStyle='#b3231b';x.lineWidth=6;x.strokeRect(10,10,w-20,h-20);}),-4.35,0.72,-3.1,Math.PI/2.4); b.rotation.x=-.12; }
+
+/* steam from manhole + ramen shop */
+const steam=[]; const steamMat=new THREE.MeshBasicMaterial({color:0xdfe8ff,transparent:true,opacity:.14,depthWrite:false});
+for(let i=0;i<26;i++){ const s=new THREE.Mesh(new THREE.SphereGeometry(rnd(.12,.3),10,8),steamMat.clone()); s.position.set(rnd(-.3,.3)+1.3,rnd(.3,2.6),rnd(-.3,.3)-3.4); s.userData.v=rnd(.25,.55); scene.add(s); steam.push(s); }
+/* rain */
+const RAIN=1400, rainPos=new Float32Array(RAIN*3);
+for(let i=0;i<RAIN;i++){ rainPos[i*3]=rnd(-10,10); rainPos[i*3+1]=rnd(0,13); rainPos[i*3+2]=rnd(-8,8); }
+const rainGeo=new THREE.BufferGeometry(); rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPos,3));
+const rain=new THREE.Points(rainGeo,new THREE.PointsMaterial({color:0x9fc8ff,size:.055,transparent:true,opacity:.55}));
+scene.add(rain);
+
+/* lights: ambient + moon key light with shadows */
+scene.add(new THREE.AmbientLight(0x35406e,.85));
+const moon=new THREE.DirectionalLight(0x8fb4ff,1.1); moon.position.set(-9,14,7); moon.castShadow=true;
+moon.shadow.mapSize.set(2048,2048); moon.shadow.camera.left=-13; moon.shadow.camera.right=13; moon.shadow.camera.top=13; moon.shadow.camera.bottom=-13; moon.shadow.bias=-0.0004;
+scene.add(moon);
+neonLight(0xff4fd8,5.2,4,0,10,9); neonLight(0x39e6ff,-5.2,3.4,-.6,10,9);
+
+/* ============ UI / camera moves ============ */
+let flickerOn=true;
+const views={front:[13,9,15,0,1.6,0],top:[0.01,22,0.01,0,0,0],alley:[1.8,1.1,7.6,0,1.8,-2],roof:[-8,11,-8,2,5,2]};
+let camAnim=null;
+function goView(name){ const v=views[name]; camAnim={t:0,fromP:camera.position.clone(),toP:new THREE.Vector3(v[0],v[1],v[2]),fromT:controls.target.clone(),toT:new THREE.Vector3(v[3],v[4],v[5])}; }
+document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>goView(b.dataset.view));
+const btnR=document.getElementById('btnRotate'), btnRain=document.getElementById('btnRain'), btnF=document.getElementById('btnFlicker');
+btnR.onclick=()=>{controls.autoRotate=!controls.autoRotate;btnR.classList.toggle('on',controls.autoRotate);};
+btnRain.onclick=()=>{rain.visible=!rain.visible;btnRain.classList.toggle('on',rain.visible);};
+btnF.onclick=()=>{flickerOn=!flickerOn;btnF.classList.toggle('on',flickerOn); if(!flickerOn) flickerSigns.forEach(f=>{f.mats.forEach(m=>m.color.setScalar(1)); f.lights.forEach(l=>l.intensity=f.base);});};
+
+/* ============ animate ============ */
+const clock=new THREE.Clock();
+function animate(){ requestAnimationFrame(animate); const dt=Math.min(clock.getDelta(),.05), t=clock.elapsedTime;
+  if(camAnim){ camAnim.t+=dt/1.4; const k=camAnim.t>=1?1:(1-Math.pow(1-camAnim.t,3));
+    camera.position.lerpVectors(camAnim.fromP,camAnim.toP,k); controls.target.lerpVectors(camAnim.fromT,camAnim.toT,k); if(camAnim.t>=1) camAnim=null; }
+  if(flickerOn) flickerSigns.forEach((f,i)=>{ const n=Math.random(); const v=(n<.06)? .15 : (n<.12? .55 : 1);
+    f.mats.forEach(m=>m.color.setScalar(.35+.65*v)); f.lights.forEach(l=>l.intensity=f.base*v); });
+  steam.forEach(s=>{ s.position.y+=s.userData.v*dt; s.position.x+=Math.sin(t*1.4+s.id)*dt*.12; s.material.opacity=.16*(1-(s.position.y-.3)/2.6); if(s.position.y>2.9){s.position.y=.3;s.position.x=1.3+rnd(-.3,.3);} });
+  if(rain.visible){ const p=rainGeo.attributes.position.array; for(let i=0;i<RAIN;i++){ p[i*3+1]-=dt*11; p[i*3]+=dt*1.2; if(p[i*3+1]<0){p[i*3+1]=13;p[i*3]=rnd(-10,10);} } rainGeo.attributes.position.needsUpdate=true; }
+  lanternMat.color.setHSL(.075,1,.55+Math.sin(t*2.2)*.05);
+  controls.update(); composer.render();
+}
+animate();
+addEventListener('resize',()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight); });
+document.getElementById('loading').style.opacity=0; setTimeout(()=>document.getElementById('loading').remove(),800);
+</script>
+</body>
+</html>
