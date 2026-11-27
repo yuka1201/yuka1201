@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="yuka">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Misskeyプロフィールメーカー ― Y.U.K.A Tools</title>
+<meta name="description" content="Misskeyのプロフィール（名前・自己紹介・プロフィール項目）を、Misskey風プレビューを見ながら作れるツール。MFM装飾にも対応、そのままコピーして貼るだけ。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👤%3C/text%3E%3C/svg%3E">
+<style>
+:root,:root[data-theme="white"]{
+--lav:#b79ced; --lav-deep:#8b6fd8; --pink:#f6a8c9; --pink-deep:#d16ba5;
+--bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(0,0,0,.04), transparent 60%), linear-gradient(160deg,#f4f4f7 0%,#fbfbfc 100%);
+--card:#ffffff; --soft-bg:#f6f6f9; --input-bg:#ffffff;
+--ink:#23232b; --ink-soft:#6d6d78;
+--line2:rgba(35,35,43,.16); --accent-deep:#4c4c58;
+--grad:linear-gradient(92deg,#3f3f4a,#767684);
+--chip-bg:#eeeef1; --badge-bg:rgba(255,255,255,.85);
+--card-shadow:0 10px 30px rgba(30,30,40,.08);
+--btn-shadow:0 6px 16px rgba(30,30,40,.18); --flash-ring:rgba(76,76,88,.25);
+--toast-bg:#23232b; --toast-fg:#ffffff;
+--mk-accent:#86b300;
+}
+:root[data-theme="black"]{
+--bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(122,132,255,.14), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(70,70,140,.18), transparent 60%), linear-gradient(160deg,#0b0c16 0%,#12122a 100%);
+--card:#171932; --soft-bg:#101124; --input-bg:#0f1020;
+--ink:#eceefb; --ink-soft:#9a9ec0;
+--line2:rgba(236,238,251,.20); --accent-deep:#c3b3f7;
+--grad:linear-gradient(92deg,#4a4e78,#7d84b8);
+--chip-bg:#23233d; --badge-bg:rgba(23,25,50,.85);
+--card-shadow:0 10px 30px rgba(0,0,0,.40);
+--btn-shadow:0 6px 16px rgba(0,0,0,.40); --flash-ring:rgba(185,168,245,.35);
+--toast-bg:#eceefb; --toast-fg:#171932;
+--mk-accent:#a5c94f;
+}
+:root[data-theme="yuka"]{
+--bg-img:radial-gradient(1100px 500px at 85% -10%, rgba(246,168,201,.45), transparent 60%), radial-gradient(900px 480px at -10% 110%, rgba(183,156,237,.40), transparent 60%), linear-gradient(160deg,#f7f2ff 0%,#fdf3f8 55%,#f3edff 100%);
+--card:#ffffff; --soft-bg:#fdfbff; --input-bg:#fdfbff;
+--ink:#3d3355; --ink-soft:#6f6590;
+--line2:rgba(183,156,237,.35); --accent-deep:#8b6fd8;
+--grad:linear-gradient(92deg,#8b6fd8,#d16ba5 60%,#f6a8c9);
+--chip-bg:#f1eafd; --badge-bg:rgba(255,255,255,.75);
+--card-shadow:0 10px 30px rgba(93,72,160,.12);
+--btn-shadow:0 6px 16px rgba(209,107,165,.35); --flash-ring:rgba(209,107,165,.30);
+--toast-bg:#3d3355; --toast-fg:#ffffff;
+--mk-accent:#86b300;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP",Meiryo,system-ui,sans-serif;
+color:var(--ink); min-height:100vh; background:var(--bg-img);
+}
+.wrap{max-width:1240px;margin:0 auto;padding:34px 16px 70px}
+.site-theme-row{position:fixed;top:14px;right:14px;z-index:50}
+.theme-icon-btn{width:44px;height:44px;border-radius:50%;border:2px solid var(--line2);background:var(--card);font-size:19px;cursor:pointer;box-shadow:var(--card-shadow)}
+header.top{text-align:center;margin-bottom:26px}
+.badge{display:inline-block;padding:6px 16px;border-radius:999px;background:var(--badge-bg);border:1.5px solid var(--line2);color:var(--accent-deep);font-size:12.5px;font-weight:700;letter-spacing:.14em}
+h1{margin-top:14px;font-size:clamp(28px,5vw,44px);font-weight:900;line-height:1.2;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{margin-top:10px;color:var(--ink-soft);font-size:14px;line-height:1.8;max-width:760px;margin-left:auto;margin-right:auto}
+.card{background:var(--card);border-radius:20px;padding:18px;box-shadow:var(--card-shadow);border:2px solid var(--line2)}
+h2.sec{font-size:17px;font-weight:900;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h2.sec.hint{font-size:12px;font-weight:600;color:var(--ink-soft)}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.col{display:flex;flex-direction:column;gap:18px}
+label.f{display:block;font-size:13px;font-weight:800;margin:14px 0 6px;color:var(--ink)}
+label.f:first-of-type{margin-top:2px}
+input[type=text], input[type=date], textarea{
+width:100%;padding:10px 12px;border-radius:12px;border:2px solid var(--line2);
+background:var(--input-bg);color:var(--ink);font:inherit;font-size:14px;
+}
+textarea{min-height:170px;line-height:1.7;resize:vertical}
+input:focus, textarea:focus{outline:none;border-color:var(--lav);box-shadow:0 0 0 4px var(--flash-ring)}
+.count{font-size:12px;color:var(--ink-soft);text-align:right;margin-top:4px}
+.count.over{color:#d33;font-weight:800}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{border:2px solid var(--line2);background:var(--soft-bg);color:var(--ink);border-radius:999px;padding:8px 16px;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
+.btn:hover{box-shadow:var(--btn-shadow)}
+.btn.primary{background:var(--grad);color:#fff;border-color:transparent}
+.btn.sub{background:var(--chip-bg)}
+.tpls{display:flex;flex-wrap:wrap;gap:8px}
+.tpl{border:2px solid var(--line2);background:var(--soft-bg);border-radius:14px;padding:10px 14px;cursor:pointer;font:inherit;text-align:left}
+.tpl b{display:block;font-size:14px}
+.tpl span{font-size:11.5px;color:var(--ink-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1.5px solid var(--line2);background:var(--chip-bg);color:var(--ink);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700;cursor:pointer;font:inherit}
+.fieldrow{display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin-top:8px}
+.imgrow{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.filebtn{display:inline-block}
+.filebtn input{display:none}
+.check{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-top:14px;cursor:pointer}
+.note-help{font-size:12px;color:var(--ink-soft);line-height:1.7;margin-top:10px}
+/* --- Misskey風プレビュー --- */
+.mk{border-radius:16px;overflow:hidden;border:1.5px solid var(--line2);background:var(--card)}
+.mk-banner{height:150px;background:linear-gradient(120deg,#b79ced,#f6a8c9);background-size:cover;background-position:center;position:relative}
+.mk-body{padding:0 18px 18px}
+.mk-ava{width:92px;height:92px;border-radius:50%;border:4px solid var(--card);margin-top:-46px;background:linear-gradient(140deg,#d9ccf5,#f9d3e6);background-size:cover;background-position:center;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;font-size:38px}
+.mk-follow{float:right;margin-top:12px;background:var(--mk-accent);color:#fff;border:none;border-radius:999px;padding:7px 18px;font:inherit;font-size:13px;font-weight:800;cursor:default}
+.mk-name{font-size:20px;font-weight:900;margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mk-bot{font-size:10.5px;font-weight:800;background:var(--chip-bg);border:1.5px solid var(--line2);border-radius:6px;padding:2px 7px;color:var(--ink-soft)}
+.mk-user{color:var(--ink-soft);font-size:13.5px;margin-top:2px}
+.mk-bio{margin-top:12px;font-size:14.5px;line-height:1.75;word-break:break-word;white-space:pre-wrap}
+.mk-bio a{color:var(--mk-accent);text-decoration:none;font-weight:700}
+.mk-bio.mention{color:var(--mk-accent);font-weight:700}
+.mk-bio.hashtag{color:var(--mk-accent);font-weight:700}
+.mk-bio center{display:block;text-align:center}
+.mk-bio.mfm-big{font-size:1.35em}
+.mk-bio.mfm-x2{font-size:1.6em}
+.mk-bio.mfm-x3{font-size:2em}
+.mk-bio.mfm-x4{font-size:2.5em}
+.mk-bio.mfm-small{font-size:.78em}
+.mk-bio code{background:var(--chip-bg);border-radius:6px;padding:1px 6px;font-size:.9em}
+@keyframes mfm-spin{to{transform:rotate(360deg)}}
+@keyframes mfm-tada{0%{transform:scale(1)}10%,20%{transform:scale(.9) rotate(-3deg)}30%,50%,70%,90%{transform:scale(1.1) rotate(3deg)}40%,60%,80%{transform:scale(1.1) rotate(-3deg)}100%{transform:scale(1) rotate(0)}}
+@keyframes mfm-jelly{0%{transform:scale3d(1,1,1)}30%{transform:scale3d(1.25,.75,1)}40%{transform:scale3d(.75,1.25,1)}50%{transform:scale3d(1.15,.85,1)}65%{transform:scale3d(.95,1.05,1)}75%{transform:scale3d(1.05,.95,1)}100%{transform:scale3d(1,1,1)}}
+.mk-bio.anim-spin{display:inline-block;animation:mfm-spin 1.6s linear infinite}
+.mk-bio.anim-tada{display:inline-block;animation:mfm-tada 1.2s ease infinite}
+.mk-bio.anim-jelly{display:inline-block;animation:mfm-jelly 1.1s ease infinite}
+.mk-fields{margin-top:14px;border-top:1.5px dashed var(--line2);padding-top:12px;display:grid;gap:7px}
+.mk-field{display:grid;grid-template-columns:110px 1fr;gap:10px;font-size:13.5px}
+.mk-field dt{color:var(--ink-soft);font-weight:700}
+.mk-field dd{word-break:break-word}
+.mk-meta{margin-top:12px;color:var(--ink-soft);font-size:12.5px;display:flex;gap:16px;flex-wrap:wrap}
+.outbox{white-space:pre-wrap;word-break:break-word;background:var(--soft-bg);border:2px solid var(--line2);border-radius:14px;padding:14px;font-size:13px;line-height:1.8;min-height:60px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--toast-bg);color:var(--toast-fg);padding:11px 22px;border-radius:999px;font-size:13.5px;font-weight:800;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+footer{margin-top:34px;text-align:center;color:var(--ink-soft);font-size:12.5px;line-height:1.9}
+footer a{color:var(--accent-deep);font-weight:700;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="site-theme-row"><button type="button" id="siteThemeBtn" class="theme-icon-btn" aria-label="サイトの表示テーマ切り替え" title="表示テーマ：優花（タップで切替）">🌸</button></div>
+<div class="wrap">
+<header class="top">
+<span class="badge">Y.U.K.A SYSTEM</span>
+<h1>👤 Misskeyプロフィールメーカー</h1>
+<p class="sub">名前・自己紹介・プロフィール項目を入力すると、右に Misskey 風のプレビューがその場で出るよ。自己紹介は MFM 装飾にも対応。できたら各項目をコピーして、Misskey の「設定 → プロフィール」に貼るだけ！</p>
+</header>
+
+<div class="layout">
+<div class="col">
+<section class="card">
+<h2 class="sec"><span>🌸 テンプレートから選ぶ</span> <span class="hint">タップすると入力欄に反映されるよ。あとから自由に変えられる</span></h2>
+<div class="tpls" id="tpls"></div>
+</section>
+
+<section class="card">
+<h2 class="sec"><span>📝 基本情報</span></h2>
+<label class="f">名前</label>
+<input type="text" id="inName" placeholder="例：如月優花">
+<div class="count" id="nameCount"></div>
+<label class="f">ユーザー名（プレビュー表示用）</label>
+<input type="text" id="inUser" placeholder="例：kisaragi_yuka">
+<label class="check"><input type="checkbox" id="inBot"> Botバッジを表示する</label>
+<label class="f">アイコン画像</label>
+<div class="imgrow">
+<input type="text" id="inAvatarUrl" placeholder="画像URL（または右のボタンで読み込み）">
+<label class="btn sub filebtn">画像を選ぶ<input type="file" id="inAvatarFile" accept="image/*"></label>
+</div>
+<label class="f">バナー画像</label>
+<div class="imgrow">
+<input type="text" id="inBannerUrl" placeholder="画像URL（または右のボタンで読み込み）">
+<label class="btn sub filebtn">画像を選ぶ<input type="file" id="inBannerFile" accept="image/*"></label>
+</div>
+<p class="note-help">画像はプレビュー確認用だよ。Misskey への設定は、Misskey 側でいつもの画像アップロードをしてね。</p>
+</section>
+
+<section class="card">
+<h2 class="sec"><span>✏️ 自己紹介</span> <span class="hint">MFMが使えるよ</span></h2>
+<textarea id="inBio" placeholder="例：$[center $[x2 🌸] はじめまして、優花です。]"></textarea>
+<div class="count" id="bioCount"></div>
+<div class="chips" id="mfmChips"></div>
+<p class="note-help">よく使う装飾はチップをタップで挿入できるよ。プレビューは簡易再現なので、最終確認は Misskey 側でしてね。</p>
+</section>
+
+<section class="card">
+<h2 class="sec"><span>🏷️ プロフィール項目</span> <span class="hint">最大4つまで</span></h2>
+<div id="fieldRows"></div>
+<label class="f">場所（任意）</label>
+<input type="text" id="inLocation" placeholder="例：東京都千代田区">
+<label class="f">誕生日（任意）</label>
+<input type="date" id="inBirthday">
+</section>
+</div>
+
+<div class="col">
+<section class="card">
+<h2 class="sec"><span>👀 プレビュー</span> <span class="hint">Misskeyのプロフィール風表示</span></h2>
+<div class="mk">
+<div class="mk-banner" id="pvBanner"></div>
+<div class="mk-body">
+<button class="mk-follow" type="button">フォロー</button>
+<div class="mk-ava" id="pvAvatar">🌸</div>
+<div class="mk-name"><span id="pvName">名前</span><span class="mk-bot" id="pvBot" hidden>Bot</span></div>
+<div class="mk-user" id="pvUser">@username</div>
+<div class="mk-bio" id="pvBio"></div>
+<dl class="mk-fields" id="pvFields"></dl>
+<div class="mk-meta" id="pvMeta"></div>
+</div>
+</div>
+</section>
+
+<section class="card">
+<h2 class="sec"><span>📋 コピーして使う</span></h2>
+<div class="rowbtns">
+<button class="btn primary" type="button" id="copyAll">✨ 全部まとめてコピー</button>
+<button class="btn sub" type="button" id="copyName">名前をコピー</button>
+<button class="btn sub" type="button" id="copyBio">自己紹介をコピー</button>
+<button class="btn sub" type="button" id="copyFields">項目をコピー</button>
+<button class="btn" type="button" id="btnReset">リセット</button>
+</div>
+<label class="f">一括コピーの中身</label>
+<div class="outbox" id="outAll"></div>
+<p class="note-help">Misskey の「設定 → プロフィール」で、名前・自己紹介・項目をそれぞれ貼り付けてね。項目は「名前 → 値」の順に1行ずつ入れる形だよ。</p>
+</section>
+</div>
+</div>
+
+<footer>
+<p>Y.U.K.A Tools ― <a href="index.html">ポータルに戻る</a> ／ <a href="misskey-mfm-maker.html">Misskey MFMメーカー</a> ／ <a href="misskey-theme-maker.html">Misskeyテーマメーカー</a></p>
+<p>※ Misskey は各サーバーの登録商標です。このツールは非公式のファンメイドです。</p>
+</footer>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const LS_KEY = "misskey-profile-maker-v1";
+const LS_THEME = "misskey-profile-maker-sitetheme";
+const BIO_LIMIT = 1500, NAME_LIMIT = 50;
+
+/* ---------- テンプレート ---------- */
+const TEMPLATES = [
+{ label:"シンプル", desc:"無難にまとまる基本形", name:"", bio:"はじめまして。\nMisskeyでのんびりしています。よろしくお願いします。", fields:[["好きなもの",""],["活動時間",""]]},
+{ label:"かわいい", desc:"桜と絵文字でふんわり", name:"", bio:"$[center $[x2 🌸] はじめまして 🌸]\nまったり投稿しています。\n仲良くしてくれると嬉しいです:blobcat_happy:", fields:[["推し",""],["ひとこと","よろしくね"]]},
+{ label:"絵描き", desc:"イラスト投稿アカウント用", name:"", bio:"イラストを描いています。\n感想やリアクション、とても励みになります。\n無断転載はご遠慮ください。", fields:[["ジャンル",""],["依頼","プロフィールのリンクから"],["作業環境",""]]},
+{ label:"Bot運用", desc:"自動投稿Botの説明用", name:"", bio:"自動投稿用Botアカウントです。\n朝の挨拶と天気、定期ノートを自動で投稿します。\n🌸のノートへのリアクションには、お礼のリプライを返すことがあります。", fields:[["管理者",""],["役割","自動投稿Bot"]]},
+{ label:"ゲーム好き", desc:"ゲーム実況・日常用", name:"", bio:"ゲームと日常のことをつぶやきます。\nフレンド申請は一言もらえると嬉しいです。", fields:[["よく遊ぶゲーム",""],["配信",""]]},
+];
+
+/* ---------- MFM 簡易レンダラ ---------- */
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function renderInline(s){
+s = esc(s);
+s = s.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+s = s.replace(/\*\*\*([^*]+)\*\*\*/g, "<b><i>$1</i></b>");
+s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<i>$2</i>");
+s = s.replace(/~~([^~]+)~~/g, "<s>$1</s>");
+s = s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+s = s.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+s = s.replace(/@([A-Za-z0-9_]+)(@[A-Za-z0-9.-]+)?/g, '<span class="mention">@$1$2</span>');
+s = s.replace(/#([^\s#<]+)/g, '<span class="hashtag">#$1</span>');
+return s;
+}
+function renderMfm(src){
+let out = "", i = 0;
+const n = src.length;
+while(i < n){
+if(src.startsWith("$[", i)){
+const m = /^\$\[([A-Za-z0-9_]+)((?:\.[A-Za-z]+=[^\s\]]+)*)\s/.exec(src.slice(i));
+if(m){
+const fn = m[1], args = m[2] || "";
+let depth = 1, j = i + m[0].length, start = j;
+while(j < n && depth > 0){
+if(src.startsWith("$[", j)) depth++;
+else if(src[j] === "]"){ depth--; if(depth === 0) break;}
+j++;
+}
+if(depth === 0){
+const inner = renderMfm(src.slice(start, j));
+out += wrapFn(fn, args, inner);
+i = j + 1;
+continue;
+}
+}
+}
+// 次の $[ までを通常テキストとして処理
+let nxt = src.indexOf("$[", i);
+if(nxt === i) nxt = src.indexOf("$[", i + 2);
+if(nxt === -1) nxt = n;
+if(nxt === i) nxt = i + 2;
+out += renderInline(src.slice(i, nxt));
+i = nxt;
+}
+return out;
+}
+function wrapFn(fn, args, inner){
+const color = /fg\.color=([0-9A-Fa-f]{6})/.exec(args);
+const bg = /bg\.color=([0-9A-Fa-f]{6})/.exec(args);
+switch(fn){
+case "center": return `<center>${inner}</center>`;
+case "big": return `<span class="mfm-big">${inner}</span>`;
+case "x2": return `<span class="mfm-x2">${inner}</span>`;
+case "x3": return `<span class="mfm-x3">${inner}</span>`;
+case "x4": return `<span class="mfm-x4">${inner}</span>`;
+case "small": return `<span class="mfm-small">${inner}</span>`;
+case "bold": return `<b>${inner}</b>`;
+case "italic": return `<i>${inner}</i>`;
+case "strike": return `<s>${inner}</s>`;
+case "spin": return `<span class="anim-spin">${inner}</span>`;
+case "tada": return `<span class="anim-tada">${inner}</span>`;
+case "jelly": return `<span class="anim-jelly">${inner}</span>`;
+case "fg": return color? `<span style="color:#${color[1]}">${inner}</span>`: inner;
+case "bg": return bg? `<span style="background:#${bg[1]}">${inner}</span>`: inner;
+default: return inner;
+}
+}
+
+/* ---------- 状態 ---------- */
+function blankState(){
+return { name:"", user:"", bot:false, avatar:"", banner:"", bio:"",
+fields:[["",""],["",""],["",""],["",""]], location:"", birthday:""};
+}
+let state = blankState();
+
+function readInputs(){
+state.name = $("inName").value;
+state.user = $("inUser").value.replace(/^@+/, "");
+state.bot = $("inBot").checked;
+state.avatar = $("inAvatarUrl").value.trim();
+state.banner = $("inBannerUrl").value.trim();
+state.bio = $("inBio").value;
+state.fields = [0,1,2,3].map(k => [$("fname"+k).value, $("fvalue"+k).value]);
+state.location = $("inLocation").value;
+state.birthday = $("inBirthday").value;
+}
+function writeInputs(){
+$("inName").value = state.name;
+$("inUser").value = state.user;
+$("inBot").checked = state.bot;
+$("inAvatarUrl").value = state.avatar;
+$("inBannerUrl").value = state.banner;
+$("inBio").value = state.bio;
+state.fields.forEach((f, k) => { $("fname"+k).value = f[0]; $("fvalue"+k).value = f[1];});
+$("inLocation").value = state.location;
+$("inBirthday").value = state.birthday;
+}
+
+function allText(){
+const lines = [];
+lines.push("", state.name || "（未入力）", "");
+lines.push("", state.bio || "（未入力）", "");
+lines.push("");
+const fs = state.fields.filter(f => f[0] || f[1]);
+if(fs.length) fs.forEach(f => lines.push(`${f[0]}：${f[1]}`));
+else lines.push("（未入力）");
+if(state.location) lines.push("", "", state.location);
+if(state.birthday) lines.push("", "", state.birthday);
+return lines.join("\n");
+}
+
+function update(){
+readInputs();
+// プレビュー
+$("pvName").textContent = state.name || "名前";
+$("pvBot").hidden =!state.bot;
+$("pvUser").textContent = "@" + (state.user || "username");
+$("pvBio").innerHTML = state.bio? renderMfm(state.bio): '<span style="color:var(--ink-soft)">自己紹介がここに出るよ</span>';
+const ava = $("pvAvatar");
+if(state.avatar){ ava.style.backgroundImage = `url("${state.avatar}")`; ava.textContent = "";}
+else { ava.style.backgroundImage = ""; ava.textContent = "🌸";}
+const bn = $("pvBanner");
+bn.style.backgroundImage = state.banner? `url("${state.banner}")`: "";
+const dl = $("pvFields");
+dl.innerHTML = "";
+state.fields.filter(f => f[0] || f[1]).forEach(f => {
+const row = document.createElement("div"); row.className = "mk-field";
+const dt = document.createElement("dt"); dt.textContent = f[0];
+const dd = document.createElement("dd"); dd.innerHTML = renderMfm(f[1]);
+row.append(dt, dd); dl.appendChild(row);
+});
+const meta = [];
+if(state.location) meta.push("📍 " + state.location);
+if(state.birthday){
+const [y, mo, da] = state.birthday.split("-");
+if(y) meta.push(`🎂 ${y}年${Number(mo)}月${Number(da)}日`);
+}
+$("pvMeta").textContent = meta.join("　");
+// 文字数
+const nc = $("nameCount");
+nc.textContent = `${state.name.length} / ${NAME_LIMIT} 字（目安）`;
+nc.classList.toggle("over", state.name.length > NAME_LIMIT);
+const bc = $("bioCount");
+bc.textContent = `${state.bio.length} / ${BIO_LIMIT} 字（目安）`;
+bc.classList.toggle("over", state.bio.length > BIO_LIMIT);
+// 出力
+$("outAll").textContent = allText();
+try{ localStorage.setItem(LS_KEY, JSON.stringify(state));}catch(e){}
+}
+
+/* ---------- コピー ---------- */
+let toastTimer = null;
+function toast(msg){
+const t = $("toast"); t.textContent = msg; t.classList.add("show");
+clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2200);
+}
+async function copyText(text, msg){
+try{ await navigator.clipboard.writeText(text);}
+catch(e){
+const ta = document.createElement("textarea");
+ta.value = text; document.body.appendChild(ta); ta.select();
+document.execCommand("copy"); ta.remove();
+}
+toast(msg);
+}
+
+/* ---------- MFMチップ ---------- */
+const MFM_CHIPS = [
+["太字", "**文字**"], ["拡大", "$[x2 文字]"], ["特大", "$[big 文字]"],
+["中央寄せ", "$[center 文字]"], ["小文字", "$[small 文字]"],
+["回転", "$[spin 文字]"], ["たーだ", "$[tada 文字]"], ["ゼリー", "$[jelly 文字]"],
+["文字色", "$[fg.color=f6a8c9 文字]"], ["背景色", "$[bg.color=b79ced 文字]"],
+["リンク", "[表示文字](https://example.com)"],
+];
+function insertAtCursor(el, text){
+const s = el.selectionStart?? el.value.length, e = el.selectionEnd?? el.value.length;
+el.value = el.value.slice(0, s) + text + el.value.slice(e);
+el.focus(); el.selectionStart = el.selectionEnd = s + text.length;
+update();
+}
+
+/* ---------- 画像読み込み ---------- */
+function bindFile(inputId, urlId){
+$(inputId).addEventListener("change", ev => {
+const file = ev.target.files[0];
+if(!file) return;
+const r = new FileReader();
+r.onload = () => { $(urlId).value = String(r.result); update(); toast("画像を読み込んだよ（プレビュー用）");};
+r.readAsDataURL(file);
+});
+}
+
+/* ---------- サイトテーマ ---------- */
+const SITE_THEMES = ["yuka", "white", "black"];
+const SITE_THEME_LABEL = { yuka:"優花", white:"白", black:"黒"};
+function applySiteTheme(t){
+document.documentElement.setAttribute("data-theme", t);
+$("siteThemeBtn").title = `表示テーマ：${SITE_THEME_LABEL[t]}（タップで切替）`;
+try{ localStorage.setItem(LS_THEME, t);}catch(e){}
+}
+
+/* ---------- 初期化 ---------- */
+function init(){
+// テンプレート
+TEMPLATES.forEach(t => {
+const b = document.createElement("button");
+b.type = "button"; b.className = "tpl";
+b.innerHTML = `<b>${t.label}</b><span>${t.desc}</span>`;
+b.addEventListener("click", () => {
+state.bio = t.bio;
+state.fields = t.fields.map(f => [f[0], f[1]]);
+while(state.fields.length < 4) state.fields.push(["", ""]);
+writeInputs(); update(); toast(`テンプレート「${t.label}」を入れたよ`);
+});
+$("tpls").appendChild(b);
+});
+// 項目行
+const fr = $("fieldRows");
+for(let k = 0; k < 4; k++){
+const row = document.createElement("div"); row.className = "fieldrow";
+row.innerHTML = `<input type="text" id="fname${k}" placeholder="項目名（例：好きなもの）"><input type="text" id="fvalue${k}" placeholder="内容">`;
+fr.appendChild(row);
+}
+// MFMチップ
+MFM_CHIPS.forEach(([label, code]) => {
+const c = document.createElement("button");
+c.type = "button"; c.className = "chip"; c.textContent = label;
+c.addEventListener("click", () => insertAtCursor($("inBio"), code));
+$("mfmChips").appendChild(c);
+});
+// 入力監視
+document.querySelectorAll("input, textarea").forEach(el => {
+el.addEventListener("input", update);
+el.addEventListener("change", update);
+});
+bindFile("inAvatarFile", "inAvatarUrl");
+bindFile("inBannerFile", "inBannerUrl");
+// コピー
+$("copyAll").addEventListener("click", () => copyText(allText(), "全部まとめてコピーしたよ🌸"));
+$("copyName").addEventListener("click", () => copyText(state.name, "名前をコピーしたよ"));
+$("copyBio").addEventListener("click", () => copyText(state.bio, "自己紹介をコピーしたよ"));
+$("copyFields").addEventListener("click", () => {
+const txt = state.fields.filter(f => f[0] || f[1]).map(f => `${f[0]}\t${f[1]}`).join("\n");
+copyText(txt, "項目をコピーしたよ");
+});
+$("btnReset").addEventListener("click", () => {
+state = blankState(); writeInputs(); update(); toast("リセットしたよ");
+});
+// テーマ切替
+let theme = "yuka";
+try{ theme = localStorage.getItem(LS_THEME) || "yuka";}catch(e){}
+if(!SITE_THEMES.includes(theme)) theme = "yuka";
+applySiteTheme(theme);
+$("siteThemeBtn").addEventListener("click", () => {
+const cur = document.documentElement.getAttribute("data-theme") || "yuka";
+applySiteTheme(SITE_THEMES[(SITE_THEMES.indexOf(cur) + 1) % SITE_THEMES.length]);
+});
+// 復元
+try{
+const raw = localStorage.getItem(LS_KEY);
+if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.fields)){ state = Object.assign(blankState(), s);}}
+}catch(e){}
+writeInputs(); update();
+}
+init();
+</script>
+</body>
+</html>
